@@ -16,26 +16,26 @@
 # Allocations
 
 - experience:
-	-J: Lots with Python, some with Java, wee bit of hardware
+	- J: Lots with Python, some with Java, wee bit of hardware
 
-	-Kr: Lots of hardware + Python, worked with Python all summer
+	- Kr: Lots of hardware + Python, worked with Python all summer
 
-	-P: Lots with Python, some with Java, some with intelligent agents, maths
+	- P: Lots with Python, some with Java, some with intelligent agents, maths
 
-	-T: Lots with Python, some with Java, some with intelligent agents, maths
+	- T: Lots with Python, some with Java, some with intelligent agents, maths
 
-	-D: Lots of C, some hardware + sensors, some Java, some Python
+	- D: Lots of C, some hardware + sensors, some Java, some Python
 
 - roles:
-	-N suggestion to keep it fluid but have roles allocated nonetheless
+	- N suggestion to keep it fluid but have roles allocated nonetheless
 
-	-Kr likes hardware!  Yay!
+	- Kr likes hardware!  Yay!
 	
-	-N suggests 2 folk per group (fluidly)
+	- N suggests 2 folk per group (fluidly)
 	
-	-N suggests at least one person in charge of overall robot structure/physical design
+	- N suggests at least one person in charge of overall robot structure/physical design
 	
-	-Main areas spotted:
+	- Main areas spotted:
 	
 		1.vision - T leading, Kr, J, D involved
 	
@@ -55,26 +55,26 @@
 
 - Group management:
 	
-	-One manager at a time, changing every so often
+	- One manager at a time, changing every so often
 	
-	-P and J volunteering, P for now
+	- P and J volunteering, P for now
 
 - Team management
-	-Can mainly ignore til next milestone
+	- Can mainly ignore til next milestone
 	
-	-Someone should be nominated to be head of comms with them - probably the manager
+	- Someone should be nominated to be head of comms with them - probably the manager
 
 
 # Design
 
 - General design:
-	-T suggests writing overall design before code esp API
+	- T suggests writing overall design before code esp API
 	
-	-N suggests not as important as lots will be learned and changed
+	- N suggests not as important as lots will be learned and changed
 	
-	-T clarifies more wanting to plan use cases
+	- T clarifies more wanting to plan use cases
 	
-	-P suggests each leader creates use cases by Monday
+	- P suggests each leader creates use cases by Monday
 
 - wheels: 
 	- N suggests only holonomics
@@ -82,11 +82,11 @@
   	- J suggests reverse reliant robin
 
 - Sensors:
-	-"Adding extra sensors is easy cos I'm awesome" - Kr
+	- "Adding extra sensors is easy cos I'm awesome" - Kr
 	
-	-Kr: vision should be main sensor
+	- Kr: vision should be main sensor
 	
-	-D: distance sensor should be more prominent
+	- D: distance sensor should be more prominent
 
 - Main things not to change after initial design: wheel type + location, weight (too much).  Changing these would require major tweaks to the firmware code.  
 
