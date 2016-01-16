@@ -20,6 +20,7 @@
     - P: Lots with Python, some with Java, some with intelligent agents, maths
     - T: Lots with Python, some with Java, some with intelligent agents, maths
     - D: Lots of C, some hardware + sensors, some Java, some Python
+    - Ka: Touch of hardware (PBASIC during higher tech studs), Java, python, 
 - Roles:
     - N suggestion to keep it fluid but have roles allocated nonetheless
     - Kr likes hardware!  Yay!
@@ -30,13 +31,13 @@
         - Planning - P leading, T, Kr involved
         - Strategy - Everyone
         - Comms - J leading, P involved
-        - Firmware - Kr leading, D involved
+        - Firmware - Kr leading, D & Ka involved
         - Sensors - D leading
         - LEGO - P leading, EVERYONE involved
         - Reports - Ka leading, EVERYONE involved
 - Group management:
     - One manager at a time, changing every so often
-    - P and J volunteering, P for now
+    - P and J volunteering, P for now (Ka volunteers too)
 - Team management:
     - Can mainly ignore til next milestone
     - Someone should be nominated to be head of comms with them - probably the manager
