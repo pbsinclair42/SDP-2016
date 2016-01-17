@@ -56,6 +56,7 @@
     - "Adding extra sensors is easy cos I'm awesome" - Kr
     - Kr: vision should be main sensor
     - D: distance sensor should be more prominent
+    - possible IR sensor (0.5 - 15cm range) http://www.robotshop.com/uk/pololu-carrier-sharp-gp2y0d815z0f-ir-range-sensor-05-15cm.html
 
 - Main things not to change after initial design: wheel type + location, weight (too much).  Changing these would require major tweaks to the firmware code.  
 
