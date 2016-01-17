@@ -56,11 +56,13 @@
     - "Adding extra sensors is easy cos I'm awesome" - Kr
     - Kr: vision should be main sensor
     - D: distance sensor should be more prominent
-    - possible IR sensor (0.5 - 15cm range) http://www.robotshop.com/uk/pololu-carrier-sharp-gp2y0d815z0f-ir-range-sensor-05-15cm.html
+    - possible IR sensors: 
+        (0.5 - 15cm range) http://www.robotshop.com/uk/pololu-carrier-sharp-gp2y0d815z0f-ir-range-sensor-05-15cm.html
+        (2 - 10cm range) http://www.robotshop.com/uk/dfrobot-gp2y0d180z-2-10cm-range-sensor.html (with Arduino cable)
+    - line tracking sensor for Arduino: http://www.robotshop.com/uk/dfrobot-line-tracking-sensor-for-arduino.html
 
 - Main things not to change after initial design: wheel type + location, weight (too much).  Changing these would require major tweaks to the firmware code.  
-
-
+    
 # Language
 -    Vision will be done in Python (it has openCV)
 -    Arduino uses C-ish stuff
