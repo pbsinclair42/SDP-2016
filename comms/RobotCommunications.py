@@ -17,31 +17,31 @@ class RobotCommunications(Communications):
 
     # Straight movement
     def moveStraight(self, motorPower):
-        self.write("f " + str(motorPower))
+        self.write("f");# + str(motorPower))
 
     def moveBackwards(self, motorPower):
-        self.write("b " + str(motorPower);
+        self.write("b")# + str(motorPower);
 
     #move left
     def moveLeft(self,motorPower):
-        self.write("l " + str(motorPower))
+        self.write("l")# + str(motorPower))
 
     #move right
     def moveRight(self,motorPower):
-        self.write("r "+str(motorPower))
+        self.write("r")#+str(motorPower))
 
     # Same as Sideways, it's just diagonal
     def moveDiagonalLeft(self, motorPower):
-        self.write("dl " + str(motorPower))
+        self.write("d")# + str(motorPower))
 
     def moveDiagonalRight(self, motorPower):
-        self.write("dr " + str(motorPower))
+        self.write("e")# + str(motorPower))
 
     def rotateLeft(self, motorPower):
-        self.write("rl " + str(motorPower))
+        self.write("o")# + str(motorPower))
 
     def rotateRight(self, motorPower):
-        self.write("rr " + str(motorPower))
+        self.write("p")# + str(motorPower))
 
     """
     # Rotate and Grab - 2 args: power_rotate, power_grab

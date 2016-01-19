@@ -9,11 +9,12 @@ class Communications(object):
                  setConnectionOff=False,
                  port='/dev/ttyACM0',
                  baudrate=9600,
-                 timeout=2):
+                 #timeout=2
+                 ):
         if setConnectionOff is False:
 
             try:
-                self.port = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
+                self.port = serial.Serial(port=port, baudrate=baudrate)
                 self.debug = debug
                 time.sleep(0.5)
             except:
