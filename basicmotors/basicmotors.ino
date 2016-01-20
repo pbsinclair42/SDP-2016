@@ -47,41 +47,42 @@ void loop()
             motorBackward(3, 100);
             motorForward(0, 0);
             motorForward(2, 0);
-        }
-        else if (serial_in_char == 'l'){//left
+        } else if (serial_in_char == 'l'){//left
             motorForward(1, 0);
             motorForward(3, 0);
             motorBackward(0, 100);
             motorBackward(2, 100);
-        }
-        else if (serial_in_char == 'r'){//right
+        } else if (serial_in_char == 'r'){//right
             motorForward(1, 0);
             motorForward(3, 0);
             motorForward(0, 100);
             motorForward(2, 100);
         } else if (serial_in_char == 's'){//stop
             motorStop();
-        }else if (serial_in_char == 'd'){//diagonallift
+        } else if (serial_in_char == 'd'){//diagonallift
             motorForward(1, 0);
             motorForward(3, 0);
             motorForward(0, 100);
             motorForward(2, 100);
-        }else if (serial_in_char == 'e'){//diagonal right
+        } else if (serial_in_char == 'e'){//diagonal right
             motorForward(1, 0);
             motorForward(3, 0);
             motorForward(0, 100);
             motorForward(2, 100);
-        }else if (serial_in_char == 'o'){//rotate left
+        } else if (serial_in_char == 'o'){//rotate left
             motorForward(1, 0);
             motorForward(3, 0);
             motorForward(0, 100);
             motorForward(2, 100);
-        }else if (serial_in_char == 'p'){//rotate right
+        } else if (serial_in_char == 'p'){//rotate right
             motorForward(1, 0);
             motorForward(3, 0);
             motorForward(0, 100);
             motorForward(2, 100);
+        } else  { //error 
+            Serial.print("What should I do?!");
         }
+
    } 
  motorStop();
  /*
