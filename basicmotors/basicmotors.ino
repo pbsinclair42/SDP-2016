@@ -8,15 +8,11 @@ int b = 10;
 int c = 20;
 void setup()
 {
-   motorForward(0, 0);
-   motorForward(1, 0);
-   motorForward(2, 0);
-   motorForward(3, 0);
-   motorForward(4, 0);
-   motorForward(5, 0); 
-   pinMode(blink_pin, OUTPUT);
+   // Why are we stopping all the motors when the SDPSetup method will do so
    SDPsetup();
-
+   motorStop();  
+   pinMode(blink_pin, OUTPUT);
+   
 }
 
 void motorStop()
