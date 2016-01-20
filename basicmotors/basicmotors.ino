@@ -80,7 +80,7 @@ void loop()
             motorForward(0, 100);
             motorForward(2, 100);
         } else  { //error 
-            Serial.print("What should I do?!");
+            Serialprint("?");
         }
 
    } 
