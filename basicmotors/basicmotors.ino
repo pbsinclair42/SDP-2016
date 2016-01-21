@@ -17,8 +17,6 @@ void setup()
    SDPsetup();
 }
 
-
-
 void loop()
 {
    while(Serial.available() > 0)
@@ -77,9 +75,26 @@ void loop()
             motorForward(RIGHT_MOTOR, 100);
             motorForward(BACK_MOTOR, 100);
         }
+        // better test for motors
+        else if (serial_in_char == 't'){
+            motorTest1();
+        }
         //stop
         else if (serial_in_char == 's'){
             motorStop();
-            }
+        }
    }
+}
+
+// Folks, let's keep all other functions after setup and loop
+
+void motorTest1(){
+    int i;
+    for (i = 0; i < 3; i++){
+        motorForward(i, 100);
+        delay(1000);
+        motorBackward(i, 100);
+        delay(1000);
+    }
+
 }
