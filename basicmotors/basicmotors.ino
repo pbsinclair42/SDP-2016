@@ -2,99 +2,93 @@
 #include "Arduino.h"
 #include <Wire.h>
 
-// motor encodings
-int LEFT_MOTOR = 0;
-int RIGHT_MOTOR = 1;
-int BACK_MOTOR = 2;
-
-// character for serial. TODO: Use a buffer for received stuff later.
-char serial_in_char;
-
+int blink_pin = 13;
+int a = 5;
+int b = 10;
+int c = 20;
 void setup()
 {
-   // sanity
-   motorAllStop();
+   // Why are we stopping all the motors when the SDPSetup method will do so
    SDPsetup();
+   motorStop();  
+   pinMode(blink_pin, OUTPUT);
+   
 }
 
+void motorStop()
+{
+ motorForward(0, 0);
+ motorForward(1, 0);
+ motorForward(2, 0);
+ motorForward(3, 0);
+ motorForward(4, 0);
+ motorForward(5, 0); 
+}
+
+char serial_in_char;
 void loop()
 {
    while(Serial.available() > 0)
    {
         serial_in_char = (char) Serial.read();
+        Serial.print(serial_in_char);
         
-        // For Serial Test Purposes
-        Serial.print("Received: ")
-        Serial.println(serial_in_char);
-        
-        //forward
-        if (serial_in_char == 'f'){
-            motorForward(LEFT_MOTOR,  100);
-            motorForward(RIGHT_MOTOR, 100);
-            motorForward(BACK_MOTOR, 0);
+        if (serial_in_char == 'f'){//forward
+            motorForward(1, 100);
+            motorForward(3, 100);
+            motorForward(0, 0);
+            motorForward(2, 0);
+        } else if (serial_in_char == 'b'){//backwards
+            motorBackward(1, 100);
+            motorBackward(3, 100);
+            motorForward(0, 0);
+            motorForward(2, 0);
+        } else if (serial_in_char == 'l'){//left
+            motorForward(1, 0);
+            motorForward(3, 0);
+            motorBackward(0, 100);
+            motorBackward(2, 100);
+        } else if (serial_in_char == 'r'){//right
+            motorForward(1, 0);
+            motorForward(3, 0);
+            motorForward(0, 100);
+            motorForward(2, 100);
+        } else if (serial_in_char == 's'){//stop
+            motorStop();
+        } else if (serial_in_char == 'd'){//diagonallift
+            motorForward(1, 0);
+            motorForward(3, 0);
+            motorForward(0, 100);
+            motorForward(2, 100);
+        } else if (serial_in_char == 'e'){//diagonal right
+            motorForward(1, 0);
+            motorForward(3, 0);
+            motorForward(0, 100);
+            motorForward(2, 100);
+        } else if (serial_in_char == 'o'){//rotate left
+            motorForward(1, 0);
+            motorForward(3, 0);
+            motorForward(0, 100);
+            motorForward(2, 100);
+        } else if (serial_in_char == 'p'){//rotate right
+            motorForward(1, 0);
+            motorForward(3, 0);
+            motorForward(0, 100);
+            motorForward(2, 100);
+        } else  { //error 
+            Serialprint("?");
         }
-        //backwards
-        else if (serial_in_char == 'b'){
-            motorBackward(LEFT_MOTOR,  100);
-            motorBackward(RIGHT_MOTOR, 100);
-            motorForward(BACK_MOTOR, 0);
-        }
-        // left
-        else if (serial_in_char == 'l'){
-            motorForward(LEFT_MOTOR,  0);
-            motorForward(RIGHT_MOTOR, 100);
-            motorForward(BACK_MOTOR, 100);
-        }
-        //right
-        else if (serial_in_char == 'r'){
-            motorForward(LEFT_MOTOR,  100);
-            motorForward(RIGHT_MOTOR, 0);
-            motorForward(BACK_MOTOR, 100);
-        }
-        //diagonal_left
-        else if (serial_in_char == 'd'){
-            motorForward(LEFT_MOTOR,  100);
-            motorForward(RIGHT_MOTOR, 100);
-            motorForward(BACK_MOTOR, 100);
-        }
-        //diagonal right
-        else if (serial_in_char == 'e'){
-            motorForward(LEFT_MOTOR,  100);
-            motorForward(RIGHT_MOTOR, 100);
-            motorForward(BACK_MOTOR, 100);
-        }
-        //rotate left
-        else if (serial_in_char == 'o'){
-            motorForward(LEFT_MOTOR,  100);
-            motorForward(RIGHT_MOTOR, 100);
-            motorForward(BACK_MOTOR, 100);
-        }
-        //rotate right
-        else if (serial_in_char == 'p'){
-            motorForward(LEFT_MOTOR,  100);
-            motorForward(RIGHT_MOTOR, 100);
-            motorForward(BACK_MOTOR, 100);
-        }
-        // better test for motors
-        else if (serial_in_char == 't'){
-            motorTest1();
-        }
-        //stop
-        else if (serial_in_char == 's'){
-            motorAllStop();
-        }
-   }
-}
 
-// Folks, let's keep all other functions after setup and loop
-
-void motorTest1(){
-    int i;
-    for (i = 0; i < 3; i++){
-        motorForward(i, 100);
-        delay(1000);
-        motorBackward(i, 100);
-        delay(1000);
-    }
-
+   } 
+ motorStop();
+ /*
+ motorForward(0, 100);
+ motorForward(1, 100);
+ motorBackward(2, 100);
+ digitalWrite( blink_pin, HIGH);
+ delay(5000);
+ motorForward(0, 0);
+ motorForward(1, 0);
+ motorBackward(2, 0);
+ delay(5000);*/
 }
