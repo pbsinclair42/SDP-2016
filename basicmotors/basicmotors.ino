@@ -81,7 +81,7 @@ void loop()
         }
         //stop
         else if (serial_in_char == 's'){
-            motorStop();
+            motorAllStop();
         }
    }
 }
