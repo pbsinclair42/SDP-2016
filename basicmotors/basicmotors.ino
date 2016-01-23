@@ -9,6 +9,8 @@ int LEFT_MOTOR = 0;
 int RIGHT_MOTOR = 1;
 int BACK_MOTOR = 2;
 
+int LEFT_KICKER = 4;
+int RIGHT_KICKER = 5;
 // character for serial. TODO: Use a buffer for received stuff later.
 char serial_in_char;
 
@@ -21,6 +23,9 @@ void setup()
 
 void loop()
 {
+
+   kickTest()
+
    while(Serial.available() > 0)
    {
         serial_in_char = (char) Serial.read();
@@ -98,5 +103,13 @@ void motorTest1(){
     // change me for calibrations and measurements
     delay(1000);
     motorAllStop();
+}
 
+void kickTest() {
+   motorForward (LEFT_KICKER, 100);
+   motorBackward(RIGHT_KICKER, 100);
+   delay(300);
+   motorBackward (LEFT_KICKER, 100);
+   motorForward(RIGHT_KICKER, 100);
+   delay(300);
 }
