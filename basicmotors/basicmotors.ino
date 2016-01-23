@@ -1,3 +1,5 @@
+#include <SDPArduino.h>
+
 #include "SDPArduino.h"
 #include "Arduino.h"
 #include <Wire.h>
@@ -24,12 +26,12 @@ void loop()
         serial_in_char = (char) Serial.read();
         
         // For Serial Test Purposes
-        Serial.print("Received: ")
+        Serial.print("Received: ");
         Serial.println(serial_in_char);
         
         //forward
         if (serial_in_char == 'f'){
-            motorForward(LEFT_MOTOR,  100);
+            motorBackward(LEFT_MOTOR,  100);
             motorForward(RIGHT_MOTOR, 100);
             motorForward(BACK_MOTOR, 0);
         }
@@ -91,10 +93,10 @@ void loop()
 void motorTest1(){
     int i;
     for (i = 0; i < 3; i++){
-        motorForward(i, 100);
-        delay(1000);
-        motorBackward(i, 100);
-        delay(1000);
+        motorForward(i, 75);
     }
+    // change me for calibrations and measurements
+    delay(1000);
+    motorAllStop();
 
 }
