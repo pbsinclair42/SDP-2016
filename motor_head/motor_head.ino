@@ -1,142 +1,256 @@
 #include <SDPArduino.h>
-#include <SDPArduino.h>
-#include "SDPArduino.h"
-#include "Arduino.h"
+
+
+/*
+
+ * Master board sample code to be used in conjuction with the rotary encoder
+
+ * slave board and sample code.
+
+ * This sketch will keep track of the rotary encoder positions relative to
+
+ * the origin. The origin is set to the position held when the master board
+
+ * is powered.
+
+ *
+
+ * Rotary encoder positions are printed to serial every 200ms where the
+
+ * first result is that of the encoder attached to the port at 11 o'clock
+
+ * on the slave board (with the I2C ports at at 12 o'clock). The following
+
+ * results are in counter-clockwise sequence.
+
+ *
+
+ * Author: Chris Seaton, SDP Group 7 2015
+
+ */
+
+ 
+
 #include <Wire.h>
 
 
-// TODO: use #define for those
-int MOTOR_LEFT = 0;
-int MOTOR_LEFT_MAX = 100;  //  TODO: calibrate
-int MOTOR_RIGHT = 1;
-int MOTOR_RIGHT_MAX = 100; // TODO: calibrate
-int MOTOR_BACK = 2; 
-int MOTOR_BACK_MAX = 100; // TODO: calibrate
-int KICKER_1 = 3;
-int KICKER_2 = 4;
 
-int serial_index;
-byte serial_in;
-byte serial_end = byte('\n'); // to be agreed upon
+#define ROTARY_SLAVE_ADDRESS 5
 
-byte serial_buffer[63];
+#define ROTARY_COUNT 6
 
-void setup()
-{
-   // sanity
-   motorAllStop();
+#define PRINT_DELAY 200
 
-   // compulsory for normal operation
-   SDPsetup();
+
+int LEFT_MOTOR = 0;
+int RIGHT_MOTOR = 1;
+int BACK_MOTOR = 2;
+
+int LEFT_KICKER = 4;
+int RIGHT_KICKER = 5;
+
+int LeftPower = 96;
+int RightPower = 98;
+int BackPower = 98;
+
+// Initial motor position is 0.
+
+int positions[ROTARY_COUNT] = {0};
+
+int serial_in_char;
+
+void setup() {
+
+  digitalWrite(8, HIGH);  // Radio on
+
+  Serial.begin(115200);  // Serial at given baudrate
+
+  Wire.begin();  // Master of the I2C bus
+  
+  // Krassy: all motors forward to be able to test things!
+  
+  
+  //moveForward();
+  
+ // motorForward(0, 100);
+  //motorForward(1, 100);
+ // motorForward(2, 98);
 }
 
-void loop(){
 
-	while(Serial.available() > 0){
-		serial_in = Serial.read();
-		if (serial_in == serial_end){
-			execute_command(serial_buffer);
-			serial_index = 0;
-			}
-		else{
-			serial_buffer[serial_index] = serial_in;
-			++serial_index;
-		}
 
-	}
 
-}
 
-void execute_command(byte serial_buffer[]){
-	/*(switch(serial_buffer){
-		case(...) : call_function_command();
-		break
-		case(...) : call_function_command();
-		break
-		...
-		...
-		...
-		default : unrecognized command!
-	}
-	*/
-	return 0;
-}
 
-void full_rotation_test(){
-	motorForkard(MOTOR_LEFT, MOTOR_LEFT_MAX / 2);
-	motorForward(MOTOR_RIGHT, MOTOR_RIGHT_MAX / 2);
-	motorForward(MOTOR_BACK, MOTOR_BACK_MAX / 2);
-	delay(5000);
-	
-	motorBackward(MOTOR_LEFT, MOTOR_LEFT_MAX / 2);
-	motorBackward(MOTOR_RIGHT, MOTOR_RIGHT_MAX / 2);
-	motorBackward(MOTOR_BACK, MOTOR_BACK_MAX / 2);
-	delay(5000);
-	
-	motorAllStop();
-	return 0;
-}
-
-void full_front_back_test(){
-	motorBackward(MOTOR_LEFT, MOTOR_LEFT_MAX);
-	motorForward(MOTOR_RIGHT, MOTOR_RIGHT_MAX);
-	motorForward(MOTOR_BACK, 0);
-	delay(5000);
-
-	motorBackward(MOTOR_LEFT, MOTOR_LEFT_MAX);
-	motorForward(MOTOR_RIGHT, MOTOR_RIGHT_MAX);
-	motorBackward(MOTOR_BACK, 0);
-	delay(5000);
-	
-	motorAllStop();
-	return 0;
-}
-
-void full_diagonal_test(){
-	motorBackward(MOTOR_LEFT, MOTOR_LEFT_MAX);
-	motorForward(MOTOR_RIGHT, 0);
-	motorForward(MOTOR_BACK, MOTOR_BACK_MAX);
-	delay(5000);
-
-	motorBackward(MOTOR_LEFT, 0);
-	motorForward(MOTOR_RIGHT, MOTOR_RIGHT_MAX);
-	motorBackward(MOTOR_BACK, MOTOR_BACK_MAX);
-	delay(5000);
-	
-	motorAllStop();
-	return 0;
-}
-
-void full_strafe_test(){
-	motorForward(MOTOR_LEFT, MOTOR_LEFT_MAX / 2);
-	motorForward(MOTOR_RIGHT, 0);
-	motorBackward(MOTOR_BACK, MOTOR_BACK_MAX);
-	delay(5000);
-
-	motorBackward(MOTOR_LEFT, 0);
-	motorBackward(MOTOR_RIGHT, MOTOR_RIGHT_MAX);
-	motorBackward(MOTOR_BACK, MOTOR_BACK_MAX);
-	delay(5000);
-
-	motorAllStop();
-	return 0;
-}
-
-// TODO: Rework for calibration
-/*
 void updateMotorPositions() {
 
   // Request motor position deltas from rotary slave board
 
   Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
-
-  
-
   // Update the recorded motor positions
+  for (int i = 0; i < ROTARY_COUNT; i++) {
+    positions[i] += (int8_t) Wire.read();  // Must cast to signed 8-bit type
+  }
+}
+
+
+
+void printMotorPositions() {
+
+  Serial.print("Motor positions (Left, Right, back): ");
 
   for (int i = 0; i < ROTARY_COUNT; i++) {
 
-    positions[i] += (int8_t) Wire.read();  // Must cast to signed 8-bit type
+    Serial.print(positions[i]);
+
+    Serial.print(' ');
 
   }
-  */
+
+  Serial.println();
+
+  Serial.println( positions[0] + positions[1]);
+
+  delay(PRINT_DELAY);  // Delay to avoid flooding serial out
+
+}
+
+
+
+
+void loop() {
+  
+  int c = getChar();
+  direct(c);
+  getPositions();
+}
+
+int getChar(){
+    while(Serial.available() > 0) {
+       serial_in_char = (int) Serial.read();
+       serial_in_char -= 48;
+       Serial.print("Received: ");
+       Serial.println(serial_in_char); 
+    }
+   return serial_in_char;           
+}
+
+void direct(int c){
+
+    if (serial_in_char == 8){  //Works!
+       moveForward();
+    }
+    if (serial_in_char == 0) { //Works!
+      allMotorStop() ;
+    }
+    if (serial_in_char == 2){  //Works!
+       moveBackward(); 
+    }
+    
+    if (serial_in_char == 4){
+       moveLeft();
+    }
+    if (serial_in_char == 6){
+       moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+    }
+    if (serial_in_char == 9){  //Works!
+        diagonalRightForward();
+    }
+    
+    if (serial_in_char == 7){  //works!
+      diagonalLeftForward();
+    }
+    if (serial_in_char == 10){  //Works!
+       rotateLeft();
+    }
+    if (serial_in_char == 11){  //Works!
+       rotateRight();
+    }
+    
+    if (serial_in_char == 3){  //Works!
+        diagonalRightBackward();
+    }
+    if (serial_in_char == 1){  //works!
+      diagonalLeftBackward();
+    }
+}
+
+void diagonalRightBackward() {
+ motorForward(LEFT_MOTOR,  LeftPower*1);
+ motorForward(RIGHT_MOTOR, RightPower*0);
+ motorBackward(BACK_MOTOR, BackPower*1);
+}
+
+void diagonalLeftBackward() {
+ motorForward(LEFT_MOTOR,  LeftPower*0);
+ motorBackward(RIGHT_MOTOR, RightPower*1);
+ motorForward(BACK_MOTOR, BackPower*1);
+}
+
+void rotateRight() {
+ motorBackward(LEFT_MOTOR,  LeftPower*1);
+ motorBackward(RIGHT_MOTOR, RightPower*1);
+ motorBackward(BACK_MOTOR, BackPower*1);  
+}
+
+
+void rotateLeft() {
+ motorForward(LEFT_MOTOR,  LeftPower*1);
+ motorForward(RIGHT_MOTOR, RightPower*1);
+ motorForward(BACK_MOTOR, BackPower*1);  
+}
+
+void diagonalRightForward() {
+ motorForward(LEFT_MOTOR,  LeftPower*0);
+ motorForward(RIGHT_MOTOR, RightPower*1);
+ motorBackward(BACK_MOTOR, BackPower*1);
+}
+
+void diagonalLeftForward() {
+ motorBackward(LEFT_MOTOR,  LeftPower*1);
+ motorForward(RIGHT_MOTOR, RightPower*0);
+ motorForward(BACK_MOTOR, BackPower*1);
+}
+
+void moveRight(){
+  motorBackward(LEFT_MOTOR,  LeftPower *0.71);
+ motorBackward(RIGHT_MOTOR, RightPower * 0.35);
+ motorForward(BACK_MOTOR, BackPower *0.85); 
+  
+  /*
+ motorForward(LEFT_MOTOR,  LeftPower *1);
+ motorBackward(RIGHT_MOTOR, RightPower * 1);
+ motorForward(BACK_MOTOR, BackPower *1);
+ */
+}
+
+void moveLeft() {
+ motorForward(LEFT_MOTOR,  LeftPower *0.35);
+ motorForward(RIGHT_MOTOR, RightPower * 0.71);
+ motorBackward(BACK_MOTOR, BackPower *0.85); 
+ 
+
+ 
+}
+
+void moveBackward(){
+  motorForward(LEFT_MOTOR,  100);
+  motorBackward(RIGHT_MOTOR, 100);
+  motorForward(BACK_MOTOR, 0);
+}
+void moveForward() {
+  motorBackward(LEFT_MOTOR,  LeftPower * 1);
+  motorForward(RIGHT_MOTOR, RightPower * 0.85);
+  motorForward(BACK_MOTOR, BackPower *0); 
+}
+ 
+void allMotorStop() {
+  motorForward(LEFT_MOTOR,  LeftPower * 0);
+  motorForward(RIGHT_MOTOR, RightPower * 0);
+  motorForward(BACK_MOTOR, BackPower * 0); 
+}
+
+void getPositions(){
+    updateMotorPositions();
+    printMotorPositions();
+}
