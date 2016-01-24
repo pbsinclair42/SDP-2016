@@ -24,6 +24,7 @@ if __name__ == "__main__":
                 prev3 = float(line.split(":")[1].split()[2])
 
     with open(filename, "r") as f_obj:
+        print (prev1, prev2, prev3)
         for line in f_obj:
             line = line.split(":")[1]
             line_vals = line.split()
