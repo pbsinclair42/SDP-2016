@@ -49,9 +49,9 @@ int BACK_MOTOR = 2;
 int LEFT_KICKER = 4;
 int RIGHT_KICKER = 5;
 
-int LeftPower = 96;
-int RightPower = 98;
-int BackPower = 98;
+int LeftPower = 100;
+int RightPower = 99;
+int BackPower = 99;
 
 // Initial motor position is 0.
 
@@ -146,7 +146,6 @@ void direct(int c){
     if (serial_in_char == 2){  //Works!
        moveBackward(); 
     }
-    
     if (serial_in_char == 4){
        moveLeft();
     }
@@ -172,6 +171,9 @@ void direct(int c){
     }
     if (serial_in_char == 1){  //works!
       diagonalLeftBackward();
+    }
+    if (serial_in_char == 5){
+      testUnit();
     }
 }
 
@@ -201,33 +203,43 @@ void rotateLeft() {
 }
 
 void diagonalRightForward() {
- motorForward(LEFT_MOTOR,  LeftPower*0);
- motorForward(RIGHT_MOTOR, RightPower*1);
- motorBackward(BACK_MOTOR, BackPower*1);
-}
-
-void diagonalLeftForward() {
  motorBackward(LEFT_MOTOR,  LeftPower*1);
  motorForward(RIGHT_MOTOR, RightPower*0);
  motorForward(BACK_MOTOR, BackPower*1);
 }
 
+void diagonalLeftForward() {
+ motorBackward(LEFT_MOTOR,  LeftPower*0); 
+ motorForward(RIGHT_MOTOR, RightPower*1);
+ motorBackward(BACK_MOTOR, BackPower*1);
+}
+
 void moveRight(){
+/*
   motorBackward(LEFT_MOTOR,  LeftPower *0.71);
  motorBackward(RIGHT_MOTOR, RightPower * 0.35);
  motorForward(BACK_MOTOR, BackPower *0.85); 
   
-  /*
+  
  motorForward(LEFT_MOTOR,  LeftPower *1);
  motorBackward(RIGHT_MOTOR, RightPower * 1);
  motorForward(BACK_MOTOR, BackPower *1);
  */
+  motorBackward(LEFT_MOTOR,  LeftPower *0.51);
+ motorBackward(RIGHT_MOTOR, RightPower * 0.51);
+ motorForward(BACK_MOTOR, BackPower * 0.98);
+ 
 }
 
 void moveLeft() {
+  /*
  motorForward(LEFT_MOTOR,  LeftPower *0.35);
  motorForward(RIGHT_MOTOR, RightPower * 0.71);
  motorBackward(BACK_MOTOR, BackPower *0.85); 
+ */
+  motorForward(LEFT_MOTOR,  LeftPower *0.51);
+ motorForward(RIGHT_MOTOR, RightPower * 0.51);
+ motorBackward(BACK_MOTOR, BackPower * 0.98);
  
 
  
@@ -240,10 +252,16 @@ void moveBackward(){
 }
 void moveForward() {
   motorBackward(LEFT_MOTOR,  LeftPower * 1);
-  motorForward(RIGHT_MOTOR, RightPower * 0.85);
+  motorForward(RIGHT_MOTOR, RightPower * 1);
   motorForward(BACK_MOTOR, BackPower *0); 
 }
  
+void testUnit(){
+  motorForward(LEFT_MOTOR,  100);
+  motorForward(RIGHT_MOTOR, 99);
+  motorForward(BACK_MOTOR, 99);   
+}  
+
 void allMotorStop() {
   motorForward(LEFT_MOTOR,  LeftPower * 0);
   motorForward(RIGHT_MOTOR, RightPower * 0);
