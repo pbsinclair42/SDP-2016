@@ -58,9 +58,9 @@ void setup() {
   Wire.begin();  // Master of the I2C bus
   
   // Krassy: all motors forward to be able to test things!
-  motorForward(0, 100);
-  motorForward(1, 100);
-  motorForward(2, 100);
+  //motorForward(0, 100);
+  //motorForward(1, 100);
+  //motorForward(2, 100);
 }
 
 
