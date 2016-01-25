@@ -1,7 +1,3 @@
-#include "SDPArduino.h"
-#include "Arduino.h"
-#include <Wire.h>
-
 
 /*
 
@@ -33,41 +29,47 @@
 
 
 
+#include "SDPArduino.h"
+#include "Arduino.h"
+#include <Wire.h>
+
+
+// We could probably use a matrix for this information...?
 
 #define ROTARY_SLAVE_ADDRESS 5
-
 #define ROTARY_COUNT 6
-
 #define PRINT_DELAY 200
 
+#define LEFT_MOTOR 0
+#define RIGHT_MOTOR 1
+#define BACK_MOTOR 2
 
-int LEFT_MOTOR = 0;
-int RIGHT_MOTOR = 1;
-int BACK_MOTOR = 2;
+#define LEFT_KICKER  5
+#define RIGHT_KICKER  3
 
-int LEFT_KICKER = 5;
-int RIGHT_KICKER = 3;
+#define LEFT_POWER  100
+#define RIGHT_POWER  99
+#define BACK_POWER 99
 
-int LeftPower = 100;
-int RightPower = 99;
-int BackPower = 99;
+#define LEFT_KICKER_POWER 100
+#define RIGHT_KICKER_POWER 100
 
-// Initial motor position is 0.
-
+// Initial motor position is 0 for each motor.
 int positions[ROTARY_COUNT] = {0};
 
 char buffer[4];
 int number;
-
 char serial_in_char;
 
 void setup() {
-
+  SDPsetup();
   digitalWrite(8, HIGH);  // Radio on
 
   Serial.begin(115200);  // Serial at given baudrate
 
-  Wire.begin();  // Master of the I2C bus
+  Wire.begin(); 
+
+  // Master of the I2C bus
   
   // Krassy: all motors forward to be able to test things!
   
@@ -99,14 +101,12 @@ void updateMotorPositions() {
 
 void printMotorPositions() {
 
-  Serial.print("Motor positions (Left, Right, back): ");
-
-
-
-  Serial.println();
+  Serial.println("Motor positions (Left, Right, back): ");
 
   delay(PRINT_DELAY);  // Delay to avoid flooding serial out
-
+  for (int i = 0; i < ROTARY_COUNT; i++) {
+    Serial.print (" %."); Serial.print( positions[i]);
+  }
 }
 
 
@@ -119,68 +119,62 @@ void loop() {
 }
 
 char getChar(){
-    int k=0;
-    while(Serial.available() > 0) {
-       serial_in_char = (char)Serial.read();
-       //serial_in_char -= 48;
-       Serial.print("Received: ");
-       Serial.print(serial_in_char); 
-       Serial.print("\r\n");
-       buffer[k] = serial_in_char;
-       k = k+1;
-    }
-  
-   number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
-   Serial.write(buffer[1]);
-   Serial.write(buffer[2]);
-   Serial.write("|");
-   Serial.print(number);
-   Serial.write("\r\n");
-   return serial_in_char;           
+  int k=0;
+  while(Serial.available() > 0) {
+    serial_in_char = (char)Serial.read();
+    Serial.print("Received: ");
+    Serial.print(serial_in_char); 
+    Serial.print("\r\n");
+    buffer[k] = serial_in_char;
+    k = k+1;
+  }
+  number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));  // turn "10" (one - zero) into 10
+  Serial.write(buffer[1]);
+  Serial.write(buffer[2]);
+  Serial.write("|");
+  Serial.print(number);
+  Serial.write("\r\n");
+  return serial_in_char;           
 }
 
 void direct(int c){
-
-    
     if (buffer[0] == 'f'){  //Works!
-       //Serial.write("\n yasss \n");
-       //Serial.write(number);
-       //Serial.write(buffer[2]);
-       moveForward();
+      Serial.write("\n yasss \n");
+      Serial.write(number);
+      Serial.write(buffer[2]);
+      moveForward();
     }
     if (buffer[0] == 's') { //Works!
       allMotorStop() ;
     }
     if (buffer[0] == 'b'){  //Works!
-       moveBackward(); 
+      moveBackward(); 
     }
     if (buffer[0] == 'l'){
-       moveLeft();
+      moveLeft();
     }
     if (buffer[0] == 'r'){
-       moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+      moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
     }
     if (buffer[0] == 'e'){  //Works!
-        diagonalRightForward();
+      diagonalRightForward();
     }
-    
     if (buffer[0] == 'q'){  //works!
       diagonalLeftForward();
     }
     if (buffer[0] == 'a'){  //Works!
-       rotateLeft();
+      rotateLeft();
     }
     if (buffer[0] == 'd'){  //Works!
-       rotateRight();
+      rotateRight();
     }
-    
     if (buffer[0] == 'x'){  //Works!
-        diagonalRightBackward();
+      diagonalRightBackward();
     }
     if (buffer[0] == 'z'){  //works!
       diagonalLeftBackward();
     }
-    if (serial_in_char == 5){
+    if (serial_in_char == '5'){
       testUnit();
     }
     if(buffer[0] == 'k'){
@@ -189,94 +183,76 @@ void direct(int c){
 }
 
 void motorKick(){
-  motorBackward(LEFT_KICKER,100);
-  motorBackward(RIGHT_KICKER,100);
+  motorBackward(LEFT_KICKER, 100);
+  motorBackward(RIGHT_KICKER, 100);                                            
   delay(500);
-  motorForward(LEFT_KICKER,100);
-  motorForward(RIGHT_KICKER,100);
+  motorForward(LEFT_KICKER, 100);
+  motorForward(RIGHT_KICKER, 100);
   delay(500);
-  motorForward(LEFT_KICKER,0);
-  motorForward(RIGHT_KICKER,0);
-  
+  motorForward(LEFT_KICKER, 0);
+  motorForward(RIGHT_KICKER, 0); 
 }
 
 void diagonalRightBackward() {
- motorForward(LEFT_MOTOR,  LeftPower*1);
- motorForward(RIGHT_MOTOR, RightPower*0);
- motorBackward(BACK_MOTOR, BackPower*1);
+  motorForward(LEFT_MOTOR,  LEFT_POWER * 1);
+  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0);
+  motorBackward(BACK_MOTOR, BACK_POWER * 1);
 }
 
 void diagonalLeftBackward() {
- motorForward(LEFT_MOTOR,  LeftPower*0);
- motorBackward(RIGHT_MOTOR, RightPower*1);
- motorForward(BACK_MOTOR, BackPower*1);
+  motorForward(LEFT_MOTOR,  LEFT_POWER * 0);
+  motorBackward(RIGHT_MOTOR, RIGHT_POWER * 1);
+  motorForward(BACK_MOTOR, BACK_POWER * 1);
 }
 
 void rotateRight() {
- motorBackward(LEFT_MOTOR,  LeftPower*1);
- motorBackward(RIGHT_MOTOR, RightPower*1);
- motorBackward(BACK_MOTOR, BackPower*1);  
+  motorBackward(LEFT_MOTOR,  LEFT_POWER * 1);
+  motorBackward(RIGHT_MOTOR, RIGHT_POWER * 1);
+  motorBackward(BACK_MOTOR, BACK_POWER * 1);  
 }
 
 
 void rotateLeft() {
- motorForward(LEFT_MOTOR,  LeftPower*1);
- motorForward(RIGHT_MOTOR, RightPower*1);
- motorForward(BACK_MOTOR, BackPower*1);  
+  motorForward(LEFT_MOTOR,  LEFT_POWER * 1);
+  motorForward(RIGHT_MOTOR, RIGHT_POWER * 1);
+  motorForward(BACK_MOTOR, BACK_POWER * 1);  
 }
 
 void diagonalRightForward() {
- motorBackward(LEFT_MOTOR,  LeftPower*1);
- motorForward(RIGHT_MOTOR, RightPower*0);
- motorForward(BACK_MOTOR, BackPower*1);
+  motorBackward(LEFT_MOTOR,  LEFT_POWER * 1);
+  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0);
+  motorForward(BACK_MOTOR, BACK_POWER * 1);
 }
 
 void diagonalLeftForward() {
- motorBackward(LEFT_MOTOR,  LeftPower*0); 
- motorForward(RIGHT_MOTOR, RightPower*1);
- motorBackward(BACK_MOTOR, BackPower*1);
+  motorBackward(LEFT_MOTOR,  LEFT_POWER * 0); 
+  motorForward(RIGHT_MOTOR, RIGHT_POWER * 1);
+  motorBackward(BACK_MOTOR, BACK_POWER * 1);
 }
 
 void moveRight(){
-/*
-  motorBackward(LEFT_MOTOR,  LeftPower *0.71);
- motorBackward(RIGHT_MOTOR, RightPower * 0.35);
- motorForward(BACK_MOTOR, BackPower *0.85); 
-  
-  
- motorForward(LEFT_MOTOR,  LeftPower *1);
- motorBackward(RIGHT_MOTOR, RightPower * 1);
- motorForward(BACK_MOTOR, BackPower *1);
- */
-  motorBackward(LEFT_MOTOR,  LeftPower *0.51);
- motorBackward(RIGHT_MOTOR, RightPower * 0.51);
- motorForward(BACK_MOTOR, BackPower * 0.98);
+  motorBackward(LEFT_MOTOR,  LEFT_POWER * 0.51);
+  motorBackward(RIGHT_MOTOR, RIGHT_POWER * 0.51);
+  motorForward(BACK_MOTOR, BACK_POWER * 0.98);
  
 }
 
 void moveLeft() {
-  /*
- motorForward(LEFT_MOTOR,  LeftPower *0.35);
- motorForward(RIGHT_MOTOR, RightPower * 0.71);
- motorBackward(BACK_MOTOR, BackPower *0.85); 
- */
-  motorForward(LEFT_MOTOR,  LeftPower *0.51);
- motorForward(RIGHT_MOTOR, RightPower * 0.51);
- motorBackward(BACK_MOTOR, BackPower * 0.98);
- 
-
- 
+  motorForward(LEFT_MOTOR,  LEFT_POWER * 0.51);
+  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0.51);
+  motorBackward(BACK_MOTOR, BACK_POWER * 0.98);
 }
 
 void moveBackward(){
-  motorForward(LEFT_MOTOR,  100);
-  motorBackward(RIGHT_MOTOR, 100);
-  motorForward(BACK_MOTOR, 0);
+  motorForward(LEFT_MOTOR,  LEFT_POWER * 1);
+  motorBackward(RIGHT_MOTOR, RIGHT_POWER *1);
+  motorForward(BACK_MOTOR, BACK_POWER * 0);
 }
+
 void moveForward() {
-  motorBackward(LEFT_MOTOR,  LeftPower * 1);
-  motorForward(RIGHT_MOTOR, RightPower * 1);
-  motorForward(BACK_MOTOR, BackPower *0); 
+  motorBackward(LEFT_MOTOR,  LEFT_POWER * 1);
+  motorForward(RIGHT_MOTOR, RIGHT_POWER * 1);
+  motorForward(BACK_MOTOR, BACK_POWER * 0); 
 }
  
 void testUnit(){
@@ -286,12 +262,12 @@ void testUnit(){
 }  
 
 void allMotorStop() {
-  motorForward(LEFT_MOTOR,  LeftPower * 0);
-  motorForward(RIGHT_MOTOR, RightPower * 0);
-  motorForward(BACK_MOTOR, BackPower * 0); 
+  motorForward(LEFT_MOTOR,  LEFT_POWER * 0);
+  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0);
+  motorForward(BACK_MOTOR, BACK_POWER * 0); 
 }
 
 void getPositions(){
-    updateMotorPositions();
-    printMotorPositions();
+  updateMotorPositions();
+  printMotorPositions();
 }
