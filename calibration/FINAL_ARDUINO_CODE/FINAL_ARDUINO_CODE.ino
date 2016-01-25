@@ -99,19 +99,11 @@ void updateMotorPositions() {
 
 void printMotorPositions() {
 
-  //Serial.print("Motor positions (Left, Right, back): ");
+  Serial.print("Motor positions (Left, Right, back): ");
 
-  for (int i = 0; i < ROTARY_COUNT; i++) {
 
-    //Serial.print(positions[i]);
 
-    //Serial.print(' ');
-
-  }
-
-  //Serial.println();
-
-  //Serial.println( positions[0] + positions[1]);
+  Serial.println();
 
   delay(PRINT_DELAY);  // Delay to avoid flooding serial out
 
