@@ -1,4 +1,6 @@
-#include <SDPArduino.h>
+#include "SDPArduino.h"
+#include "Arduino.h"
+#include <Wire.h>
 
 
 /*
@@ -29,9 +31,6 @@
 
  */
 
- 
-
-#include <Wire.h>
 
 
 
@@ -46,8 +45,8 @@ int LEFT_MOTOR = 0;
 int RIGHT_MOTOR = 1;
 int BACK_MOTOR = 2;
 
-int LEFT_KICKER = 4;
-int RIGHT_KICKER = 5;
+int LEFT_KICKER = 5;
+int RIGHT_KICKER = 3;
 
 int LeftPower = 100;
 int RightPower = 99;
@@ -57,7 +56,10 @@ int BackPower = 99;
 
 int positions[ROTARY_COUNT] = {0};
 
-int serial_in_char;
+char buffer[4];
+int number;
+
+char serial_in_char;
 
 void setup() {
 
@@ -97,19 +99,19 @@ void updateMotorPositions() {
 
 void printMotorPositions() {
 
-  Serial.print("Motor positions (Left, Right, back): ");
+  //Serial.print("Motor positions (Left, Right, back): ");
 
   for (int i = 0; i < ROTARY_COUNT; i++) {
 
-    Serial.print(positions[i]);
+    //Serial.print(positions[i]);
 
-    Serial.print(' ');
+    //Serial.print(' ');
 
   }
 
-  Serial.println();
+  //Serial.println();
 
-  Serial.println( positions[0] + positions[1]);
+  //Serial.println( positions[0] + positions[1]);
 
   delay(PRINT_DELAY);  // Delay to avoid flooding serial out
 
@@ -119,62 +121,91 @@ void printMotorPositions() {
 
 
 void loop() {
-  
-  int c = getChar();
+  char c = getChar();
   direct(c);
   getPositions();
 }
 
-int getChar(){
+char getChar(){
+    int k=0;
     while(Serial.available() > 0) {
-       serial_in_char = (int) Serial.read();
-       serial_in_char -= 48;
+       serial_in_char = (char)Serial.read();
+       //serial_in_char -= 48;
        Serial.print("Received: ");
-       Serial.println(serial_in_char); 
+       Serial.print(serial_in_char); 
+       Serial.print("\r\n");
+       buffer[k] = serial_in_char;
+       k = k+1;
     }
+  
+   number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
+   Serial.write(buffer[1]);
+   Serial.write(buffer[2]);
+   Serial.write("|");
+   Serial.print(number);
+   Serial.write("\r\n");
    return serial_in_char;           
 }
 
 void direct(int c){
 
-    if (serial_in_char == 8){  //Works!
+    
+    if (buffer[0] == 'f'){  //Works!
+       //Serial.write("\n yasss \n");
+       //Serial.write(number);
+       //Serial.write(buffer[2]);
        moveForward();
     }
-    if (serial_in_char == 0) { //Works!
+    if (buffer[0] == 's') { //Works!
       allMotorStop() ;
     }
-    if (serial_in_char == 2){  //Works!
+    if (buffer[0] == 'b'){  //Works!
        moveBackward(); 
     }
-    if (serial_in_char == 4){
+    if (buffer[0] == 'l'){
        moveLeft();
     }
-    if (serial_in_char == 6){
+    if (buffer[0] == 'r'){
        moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
     }
-    if (serial_in_char == 9){  //Works!
+    if (buffer[0] == 'e'){  //Works!
         diagonalRightForward();
     }
     
-    if (serial_in_char == 7){  //works!
+    if (buffer[0] == 'q'){  //works!
       diagonalLeftForward();
     }
-    if (serial_in_char == 10){  //Works!
+    if (buffer[0] == 'a'){  //Works!
        rotateLeft();
     }
-    if (serial_in_char == 11){  //Works!
+    if (buffer[0] == 'd'){  //Works!
        rotateRight();
     }
     
-    if (serial_in_char == 3){  //Works!
+    if (buffer[0] == 'x'){  //Works!
         diagonalRightBackward();
     }
-    if (serial_in_char == 1){  //works!
+    if (buffer[0] == 'z'){  //works!
       diagonalLeftBackward();
     }
     if (serial_in_char == 5){
       testUnit();
     }
+    if(buffer[0] == 'k'){
+      motorKick();
+    }
+}
+
+void motorKick(){
+  motorBackward(LEFT_KICKER,100);
+  motorBackward(RIGHT_KICKER,100);
+  delay(500);
+  motorForward(LEFT_KICKER,100);
+  motorForward(RIGHT_KICKER,100);
+  delay(500);
+  motorForward(LEFT_KICKER,0);
+  motorForward(RIGHT_KICKER,0);
+  
 }
 
 void diagonalRightBackward() {
