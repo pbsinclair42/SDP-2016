@@ -21,7 +21,7 @@ f: move forward/backward (needs one numerical argument, with an optional minus)
 r: rotate cloclwise/counter-clockwise (needs one numerical argument, with an optional minus)
 k: kick
 c: comms test for milestone one
-s: stop
+s: stopcomms/nserial.py~
 m: milestone one movement (not yet implemented)
 t: sanity-test;
 
@@ -43,7 +43,7 @@ t: sanity-test;
 
 // Power calibrations
 #define POWER_LFT  100
-#define POWER_RGT  95 // was 99. 
+#define POWER_RGT  98 // was 99. 
 #define POWER_BCK 95
 
 #define KICKER_LFT_POWER 90
@@ -304,12 +304,7 @@ void warning(){
 }
 
 void updateMotorPositions() {
-/*
-  if (not_calibrated)
-    for bla bla lba
-     pos[i] = 0
-    return
-*/
+
   // Request motor position deltas from rotary slave board
   Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
 
