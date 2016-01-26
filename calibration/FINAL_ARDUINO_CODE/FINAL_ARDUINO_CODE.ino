@@ -62,8 +62,7 @@ int k = 0;
     
     // for testing purposes
     Serial.print("Received: ");
-    Serial.print((char) serial_in);
-    Serial.println(serial_in); 
+    Serial.println((char)serial_in); 
      
     switch(serial_in){
       case 116 : // t
@@ -78,14 +77,22 @@ int k = 0;
         rotate();
         break;
 
-      case 99 : // c
+      case 99 :  // c
         commsTest();
         break;
 
       case 109 : // m
         milestoneOne();
         break;
-        
+      
+      case 107 : // k
+        motorKick();
+        break;
+
+      case 115 : // s
+        motorAllStop();
+        break;
+
       default:
         warning();
         break; 
@@ -98,6 +105,43 @@ int k = 0;
 }
 
 void fullTest(){
+  // Performs a test of all basic motions.
+  // Each is executed in 5 seconds.
+  // Subject to battery power, the robot should end up
+  // roughly wherever it started
+
+  testForward();
+  delay(5000);
+  motorAllStop();
+  
+  testBackward();
+  delay(5000);
+  motorAllStop();
+
+  testLeft();
+  delay(5000);
+  motorAllStop();
+
+  testRight();
+  delay(5000);
+  motorAllStop();
+
+  testLeftForward();
+  delay(5000);
+  motorAllStop();
+
+  testRightBackward();
+  delay(5000);
+  motorAllStop();
+
+  testRightForward();
+  delay(5000);
+  motorAllStop();
+
+  testLeftBackward();
+  delay(5000);
+  motorAllStop();
+  
   return;
 }
 
@@ -207,6 +251,7 @@ void execute_command(int c){
 }
 
 void motorKick(){
+  motorAllStop();
   motorBackward(KICKER_LFT, 100);
   motorBackward(KICKER_RGT, 100);                                            
   delay(500);
@@ -217,13 +262,13 @@ void motorKick(){
   motorForward(KICKER_RGT, 0); 
 }
 
-void diagonalRightBackward() {
+void testRightBackward() {
   motorForward(MOTOR_LFT,  POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 0);
   motorBackward(MOTOR_BCK, POWER_BCK * 1);
 }
 
-void diagonalLeftBackward() {
+void testLeftBackward() {
   motorForward(MOTOR_LFT,  POWER_LFT * 0);
   motorBackward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 1);
@@ -242,38 +287,38 @@ void rotateLeft() {
   motorForward(MOTOR_BCK, POWER_BCK * 1);  
 }
 
-void diagonalRightForward() {
+void testRightForward() {
   motorBackward(MOTOR_LFT,  POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 0);
   motorForward(MOTOR_BCK, POWER_BCK * 1);
 }
 
-void diagonalLeftForward() {
+void testLeftForward() {
   motorBackward(MOTOR_LFT,  POWER_LFT * 0); 
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorBackward(MOTOR_BCK, POWER_BCK * 1);
 }
 
-void moveRight(){
+void testRight(){
   motorBackward(MOTOR_LFT,  POWER_LFT * 0.51);
   motorBackward(MOTOR_RGT, POWER_RGT * 0.51);
   motorForward(MOTOR_BCK, POWER_BCK * 0.98);
  
 }
 
-void moveLeft() {
+void testLeft() {
   motorForward(MOTOR_LFT,  POWER_LFT * 0.51);
   motorForward(MOTOR_RGT, POWER_RGT * 0.51);
   motorBackward(MOTOR_BCK, POWER_BCK * 0.98);
 }
 
-void moveBackward(){
+void testBackward(){
   motorForward(MOTOR_LFT,  POWER_LFT * 1);
   motorBackward(MOTOR_RGT, POWER_RGT *1);
   motorForward(MOTOR_BCK, POWER_BCK * 0);
 }
 
-void moveForward() {
+void testForward() {
   motorBackward(MOTOR_LFT,  POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0); 
