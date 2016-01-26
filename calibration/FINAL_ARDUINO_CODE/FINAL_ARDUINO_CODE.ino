@@ -6,11 +6,10 @@
 IMPORTANT: PLEASE READ BEFORE EDITING:
 
   If editing file:
-    1. push only working code that doesn't break it;
+    1. push to master only working code that doesn't break it;
     2. follow the standard reasonably;
     3. read the comments before-hand.
-    4. do NOT push changes if you were testing/calibrating. This
-       is done in basicmotors.ino and/or other files!
+
 
 TODO: - Implement a function that constantly updates power to the motors during motion
       at an appropriate time-step(~50ms)
@@ -46,13 +45,13 @@ t: sanity-test;
 #define POWER_RGT  98 // was 99. 
 #define POWER_BCK 95
 
-#define KICKER_LFT_POWER 90
-#define KICKER_RGT_POWER 9
+#define KICKER_LFT_POWER 100
+#define KICKER_RGT_POWER 100
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 4.25  // TODO: Calibrate
-#define KICKER_CONST 10.0 // TODO: Calibrate
+#define ROTATION_CONST 4.25  // A linear function is also in effect
+#define KICKER_CONST 10.0    // TODO: Calibrate
 
 // *** Globals ***
 
@@ -62,8 +61,6 @@ int positions[ROTARY_COUNT] = {0};
 // serial buffer and current byte
 byte byte_buffer[32];
 int serial_in; // an int since Serial.read() returns an int.
-
-int number; // James' number. TODO: Remove
 
 
 // main functions: setup and loop
@@ -77,6 +74,7 @@ void setup() {
   printMotorPositions();
 
 }
+
 
 void loop() {
   while(Serial.available() > 0) {
@@ -98,19 +96,8 @@ void loop() {
         break;
       
       case 114 : // r 
-        Serial.println(positions[0]);
-        Serial.println(positions[1]);
-        Serial.println(positions[2]);
         rotate();
-        Serial.println(positions[0]);
-        Serial.println(positions[1]);
-        Serial.println(positions[2]);
-        //printMotorPositions();
-        restoreMotorPositions();
-        Serial.println(positions[0]);
-        Serial.println(positions[1]);
-        Serial.println(positions[2]);
-        
+        restoreMotorPositions();        
         break;
 
       case 99 :  // c
@@ -184,14 +171,14 @@ void forwardMotion(){
   int parse_val = 1;
   int rotary_val = 0;
   
-  // buffer all numbers
+  // Buffer all numbers
   delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms
   while(Serial.available() > 0){
     delay(10); // Why does this happen ?!
     byte_buffer[buff_index++] = byte(Serial.read());
   }
   
-  // parse value
+  // Parse value
   while (buff_index-- > 0){
     char_byte = (char) byte_buffer[buff_index];
     if (char_byte == '-')
@@ -201,13 +188,14 @@ void forwardMotion(){
       parse_val *= 10;
     }
   }
-  // print values
-  Serial.print("Forward Value: ");
-  Serial.println(rotary_val);
-  Serial.flush();
+  // Debugs for rotary value
+  //Serial.print("Forward Value: ");
+  //Serial.println(rotary_val);
+  //Serial.flush(); // waits for serial printing to finish! TODO:Remove
+  
   rotary_val = (int) (MOTION_CONST * rotary_val);
   
-  // move forward/backward
+  // Move forward/backward
   if (forward > 0)
     testForward();
   else
@@ -216,12 +204,9 @@ void forwardMotion(){
   while (-1 * forward *  positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
     updateMotorPositions();
   }
-  Serial.println("stopping");
   motorAllStop();
   
   return;
-  
-
 }
 
 void rotate(){
@@ -231,14 +216,15 @@ void rotate(){
   int parse_val = 1;
   int rotary_val = 0;
   int bias;
-  // buffer all numbers
-  delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms due to difference in bandwidth :?
+  
+  // Buffer all numbers
+  delay(10); // ask mentor(s) about this bug. Make sure it doesn't fuck up RF comms due to difference in bandwidth :?
   while(Serial.available() > 0){
     delay(10); // Why does this happen ?!
     byte_buffer[buff_index++] = byte(Serial.read());
   }
   
-  // parse value
+  // Parse value
   while (buff_index-- > 0){
     char_byte = (char) byte_buffer[buff_index];
     if (char_byte == '-')
@@ -248,24 +234,16 @@ void rotate(){
       parse_val *= 10;
     }
   }
-  
-  
-  
-  // print values
-  Serial.print("Rotary Value: ");
-  Serial.println(rotary_val);
+  // Debugs for rotary value
+  //Serial.print("Rotary Value: ");
+  //Serial.println(rotary_val);
 
+  // Linear function to correct all motion less than 180 deg
   rotary_val = (int) ((1 / 120.0) * rotary_val * rotary_val + 3 * rotary_val);
-  Serial.print("Rval: ");
-  Serial.println(rotary_val);
-  
-  /// random fix
+
+  // bias fix due to rotary encoder initial positions
   updateMotorPositions();
   bias = positions[0] + positions[1] + positions[2];
-  
-  // rf end
-  
-  
   
   // move forward/backward
   if (left > 0)
@@ -291,7 +269,7 @@ void commsTest(){
       i++;
     } 
   }
-  byte why = Wire.endTransmission();
+  byte unknown = Wire.endTransmission();
 }
 
 void milestoneOne(){
@@ -406,72 +384,3 @@ void testForward() {
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
-
-// TODO: Delete after confirmation of useless-ness
-/*
-char getChar(){
-  int k=0;
-  while(Serial.available() > 0) {
-    serial_in_byte = byte(Serial.read());
-    Serial.print("Received: ");
-    Serial.print(serial_in_byte); 
-    Serial.print("\r\n");
-    buffer[k] = serial_in_byte;
-    k = k+1;
-  }
-  number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
-  Serial.write(buffer[1]);
-  Serial.write(buffer[2]);
-  Serial.write("|");
-  Serial.print(number);
-  Serial.write("\r\n");
-  return serial_in_byte;           
-}
-*/
-
-/*
-void execute_command(int c){
-    if (buffer[0] == 'f'){  //Works!
-      Serial.write("\n yasss \n");
-      Serial.write(number);
-      Serial.write(buffer[2]);
-      moveForward();
-    }
-    if (buffer[0] == 's') { //Works!
-      allMotorStop() ;
-    }
-    if (buffer[0] == 'b'){  //Works!
-      moveBackward(); 
-    }
-    if (buffer[0] == 'l'){
-      moveLeft();
-    }
-    if (buffer[0] == 'r'){
-      moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-    }
-    if (buffer[0] == 'e'){  //Works!
-      diagonalRightForward();
-    }
-    if (buffer[0] == 'q'){  //works!
-      diagonalLeftForward();
-    }
-    if (buffer[0] == 'a'){  //Works!
-      rotateLeft();
-    }
-    if (buffer[0] == 'd'){  //Works!
-      rotateRight();
-    }
-    if (buffer[0] == 'x'){  //Works!
-      diagonalRightBackward();
-    }
-    if (buffer[0] == 'z'){  //works!
-      diagonalLeftBackward();
-    }
-    //if (serial_in_byte == '5'){
-    //  testUnit();
-    //}
-    if(buffer[0] == 'k'){
-      motorKick();
-    }
-}
-*/
