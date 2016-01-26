@@ -2,6 +2,18 @@
 #include "Arduino.h"
 #include <Wire.h>
 
+/***
+IMPORTANT: PLEASE READ BEFORE EDITING:
+
+  If editing file:
+    1. push only working code that doesn't break it;
+    2. follow the standard reasonably;
+    3. read the comments before-hand.
+    4. 
+
+***/
+
+
 // Rotary encoder definitions
 #define ROTARY_SLAVE_ADDRESS 5
 #define ROTARY_COUNT 6
@@ -12,15 +24,15 @@
 #define MOTOR_RGT 1
 #define MOTOR_BCK 2
 
-#define LEFT_KICKER  5
-#define RIGHT_KICKER  3
+#define KICKER_LFT  5
+#define KICKER_RGT  3
 
-#define LEFT_POWER  100
-#define RIGHT_POWER  99
-#define BACK_POWER 99
+#define POWER_LFT  100
+#define POWER_RGT  99
+#define POWER_BCK 99
 
-#define LEFT_KICKER_POWER 100
-#define RIGHT_KICKER_POWER 100
+#define KICKER_LFT_POWER 100
+#define KICKER_RGT_POWER 100
 
 // Initial motor position is 0 for each motor.
 int positions[ROTARY_COUNT] = {0};
@@ -140,76 +152,76 @@ void direct(int c){
 }
 
 void motorKick(){
-  motorBackward(LEFT_KICKER, 100);
-  motorBackward(RIGHT_KICKER, 100);                                            
+  motorBackward(KICKER_LFT, 100);
+  motorBackward(KICKER_RGT, 100);                                            
   delay(500);
-  motorForward(LEFT_KICKER, 100);
-  motorForward(RIGHT_KICKER, 100);
+  motorForward(KICKER_LFT, 100);
+  motorForward(KICKER_RGT, 100);
   delay(500);
-  motorForward(LEFT_KICKER, 0);
-  motorForward(RIGHT_KICKER, 0); 
+  motorForward(KICKER_LFT, 0);
+  motorForward(KICKER_RGT, 0); 
 }
 
 void diagonalRightBackward() {
-  motorForward(MOTOR_LFT,  LEFT_POWER * 1);
-  motorForward(MOTOR_RGT, RIGHT_POWER * 0);
-  motorBackward(MOTOR_BCK, BACK_POWER * 1);
+  motorForward(MOTOR_LFT,  POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 0);
+  motorBackward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void diagonalLeftBackward() {
-  motorForward(MOTOR_LFT,  LEFT_POWER * 0);
-  motorBackward(MOTOR_RGT, RIGHT_POWER * 1);
-  motorForward(MOTOR_BCK, BACK_POWER * 1);
+  motorForward(MOTOR_LFT,  POWER_LFT * 0);
+  motorBackward(MOTOR_RGT, POWER_RGT * 1);
+  motorForward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void rotateRight() {
-  motorBackward(MOTOR_LFT,  LEFT_POWER * 1);
-  motorBackward(MOTOR_RGT, RIGHT_POWER * 1);
-  motorBackward(MOTOR_BCK, BACK_POWER * 1);  
+  motorBackward(MOTOR_LFT,  POWER_LFT * 1);
+  motorBackward(MOTOR_RGT, POWER_RGT * 1);
+  motorBackward(MOTOR_BCK, POWER_BCK * 1);  
 }
 
 
 void rotateLeft() {
-  motorForward(MOTOR_LFT,  LEFT_POWER * 1);
-  motorForward(MOTOR_RGT, RIGHT_POWER * 1);
-  motorForward(MOTOR_BCK, BACK_POWER * 1);  
+  motorForward(MOTOR_LFT,  POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 1);
+  motorForward(MOTOR_BCK, POWER_BCK * 1);  
 }
 
 void diagonalRightForward() {
-  motorBackward(MOTOR_LFT,  LEFT_POWER * 1);
-  motorForward(MOTOR_RGT, RIGHT_POWER * 0);
-  motorForward(MOTOR_BCK, BACK_POWER * 1);
+  motorBackward(MOTOR_LFT,  POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 0);
+  motorForward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void diagonalLeftForward() {
-  motorBackward(MOTOR_LFT,  LEFT_POWER * 0); 
-  motorForward(MOTOR_RGT, RIGHT_POWER * 1);
-  motorBackward(MOTOR_BCK, BACK_POWER * 1);
+  motorBackward(MOTOR_LFT,  POWER_LFT * 0); 
+  motorForward(MOTOR_RGT, POWER_RGT * 1);
+  motorBackward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void moveRight(){
-  motorBackward(MOTOR_LFT,  LEFT_POWER * 0.51);
-  motorBackward(MOTOR_RGT, RIGHT_POWER * 0.51);
-  motorForward(MOTOR_BCK, BACK_POWER * 0.98);
+  motorBackward(MOTOR_LFT,  POWER_LFT * 0.51);
+  motorBackward(MOTOR_RGT, POWER_RGT * 0.51);
+  motorForward(MOTOR_BCK, POWER_BCK * 0.98);
  
 }
 
 void moveLeft() {
-  motorForward(MOTOR_LFT,  LEFT_POWER * 0.51);
-  motorForward(MOTOR_RGT, RIGHT_POWER * 0.51);
-  motorBackward(MOTOR_BCK, BACK_POWER * 0.98);
+  motorForward(MOTOR_LFT,  POWER_LFT * 0.51);
+  motorForward(MOTOR_RGT, POWER_RGT * 0.51);
+  motorBackward(MOTOR_BCK, POWER_BCK * 0.98);
 }
 
 void moveBackward(){
-  motorForward(MOTOR_LFT,  LEFT_POWER * 1);
-  motorBackward(MOTOR_RGT, RIGHT_POWER *1);
-  motorForward(MOTOR_BCK, BACK_POWER * 0);
+  motorForward(MOTOR_LFT,  POWER_LFT * 1);
+  motorBackward(MOTOR_RGT, POWER_RGT *1);
+  motorForward(MOTOR_BCK, POWER_BCK * 0);
 }
 
 void moveForward() {
-  motorBackward(MOTOR_LFT,  LEFT_POWER * 1);
-  motorForward(MOTOR_RGT, RIGHT_POWER * 1);
-  motorForward(MOTOR_BCK, BACK_POWER * 0); 
+  motorBackward(MOTOR_LFT,  POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 1);
+  motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
  
 void testUnit(){
@@ -219,9 +231,9 @@ void testUnit(){
 }  
 
 void allMotorStop() {
-  motorForward(MOTOR_LFT,  LEFT_POWER * 0);
-  motorForward(MOTOR_RGT, RIGHT_POWER * 0);
-  motorForward(MOTOR_BCK, BACK_POWER * 0); 
+  motorForward(MOTOR_LFT,  POWER_LFT * 0);
+  motorForward(MOTOR_RGT, POWER_RGT * 0);
+  motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
 
 void getPositions(){
