@@ -2,93 +2,283 @@
 #include "Arduino.h"
 #include <Wire.h>
 
+/***
+IMPORTANT: PLEASE READ BEFORE EDITING:
 
-/*
+  If editing file:
+    1. push only working code that doesn't break it;
+    2. follow the standard reasonably;
+    3. read the comments before-hand.
+    4. do NOT push changes if you were testing/calibrating. This
+       is done in basicmotors.ino and/or other files!
 
- * Master board sample code to be used in conjuction with the rotary encoder
+TODO: Implement a function that constantly updates power to the motors during motion
+      at an appropriate time-step(~50ms)
 
- * slave board and sample code.
+Serial Commands:
 
- * This sketch will keep track of the rotary encoder positions relative to
-
- * the origin. The origin is set to the position held when the master board
-
- * is powered.
-
- *
-
- * Rotary encoder positions are printed to serial every 200ms where the
-
- * first result is that of the encoder attached to the port at 11 o'clock
-
- * on the slave board (with the I2C ports at at 12 o'clock). The following
-
- * results are in counter-clockwise sequence.
-
- *
-
- * Author: Chris Seaton, SDP Group 7 2015
-
- */
+f: move forward/backward (needs one numerical argument, with an optional minus)
+r: rotate cloclwise/counter-clockwise (needs one numerical argument, with an optional minus)
+k: kick
+c: comms test for milestone one
+s: stop
+m: milestone one movement (not yet implemented)
+t: sanity-test;
 
 
+***/
 
-
+// Rotary encoder definitions
 #define ROTARY_SLAVE_ADDRESS 5
-
-#define ROTARY_COUNT 6
-
+#define ROTARY_COUNT 3
 #define PRINT_DELAY 200
 
+// Motor Definitions
+#define MOTOR_LFT 0
+#define MOTOR_RGT 1
+#define MOTOR_BCK 2
 
-int LEFT_MOTOR = 0;
-int RIGHT_MOTOR = 1;
-int BACK_MOTOR = 2;
+#define KICKER_LFT  5
+#define KICKER_RGT  3
 
-int LEFT_KICKER = 5;
-int RIGHT_KICKER = 3;
+// Power calibrations
+#define POWER_LFT  100
+#define POWER_RGT  95 // was 99. Check with others for yesterday.
+#define POWER_BCK 99
 
-int LeftPower = 100;
-int RightPower = 99;
-int BackPower = 99;
+#define KICKER_LFT_POWER 100
+#define KICKER_RGT_POWER 100
 
-// Initial motor position is 0.
+// Movement Constants
+#define MOTION_CONST 11.891304
+#define ROTATION_CONST 4.8 // TODO: Calibrate
+#define KICKER_CONST 10.0 // TODO: Calibrate
 
+// *** Globals ***
+
+// Initial motor position for each motor.
 int positions[ROTARY_COUNT] = {0};
 
-char buffer[4];
-int number;
+// serial buffer and current byte
+byte byte_buffer[32];
+int serial_in; // an int since Serial.read() returns an int.
 
-char serial_in_char;
+int number; // James' number. TODO: Remove
 
+
+// main functions: setup and loop
 void setup() {
 
-  digitalWrite(8, HIGH);  // Radio on
+  motorAllStop(); // for sanity
+  SDPsetup();
 
-  Serial.begin(115200);  // Serial at given baudrate
-
-  Wire.begin();  // Master of the I2C bus
-  
-  // Krassy: all motors forward to be able to test things!
-  
-  
-  //moveForward();
-  
- // motorForward(0, 100);
-  //motorForward(1, 100);
- // motorForward(2, 98);
 }
 
+void loop() {
+  while(Serial.available() > 0) {
+    serial_in = Serial.read();
+    
+    // for testing purposes
+    Serial.print("Received: ");
+    Serial.println((char)serial_in); 
+     
+    switch(serial_in){
+      case 116 : // t
+        fullTest();
+        restoreMotorPositions();
+        break;
 
+      case 102 : // f
+        forwardMotion();
+        restoreMotorPositions();
+        break;
+      
+      case 114 : // r 
+        rotate();
+        restoreMotorPositions();
+        break;
 
+      case 99 :  // c
+        commsTest();
+        break;
 
+      case 109 : // m
+        milestoneOne();
+        break;
+      
+      case 107 : // k
+        motorKick();
+        break;
 
+      case 115 : // s
+        motorAllStop();
+        break;
+
+      default:
+        warning();
+        break; 
+     }
+  }
+}
+
+void fullTest(){
+  // Performs a test of all basic motions.
+  // Each is executed in 5 seconds.
+  // Subject to battery power, the robot should end up
+  // roughly wherever it started
+
+  testForward();
+  delay(3000);
+  motorAllStop();
+  
+  testBackward();
+  delay(3000);
+  motorAllStop();
+
+  testLeft();
+  delay(3000);
+  motorAllStop();
+
+  testRight();
+  delay(3000);
+  motorAllStop();
+
+  testLeftForward();
+  delay(3000);
+  motorAllStop();
+
+  testRightBackward();
+  delay(3000);
+  motorAllStop();
+
+  testRightForward();
+  delay(3000);
+  motorAllStop();
+
+  testLeftBackward();
+  delay(3000);
+  motorAllStop();
+  
+  return;
+}
+
+void forwardMotion(){
+  int buff_index = 0;
+  int forward = 1;
+  char char_byte;
+  int parse_val = 1;
+  int rotary_val = 0;
+  
+  // buffer all numbers
+  delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms
+  while(Serial.available() > 0){
+    delay(10); // Why does this happen ?!
+    byte_buffer[buff_index++] = byte(Serial.read());
+  }
+  
+  // parse value
+  while (buff_index-- > 0){
+    char_byte = (char) byte_buffer[buff_index];
+    if (char_byte == '-')
+      forward = -1;
+    else if (char_byte >= '0' && char_byte <= '9'){
+      rotary_val += ((int) char_byte - '0') * parse_val;
+      parse_val *= 10;
+    }
+  }
+  // print values
+  Serial.print("Forward Value: ");
+  Serial.println(rotary_val);
+  rotary_val = (int) (MOTION_CONST * rotary_val);
+  
+  // move forward/backward
+  if (forward > 0)
+    testForward();
+  else
+    testBackward();
+  
+  while (-1 * forward *  positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
+    updateMotorPositions();
+  }
+  Serial.println("stopping");
+  motorAllStop();
+  
+  
+  return;
+  
+
+}
+
+void rotate(){
+  int buff_index = 0;
+  int left = 1;
+  char char_byte;
+  int parse_val = 1;
+  int rotary_val = 0;
+  
+  // buffer all numbers
+  delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms due to difference in bandwidth :?
+  while(Serial.available() > 0){
+    delay(10); // Why does this happen ?!
+    byte_buffer[buff_index++] = byte(Serial.read());
+  }
+  
+  // parse value
+  while (buff_index-- > 0){
+    char_byte = (char) byte_buffer[buff_index];
+    if (char_byte == '-')
+      left = -1;
+    else if (char_byte >= '0' && char_byte <= '9'){
+      rotary_val += ((int) char_byte - '0') * parse_val;
+      parse_val *= 10;
+    }
+  }
+  
+  // print values
+  Serial.print("Rotary Value: ");
+  Serial.println(rotary_val);
+  rotary_val = (int) (ROTATION_CONST * rotary_val);
+  
+  // move forward/backward
+  if (left > 0)
+    rotateLeft();
+  else
+    rotateRight();
+  
+  while (left *  (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotary_val){
+    updateMotorPositions();
+  }
+  Serial.println("stopping");
+  motorAllStop();
+  
+  return;
+}
+
+void commsTest(){
+  while (true){
+    if (Serial.available() > 0){
+      uint8_t data[1] = {byte(Serial.read())}; // well, that was interesting -_-
+      Wire.beginTransmission(69); 
+      Wire.write(data, 1);
+      byte why = Wire.endTransmission();
+    } 
+  }
+}
+
+void milestoneOne(){
+  return;
+}
+
+void warning(){
+  Serial.println("Warning: Unrecognized command");
+  return;
+}
 
 void updateMotorPositions() {
 
   // Request motor position deltas from rotary slave board
-
   Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
+
   // Update the recorded motor positions
   for (int i = 0; i < ROTARY_COUNT; i++) {
     positions[i] += (int8_t) Wire.read();  // Must cast to signed 8-bit type
@@ -96,210 +286,163 @@ void updateMotorPositions() {
 }
 
 
-
 void printMotorPositions() {
-
-  //Serial.print("Motor positions (Left, Right, back): ");
-
-  for (int i = 0; i < ROTARY_COUNT; i++) {
-
-    //Serial.print(positions[i]);
-
-    //Serial.print(' ');
-
-  }
-
-  //Serial.println();
-
-  //Serial.println( positions[0] + positions[1]);
-
+  Serial.println("Motor positions (Left, Right, back): ");
   delay(PRINT_DELAY);  // Delay to avoid flooding serial out
-
-}
-
-
-
-
-void loop() {
-  char c = getChar();
-  direct(c);
-  getPositions();
-}
-
-char getChar(){
-    int k=0;
-    while(Serial.available() > 0) {
-       serial_in_char = (char)Serial.read();
-       //serial_in_char -= 48;
-       Serial.print("Received: ");
-       Serial.print(serial_in_char); 
-       Serial.print("\r\n");
-       buffer[k] = serial_in_char;
-       k = k+1;
-    }
   
-   number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
-   Serial.write(buffer[1]);
-   Serial.write(buffer[2]);
-   Serial.write("|");
-   Serial.print(number);
-   Serial.write("\r\n");
-   return serial_in_char;           
+  for (int i = 0; i < ROTARY_COUNT; i++) {
+    Serial.print( positions[i]); Serial.print (" "); 
+  }
 }
 
-void direct(int c){
+void restoreMotorPositions(){
+  int i;
+  for (i = 0; i < ROTARY_COUNT; i++){
+    positions[i] = 0;
+  }
+  return;
+}
 
-    
+void motorKick(){
+  motorAllStop();
+  motorBackward(KICKER_LFT, 100);
+  motorBackward(KICKER_RGT, 100);                                            
+  delay(500);
+  motorForward(KICKER_LFT, 100);
+  motorForward(KICKER_RGT, 100);
+  delay(500);
+  motorForward(KICKER_LFT, 0);
+  motorForward(KICKER_RGT, 0); 
+}
+
+// basic test functions for sanity!
+
+void testRightBackward() {
+  motorForward(MOTOR_LFT, POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 0);
+  motorBackward(MOTOR_BCK, POWER_BCK * 1);
+}
+
+void testLeftBackward() {
+  motorForward(MOTOR_LFT, POWER_LFT * 0);
+  motorBackward(MOTOR_RGT, POWER_RGT * 1);
+  motorForward(MOTOR_BCK, POWER_BCK * 1);
+}
+
+void rotateRight() {
+  motorBackward(MOTOR_LFT, POWER_LFT * 1);
+  motorBackward(MOTOR_RGT, POWER_RGT * 1);
+  motorBackward(MOTOR_BCK, POWER_BCK * 1);  
+}
+
+void rotateLeft() {
+  motorForward(MOTOR_LFT, POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 1);
+  motorForward(MOTOR_BCK, POWER_BCK * 1);  
+}
+
+void testRightForward() {
+  motorBackward(MOTOR_LFT, POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 0);
+  motorForward(MOTOR_BCK, POWER_BCK * 1);
+}
+
+void testLeftForward() {
+  motorBackward(MOTOR_LFT, POWER_LFT * 0); 
+  motorForward(MOTOR_RGT, POWER_RGT * 1);
+  motorBackward(MOTOR_BCK, POWER_BCK * 1);
+}
+
+void testRight(){
+  motorBackward(MOTOR_LFT, POWER_LFT * 0.51);
+  motorBackward(MOTOR_RGT, POWER_RGT * 0.51);
+  motorForward(MOTOR_BCK, POWER_BCK * 0.98);
+ 
+}
+
+void testLeft() {
+  motorForward(MOTOR_LFT, POWER_LFT * 0.51);
+  motorForward(MOTOR_RGT, POWER_RGT * 0.51);
+  motorBackward(MOTOR_BCK, POWER_BCK * 0.98);
+}
+
+void testBackward(){
+  motorForward(MOTOR_LFT, POWER_LFT * 1);
+  motorBackward(MOTOR_RGT, POWER_RGT * 1);
+  motorForward(MOTOR_BCK, POWER_BCK * 0);
+}
+
+void testForward() {
+  motorBackward(MOTOR_LFT, POWER_LFT * 1);
+  motorForward(MOTOR_RGT, POWER_RGT * 1);
+  motorForward(MOTOR_BCK, POWER_BCK * 0); 
+}
+
+// TODO: Delete after confirmation of useless-ness
+/*
+char getChar(){
+  int k=0;
+  while(Serial.available() > 0) {
+    serial_in_byte = byte(Serial.read());
+    Serial.print("Received: ");
+    Serial.print(serial_in_byte); 
+    Serial.print("\r\n");
+    buffer[k] = serial_in_byte;
+    k = k+1;
+  }
+  number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
+  Serial.write(buffer[1]);
+  Serial.write(buffer[2]);
+  Serial.write("|");
+  Serial.print(number);
+  Serial.write("\r\n");
+  return serial_in_byte;           
+}
+*/
+
+/*
+void execute_command(int c){
     if (buffer[0] == 'f'){  //Works!
-       //Serial.write("\n yasss \n");
-       //Serial.write(number);
-       //Serial.write(buffer[2]);
-       moveForward();
+      Serial.write("\n yasss \n");
+      Serial.write(number);
+      Serial.write(buffer[2]);
+      moveForward();
     }
     if (buffer[0] == 's') { //Works!
       allMotorStop() ;
     }
     if (buffer[0] == 'b'){  //Works!
-       moveBackward(); 
+      moveBackward(); 
     }
     if (buffer[0] == 'l'){
-       moveLeft();
+      moveLeft();
     }
     if (buffer[0] == 'r'){
-       moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+      moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
     }
     if (buffer[0] == 'e'){  //Works!
-        diagonalRightForward();
+      diagonalRightForward();
     }
-    
     if (buffer[0] == 'q'){  //works!
       diagonalLeftForward();
     }
     if (buffer[0] == 'a'){  //Works!
-       rotateLeft();
+      rotateLeft();
     }
     if (buffer[0] == 'd'){  //Works!
-       rotateRight();
+      rotateRight();
     }
-    
     if (buffer[0] == 'x'){  //Works!
-        diagonalRightBackward();
+      diagonalRightBackward();
     }
     if (buffer[0] == 'z'){  //works!
       diagonalLeftBackward();
     }
-    if (serial_in_char == 5){
-      testUnit();
-    }
+    //if (serial_in_byte == '5'){
+    //  testUnit();
+    //}
     if(buffer[0] == 'k'){
       motorKick();
     }
 }
-
-void motorKick(){
-  motorBackward(LEFT_KICKER,100);
-  motorBackward(RIGHT_KICKER,100);
-  delay(500);
-  motorForward(LEFT_KICKER,100);
-  motorForward(RIGHT_KICKER,100);
-  delay(500);
-  motorForward(LEFT_KICKER,0);
-  motorForward(RIGHT_KICKER,0);
-  
-}
-
-void diagonalRightBackward() {
- motorForward(LEFT_MOTOR,  LeftPower*1);
- motorForward(RIGHT_MOTOR, RightPower*0);
- motorBackward(BACK_MOTOR, BackPower*1);
-}
-
-void diagonalLeftBackward() {
- motorForward(LEFT_MOTOR,  LeftPower*0);
- motorBackward(RIGHT_MOTOR, RightPower*1);
- motorForward(BACK_MOTOR, BackPower*1);
-}
-
-void rotateRight() {
- motorBackward(LEFT_MOTOR,  LeftPower*1);
- motorBackward(RIGHT_MOTOR, RightPower*1);
- motorBackward(BACK_MOTOR, BackPower*1);  
-}
-
-
-void rotateLeft() {
- motorForward(LEFT_MOTOR,  LeftPower*1);
- motorForward(RIGHT_MOTOR, RightPower*1);
- motorForward(BACK_MOTOR, BackPower*1);  
-}
-
-void diagonalRightForward() {
- motorBackward(LEFT_MOTOR,  LeftPower*1);
- motorForward(RIGHT_MOTOR, RightPower*0);
- motorForward(BACK_MOTOR, BackPower*1);
-}
-
-void diagonalLeftForward() {
- motorBackward(LEFT_MOTOR,  LeftPower*0); 
- motorForward(RIGHT_MOTOR, RightPower*1);
- motorBackward(BACK_MOTOR, BackPower*1);
-}
-
-void moveRight(){
-/*
-  motorBackward(LEFT_MOTOR,  LeftPower *0.71);
- motorBackward(RIGHT_MOTOR, RightPower * 0.35);
- motorForward(BACK_MOTOR, BackPower *0.85); 
-  
-  
- motorForward(LEFT_MOTOR,  LeftPower *1);
- motorBackward(RIGHT_MOTOR, RightPower * 1);
- motorForward(BACK_MOTOR, BackPower *1);
- */
-  motorBackward(LEFT_MOTOR,  LeftPower *0.51);
- motorBackward(RIGHT_MOTOR, RightPower * 0.51);
- motorForward(BACK_MOTOR, BackPower * 0.98);
- 
-}
-
-void moveLeft() {
-  /*
- motorForward(LEFT_MOTOR,  LeftPower *0.35);
- motorForward(RIGHT_MOTOR, RightPower * 0.71);
- motorBackward(BACK_MOTOR, BackPower *0.85); 
- */
-  motorForward(LEFT_MOTOR,  LeftPower *0.51);
- motorForward(RIGHT_MOTOR, RightPower * 0.51);
- motorBackward(BACK_MOTOR, BackPower * 0.98);
- 
-
- 
-}
-
-void moveBackward(){
-  motorForward(LEFT_MOTOR,  100);
-  motorBackward(RIGHT_MOTOR, 100);
-  motorForward(BACK_MOTOR, 0);
-}
-void moveForward() {
-  motorBackward(LEFT_MOTOR,  LeftPower * 1);
-  motorForward(RIGHT_MOTOR, RightPower * 1);
-  motorForward(BACK_MOTOR, BackPower *0); 
-}
- 
-void testUnit(){
-  motorForward(LEFT_MOTOR,  100);
-  motorForward(RIGHT_MOTOR, 99);
-  motorForward(BACK_MOTOR, 99);   
-}  
-
-void allMotorStop() {
-  motorForward(LEFT_MOTOR,  LeftPower * 0);
-  motorForward(RIGHT_MOTOR, RightPower * 0);
-  motorForward(BACK_MOTOR, BackPower * 0); 
-}
-
-void getPositions(){
-    updateMotorPositions();
-    printMotorPositions();
-}
+*/
