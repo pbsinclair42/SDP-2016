@@ -1,48 +1,16 @@
-
-/*
-
- * Master board sample code to be used in conjuction with the rotary encoder
-
- * slave board and sample code.
-
- * This sketch will keep track of the rotary encoder positions relative to
-
- * the origin. The origin is set to the position held when the master board
-
- * is powered.
-
- *
-
- * Rotary encoder positions are printed to serial every 200ms where the
-
- * first result is that of the encoder attached to the port at 11 o'clock
-
- * on the slave board (with the I2C ports at at 12 o'clock). The following
-
- * results are in counter-clockwise sequence.
-
- *
-
- * Author: Chris Seaton, SDP Group 7 2015
-
- */
-
-
-
 #include "SDPArduino.h"
 #include "Arduino.h"
 #include <Wire.h>
 
-
-// We could probably use a matrix for this information...?
-
+// Rotary encoder definitions
 #define ROTARY_SLAVE_ADDRESS 5
 #define ROTARY_COUNT 6
 #define PRINT_DELAY 200
 
-#define LEFT_MOTOR 0
-#define RIGHT_MOTOR 1
-#define BACK_MOTOR 2
+// Motor Definitions
+#define MOTOR_LFT 0
+#define MOTOR_RGT 1
+#define MOTOR_BCK 2
 
 #define LEFT_KICKER  5
 #define RIGHT_KICKER  3
@@ -69,16 +37,6 @@ void setup() {
 
   Wire.begin(); 
 
-  // Master of the I2C bus
-  
-  // Krassy: all motors forward to be able to test things!
-  
-  
-  //moveForward();
-  
- // motorForward(0, 100);
-  //motorForward(1, 100);
- // motorForward(2, 98);
 }
 
 
@@ -89,8 +47,8 @@ void setup() {
 void updateMotorPositions() {
 
   // Request motor position deltas from rotary slave board
-
   Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
+
   // Update the recorded motor positions
   for (int i = 0; i < ROTARY_COUNT; i++) {
     positions[i] += (int8_t) Wire.read();  // Must cast to signed 8-bit type
@@ -100,10 +58,9 @@ void updateMotorPositions() {
 
 
 void printMotorPositions() {
-
   Serial.println("Motor positions (Left, Right, back): ");
-
   delay(PRINT_DELAY);  // Delay to avoid flooding serial out
+  
   for (int i = 0; i < ROTARY_COUNT; i++) {
     Serial.print (" %."); Serial.print( positions[i]);
   }
@@ -128,7 +85,7 @@ char getChar(){
     buffer[k] = serial_in_char;
     k = k+1;
   }
-  number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));  // turn "10" (one - zero) into 10
+  number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
   Serial.write(buffer[1]);
   Serial.write(buffer[2]);
   Serial.write("|");
@@ -194,77 +151,77 @@ void motorKick(){
 }
 
 void diagonalRightBackward() {
-  motorForward(LEFT_MOTOR,  LEFT_POWER * 1);
-  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0);
-  motorBackward(BACK_MOTOR, BACK_POWER * 1);
+  motorForward(MOTOR_LFT,  LEFT_POWER * 1);
+  motorForward(MOTOR_RGT, RIGHT_POWER * 0);
+  motorBackward(MOTOR_BCK, BACK_POWER * 1);
 }
 
 void diagonalLeftBackward() {
-  motorForward(LEFT_MOTOR,  LEFT_POWER * 0);
-  motorBackward(RIGHT_MOTOR, RIGHT_POWER * 1);
-  motorForward(BACK_MOTOR, BACK_POWER * 1);
+  motorForward(MOTOR_LFT,  LEFT_POWER * 0);
+  motorBackward(MOTOR_RGT, RIGHT_POWER * 1);
+  motorForward(MOTOR_BCK, BACK_POWER * 1);
 }
 
 void rotateRight() {
-  motorBackward(LEFT_MOTOR,  LEFT_POWER * 1);
-  motorBackward(RIGHT_MOTOR, RIGHT_POWER * 1);
-  motorBackward(BACK_MOTOR, BACK_POWER * 1);  
+  motorBackward(MOTOR_LFT,  LEFT_POWER * 1);
+  motorBackward(MOTOR_RGT, RIGHT_POWER * 1);
+  motorBackward(MOTOR_BCK, BACK_POWER * 1);  
 }
 
 
 void rotateLeft() {
-  motorForward(LEFT_MOTOR,  LEFT_POWER * 1);
-  motorForward(RIGHT_MOTOR, RIGHT_POWER * 1);
-  motorForward(BACK_MOTOR, BACK_POWER * 1);  
+  motorForward(MOTOR_LFT,  LEFT_POWER * 1);
+  motorForward(MOTOR_RGT, RIGHT_POWER * 1);
+  motorForward(MOTOR_BCK, BACK_POWER * 1);  
 }
 
 void diagonalRightForward() {
-  motorBackward(LEFT_MOTOR,  LEFT_POWER * 1);
-  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0);
-  motorForward(BACK_MOTOR, BACK_POWER * 1);
+  motorBackward(MOTOR_LFT,  LEFT_POWER * 1);
+  motorForward(MOTOR_RGT, RIGHT_POWER * 0);
+  motorForward(MOTOR_BCK, BACK_POWER * 1);
 }
 
 void diagonalLeftForward() {
-  motorBackward(LEFT_MOTOR,  LEFT_POWER * 0); 
-  motorForward(RIGHT_MOTOR, RIGHT_POWER * 1);
-  motorBackward(BACK_MOTOR, BACK_POWER * 1);
+  motorBackward(MOTOR_LFT,  LEFT_POWER * 0); 
+  motorForward(MOTOR_RGT, RIGHT_POWER * 1);
+  motorBackward(MOTOR_BCK, BACK_POWER * 1);
 }
 
 void moveRight(){
-  motorBackward(LEFT_MOTOR,  LEFT_POWER * 0.51);
-  motorBackward(RIGHT_MOTOR, RIGHT_POWER * 0.51);
-  motorForward(BACK_MOTOR, BACK_POWER * 0.98);
+  motorBackward(MOTOR_LFT,  LEFT_POWER * 0.51);
+  motorBackward(MOTOR_RGT, RIGHT_POWER * 0.51);
+  motorForward(MOTOR_BCK, BACK_POWER * 0.98);
  
 }
 
 void moveLeft() {
-  motorForward(LEFT_MOTOR,  LEFT_POWER * 0.51);
-  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0.51);
-  motorBackward(BACK_MOTOR, BACK_POWER * 0.98);
+  motorForward(MOTOR_LFT,  LEFT_POWER * 0.51);
+  motorForward(MOTOR_RGT, RIGHT_POWER * 0.51);
+  motorBackward(MOTOR_BCK, BACK_POWER * 0.98);
 }
 
 void moveBackward(){
-  motorForward(LEFT_MOTOR,  LEFT_POWER * 1);
-  motorBackward(RIGHT_MOTOR, RIGHT_POWER *1);
-  motorForward(BACK_MOTOR, BACK_POWER * 0);
+  motorForward(MOTOR_LFT,  LEFT_POWER * 1);
+  motorBackward(MOTOR_RGT, RIGHT_POWER *1);
+  motorForward(MOTOR_BCK, BACK_POWER * 0);
 }
 
 void moveForward() {
-  motorBackward(LEFT_MOTOR,  LEFT_POWER * 1);
-  motorForward(RIGHT_MOTOR, RIGHT_POWER * 1);
-  motorForward(BACK_MOTOR, BACK_POWER * 0); 
+  motorBackward(MOTOR_LFT,  LEFT_POWER * 1);
+  motorForward(MOTOR_RGT, RIGHT_POWER * 1);
+  motorForward(MOTOR_BCK, BACK_POWER * 0); 
 }
  
 void testUnit(){
-  motorForward(LEFT_MOTOR,  100);
-  motorForward(RIGHT_MOTOR, 99);
-  motorForward(BACK_MOTOR, 99);   
+  motorForward(MOTOR_LFT,  100);
+  motorForward(MOTOR_RGT, 99);
+  motorForward(MOTOR_BCK, 99);   
 }  
 
 void allMotorStop() {
-  motorForward(LEFT_MOTOR,  LEFT_POWER * 0);
-  motorForward(RIGHT_MOTOR, RIGHT_POWER * 0);
-  motorForward(BACK_MOTOR, BACK_POWER * 0); 
+  motorForward(MOTOR_LFT,  LEFT_POWER * 0);
+  motorForward(MOTOR_RGT, RIGHT_POWER * 0);
+  motorForward(MOTOR_BCK, BACK_POWER * 0); 
 }
 
 void getPositions(){
