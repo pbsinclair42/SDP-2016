@@ -15,6 +15,17 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 TODO: Implement a function that constantly updates power to the motors during motion
       at an appropriate time-step(~50ms)
 
+Serial Commands:
+
+f: move forward/backward (needs one numerical argument, with an optional minus)
+r: rotate cloclwise/counter-clockwise (needs one numerical argument, with an optional minus)
+k: kick
+c: comms test for milestone one
+s: stop
+m: milestone one movement (not yet implemented)
+t: sanity-test;
+
+
 ***/
 
 // Rotary encoder definitions
@@ -206,7 +217,7 @@ void rotate(){
   int rotary_val = 0;
   
   // buffer all numbers
-  delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms
+  delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms due to difference in bandwidth :?
   while(Serial.available() > 0){
     delay(10); // Why does this happen ?!
     byte_buffer[buff_index++] = byte(Serial.read());
@@ -244,7 +255,14 @@ void rotate(){
 }
 
 void commsTest(){
-  return;
+  while (true){
+    if (Serial.available() > 0){
+      uint8_t data[1] = {byte(Serial.read())}; // well, that was interesting -_-
+      Wire.beginTransmission(69); 
+      Wire.write(data, 1);
+      byte why = Wire.endTransmission();
+    } 
+  }
 }
 
 void milestoneOne(){
@@ -252,6 +270,7 @@ void milestoneOne(){
 }
 
 void warning(){
+  Serial.println("Warning: Unrecognized command");
   return;
 }
 
@@ -283,75 +302,6 @@ void restoreMotorPositions(){
   }
   return;
 }
-/*
-char getChar(){
-  int k=0;
-  while(Serial.available() > 0) {
-    serial_in_byte = byte(Serial.read());
-    Serial.print("Received: ");
-    Serial.print(serial_in_byte); 
-    Serial.print("\r\n");
-    buffer[k] = serial_in_byte;
-    k = k+1;
-  }
-  number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
-  Serial.write(buffer[1]);
-  Serial.write(buffer[2]);
-  Serial.write("|");
-  Serial.print(number);
-  Serial.write("\r\n");
-  return serial_in_byte;           
-}
-*/
-
-/*
-void execute_command(int c){
-    if (buffer[0] == 'f'){  //Works!
-      Serial.write("\n yasss \n");
-      Serial.write(number);
-      Serial.write(buffer[2]);
-      moveForward();
-    }
-    if (buffer[0] == 's') { //Works!
-      allMotorStop() ;
-    }
-    if (buffer[0] == 'b'){  //Works!
-      moveBackward(); 
-    }
-    if (buffer[0] == 'l'){
-      moveLeft();
-    }
-    if (buffer[0] == 'r'){
-      moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-    }
-    if (buffer[0] == 'e'){  //Works!
-      diagonalRightForward();
-    }
-    if (buffer[0] == 'q'){  //works!
-      diagonalLeftForward();
-    }
-    if (buffer[0] == 'a'){  //Works!
-      rotateLeft();
-    }
-    if (buffer[0] == 'd'){  //Works!
-      rotateRight();
-    }
-    if (buffer[0] == 'x'){  //Works!
-      diagonalRightBackward();
-    }
-    if (buffer[0] == 'z'){  //works!
-      diagonalLeftBackward();
-    }
-    //if (serial_in_byte == '5'){
-    //  testUnit();
-    //}
-    if(buffer[0] == 'k'){
-      motorKick();
-    }
-}
-*/
-
-
 
 void motorKick(){
   motorAllStop();
@@ -427,3 +377,72 @@ void testForward() {
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
+// TODO: Delete after confirmation of useless-ness
+/*
+char getChar(){
+  int k=0;
+  while(Serial.available() > 0) {
+    serial_in_byte = byte(Serial.read());
+    Serial.print("Received: ");
+    Serial.print(serial_in_byte); 
+    Serial.print("\r\n");
+    buffer[k] = serial_in_byte;
+    k = k+1;
+  }
+  number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
+  Serial.write(buffer[1]);
+  Serial.write(buffer[2]);
+  Serial.write("|");
+  Serial.print(number);
+  Serial.write("\r\n");
+  return serial_in_byte;           
+}
+*/
+
+/*
+void execute_command(int c){
+    if (buffer[0] == 'f'){  //Works!
+      Serial.write("\n yasss \n");
+      Serial.write(number);
+      Serial.write(buffer[2]);
+      moveForward();
+    }
+    if (buffer[0] == 's') { //Works!
+      allMotorStop() ;
+    }
+    if (buffer[0] == 'b'){  //Works!
+      moveBackward(); 
+    }
+    if (buffer[0] == 'l'){
+      moveLeft();
+    }
+    if (buffer[0] == 'r'){
+      moveRight();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+    }
+    if (buffer[0] == 'e'){  //Works!
+      diagonalRightForward();
+    }
+    if (buffer[0] == 'q'){  //works!
+      diagonalLeftForward();
+    }
+    if (buffer[0] == 'a'){  //Works!
+      rotateLeft();
+    }
+    if (buffer[0] == 'd'){  //Works!
+      rotateRight();
+    }
+    if (buffer[0] == 'x'){  //Works!
+      diagonalRightBackward();
+    }
+    if (buffer[0] == 'z'){  //works!
+      diagonalLeftBackward();
+    }
+    //if (serial_in_byte == '5'){
+    //  testUnit();
+    //}
+    if(buffer[0] == 'k'){
+      motorKick();
+    }
+}
+*/
