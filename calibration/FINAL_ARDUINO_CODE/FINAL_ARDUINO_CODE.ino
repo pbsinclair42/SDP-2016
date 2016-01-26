@@ -12,6 +12,9 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
     4. do NOT push changes if you were testing/calibrating. This
        is done in basicmotors.ino and/or other files!
 
+TODO: Implement a function that constantly updates power to the motors during motion
+      at an appropriate time-step(~50ms)
+
 ***/
 
 // Rotary encoder definitions
@@ -29,7 +32,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 
 // Power calibrations
 #define POWER_LFT  100
-#define POWER_RGT  99
+#define POWER_RGT  95 // was 99. Check with others for yesterday.
 #define POWER_BCK 99
 
 #define KICKER_LFT_POWER 100
@@ -37,8 +40,8 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 10.0
-#define KICKER_CONST 10.0
+#define ROTATION_CONST 4.8 // TODO: Calibrate
+#define KICKER_CONST 10.0 // TODO: Calibrate
 
 // *** Globals ***
 
@@ -81,6 +84,7 @@ void loop() {
       
       case 114 : // r 
         rotate();
+        restoreMotorPositions();
         break;
 
       case 99 :  // c
@@ -113,35 +117,35 @@ void fullTest(){
   // roughly wherever it started
 
   testForward();
-  delay(5000);
+  delay(3000);
   motorAllStop();
   
   testBackward();
-  delay(5000);
+  delay(3000);
   motorAllStop();
 
   testLeft();
-  delay(5000);
+  delay(3000);
   motorAllStop();
 
   testRight();
-  delay(5000);
+  delay(3000);
   motorAllStop();
 
   testLeftForward();
-  delay(5000);
+  delay(3000);
   motorAllStop();
 
   testRightBackward();
-  delay(5000);
+  delay(3000);
   motorAllStop();
 
   testRightForward();
-  delay(5000);
+  delay(3000);
   motorAllStop();
 
   testLeftBackward();
-  delay(5000);
+  delay(3000);
   motorAllStop();
   
   return;
@@ -175,8 +179,6 @@ void forwardMotion(){
   Serial.print("Forward Value: ");
   Serial.println(rotary_val);
   rotary_val = (int) (MOTION_CONST * rotary_val);
-  Serial.println(rotary_val);
-  Serial.println(-1 * forward * positions[MOTOR_LFT]);
   
   // move forward/backward
   if (forward > 0)
@@ -186,7 +188,6 @@ void forwardMotion(){
   
   while (-1 * forward *  positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
     updateMotorPositions();
-    printMotorPositions();
   }
   Serial.println("stopping");
   motorAllStop();
@@ -198,6 +199,47 @@ void forwardMotion(){
 }
 
 void rotate(){
+  int buff_index = 0;
+  int left = 1;
+  char char_byte;
+  int parse_val = 1;
+  int rotary_val = 0;
+  
+  // buffer all numbers
+  delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms
+  while(Serial.available() > 0){
+    delay(10); // Why does this happen ?!
+    byte_buffer[buff_index++] = byte(Serial.read());
+  }
+  
+  // parse value
+  while (buff_index-- > 0){
+    char_byte = (char) byte_buffer[buff_index];
+    if (char_byte == '-')
+      left = -1;
+    else if (char_byte >= '0' && char_byte <= '9'){
+      rotary_val += ((int) char_byte - '0') * parse_val;
+      parse_val *= 10;
+    }
+  }
+  
+  // print values
+  Serial.print("Rotary Value: ");
+  Serial.println(rotary_val);
+  rotary_val = (int) (ROTATION_CONST * rotary_val);
+  
+  // move forward/backward
+  if (left > 0)
+    rotateLeft();
+  else
+    rotateRight();
+  
+  while (left *  (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotary_val){
+    updateMotorPositions();
+  }
+  Serial.println("stopping");
+  motorAllStop();
+  
   return;
 }
 
@@ -238,7 +280,6 @@ void restoreMotorPositions(){
   int i;
   for (i = 0; i < ROTARY_COUNT; i++){
     positions[i] = 0;
-    Serial.print(positions[i]);
   }
   return;
 }
