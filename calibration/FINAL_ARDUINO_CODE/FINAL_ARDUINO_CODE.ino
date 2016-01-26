@@ -13,10 +13,9 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 
 ***/
 
-
 // Rotary encoder definitions
 #define ROTARY_SLAVE_ADDRESS 5
-#define ROTARY_COUNT 6
+#define ROTARY_COUNT 3
 #define PRINT_DELAY 200
 
 // Motor Definitions
@@ -27,6 +26,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define KICKER_LFT  5
 #define KICKER_RGT  3
 
+// Power calibrations
 #define POWER_LFT  100
 #define POWER_RGT  99
 #define POWER_BCK 99
@@ -34,23 +34,28 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define KICKER_LFT_POWER 100
 #define KICKER_RGT_POWER 100
 
-// Initial motor position is 0 for each motor.
+// Globals
+// Initial motor position for each motor.
 int positions[ROTARY_COUNT] = {0};
 
-char buffer[4];
+// serial buffer and current byte
+byte buffer[10];
+byte serial_in_byte;
+
 int number;
-char serial_in_char;
 
 void setup() {
+
+  motorAllStop(); // for sanity
   SDPsetup();
-  digitalWrite(8, HIGH);  // Radio on
-
-  Serial.begin(115200);  // Serial at given baudrate
-
-  Wire.begin(); 
 
 }
 
+void loop() {
+  char c = getChar();
+  direct(c);
+  getPositions();
+}
 
 
 
@@ -78,23 +83,14 @@ void printMotorPositions() {
   }
 }
 
-
-
-
-void loop() {
-  char c = getChar();
-  direct(c);
-  getPositions();
-}
-
 char getChar(){
   int k=0;
   while(Serial.available() > 0) {
-    serial_in_char = (char)Serial.read();
+    serial_in_byte = byte(Serial.read());
     Serial.print("Received: ");
-    Serial.print(serial_in_char); 
+    Serial.print(serial_in_byte); 
     Serial.print("\r\n");
-    buffer[k] = serial_in_char;
+    buffer[k] = serial_in_byte;
     k = k+1;
   }
   number = ((int) (buffer[1]-'0'))*10 + ((int) (buffer[2]-'0'));
@@ -103,7 +99,7 @@ char getChar(){
   Serial.write("|");
   Serial.print(number);
   Serial.write("\r\n");
-  return serial_in_char;           
+  return serial_in_byte;           
 }
 
 void direct(int c){
@@ -143,7 +139,7 @@ void direct(int c){
     if (buffer[0] == 'z'){  //works!
       diagonalLeftBackward();
     }
-    if (serial_in_char == '5'){
+    if (serial_in_byte == '5'){
       testUnit();
     }
     if(buffer[0] == 'k'){
