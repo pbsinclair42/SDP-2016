@@ -205,6 +205,8 @@ char getChar(){
   return serial_in_byte;           
 }
 */
+
+/*
 void execute_command(int c){
     if (buffer[0] == 'f'){  //Works!
       Serial.write("\n yasss \n");
@@ -249,6 +251,9 @@ void execute_command(int c){
       motorKick();
     }
 }
+*/
+
+
 
 void motorKick(){
   motorAllStop();
@@ -261,6 +266,8 @@ void motorKick(){
   motorForward(KICKER_LFT, 0);
   motorForward(KICKER_RGT, 0); 
 }
+
+// basic test functions for sanity!
 
 void testRightBackward() {
   motorForward(MOTOR_LFT,  POWER_LFT * 1);
@@ -279,7 +286,6 @@ void rotateRight() {
   motorBackward(MOTOR_RGT, POWER_RGT * 1);
   motorBackward(MOTOR_BCK, POWER_BCK * 1);  
 }
-
 
 void rotateLeft() {
   motorForward(MOTOR_LFT,  POWER_LFT * 1);
@@ -322,21 +328,4 @@ void testForward() {
   motorBackward(MOTOR_LFT,  POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0); 
-}
- 
-void testUnit(){
-  motorForward(MOTOR_LFT,  100);
-  motorForward(MOTOR_RGT, 99);
-  motorForward(MOTOR_BCK, 99);   
-}  
-
-void allMotorStop() {
-  motorForward(MOTOR_LFT,  POWER_LFT * 0);
-  motorForward(MOTOR_RGT, POWER_RGT * 0);
-  motorForward(MOTOR_BCK, POWER_BCK * 0); 
-}
-
-void getPositions(){
-  updateMotorPositions();
-  printMotorPositions();
 }
