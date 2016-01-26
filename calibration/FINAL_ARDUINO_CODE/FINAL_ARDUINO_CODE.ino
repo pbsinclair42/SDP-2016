@@ -327,62 +327,62 @@ void motorKick(){
 // basic test functions for sanity!
 
 void testRightBackward() {
-  motorForward(MOTOR_LFT,  POWER_LFT * 1);
+  motorForward(MOTOR_LFT, POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 0);
   motorBackward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void testLeftBackward() {
-  motorForward(MOTOR_LFT,  POWER_LFT * 0);
+  motorForward(MOTOR_LFT, POWER_LFT * 0);
   motorBackward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void rotateRight() {
-  motorBackward(MOTOR_LFT,  POWER_LFT * 1);
+  motorBackward(MOTOR_LFT, POWER_LFT * 1);
   motorBackward(MOTOR_RGT, POWER_RGT * 1);
   motorBackward(MOTOR_BCK, POWER_BCK * 1);  
 }
 
 void rotateLeft() {
-  motorForward(MOTOR_LFT,  POWER_LFT * 1);
+  motorForward(MOTOR_LFT, POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 1);  
 }
 
 void testRightForward() {
-  motorBackward(MOTOR_LFT,  POWER_LFT * 1);
+  motorBackward(MOTOR_LFT, POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 0);
   motorForward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void testLeftForward() {
-  motorBackward(MOTOR_LFT,  POWER_LFT * 0); 
+  motorBackward(MOTOR_LFT, POWER_LFT * 0); 
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorBackward(MOTOR_BCK, POWER_BCK * 1);
 }
 
 void testRight(){
-  motorBackward(MOTOR_LFT,  POWER_LFT * 0.51);
+  motorBackward(MOTOR_LFT, POWER_LFT * 0.51);
   motorBackward(MOTOR_RGT, POWER_RGT * 0.51);
   motorForward(MOTOR_BCK, POWER_BCK * 0.98);
  
 }
 
 void testLeft() {
-  motorForward(MOTOR_LFT,  POWER_LFT * 0.51);
+  motorForward(MOTOR_LFT, POWER_LFT * 0.51);
   motorForward(MOTOR_RGT, POWER_RGT * 0.51);
   motorBackward(MOTOR_BCK, POWER_BCK * 0.98);
 }
 
 void testBackward(){
-  motorForward(MOTOR_LFT,  POWER_LFT * 1);
-  motorBackward(MOTOR_RGT, POWER_RGT *1);
+  motorForward(MOTOR_LFT, POWER_LFT * 1);
+  motorBackward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0);
 }
 
 void testForward() {
-  motorBackward(MOTOR_LFT,  POWER_LFT * 1);
+  motorBackward(MOTOR_LFT, POWER_LFT * 1);
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
