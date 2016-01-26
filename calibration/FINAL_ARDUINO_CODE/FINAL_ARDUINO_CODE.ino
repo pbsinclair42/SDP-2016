@@ -9,7 +9,8 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
     1. push only working code that doesn't break it;
     2. follow the standard reasonably;
     3. read the comments before-hand.
-    4. 
+    4. do NOT push changes if you were testing/calibrating. This
+       is done in basicmotors.ino and/or other files!
 
 ***/
 
@@ -34,16 +35,19 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define KICKER_LFT_POWER 100
 #define KICKER_RGT_POWER 100
 
-// Globals
+// *** Globals ***
+
 // Initial motor position for each motor.
 int positions[ROTARY_COUNT] = {0};
 
 // serial buffer and current byte
-byte buffer[10];
-byte serial_in_byte;
+byte buffer[32];
+int serial_in; // an int since Serial.read() returns an int.
 
-int number;
+int number; // James' number. TODO: Remove
 
+
+// main functions: setup and loop
 void setup() {
 
   motorAllStop(); // for sanity
@@ -52,14 +56,70 @@ void setup() {
 }
 
 void loop() {
-  char c = getChar();
-  direct(c);
-  getPositions();
+int k = 0;
+  while(Serial.available() > 0 and k < 32) {
+    serial_in = Serial.read();
+    
+    // for testing purposes
+    Serial.print("Received: ");
+    Serial.print((char) serial_in);
+    Serial.println(serial_in); 
+     
+    switch(serial_in){
+      case 116 : // t
+        fullTest();
+        break;
+
+      case 102 : // f
+        forwardMotion();
+        break;
+      
+      case 114 : // r 
+        rotate();
+        break;
+
+      case 99 : // c
+        commsTest();
+        break;
+
+      case 109 : // m
+        milestoneOne();
+        break;
+        
+      default:
+        warning();
+        break; 
+     }
+     buffer[k] = byte(serial_in);
+     k = k+1;
+  }
+  //execute_command(c);
+  //getPositions();
 }
 
+void fullTest(){
+  return;
+}
 
+void forwardMotion(){
+  return;
+}
 
+void rotate(){
+  return;
+}
 
+void commsTest(){
+  return;
+}
+
+void milestoneOne(){
+  return;
+}
+
+void warning(){
+  return;
+}
 
 void updateMotorPositions() {
 
@@ -73,7 +133,6 @@ void updateMotorPositions() {
 }
 
 
-
 void printMotorPositions() {
   Serial.println("Motor positions (Left, Right, back): ");
   delay(PRINT_DELAY);  // Delay to avoid flooding serial out
@@ -82,7 +141,7 @@ void printMotorPositions() {
     Serial.print (" %."); Serial.print( positions[i]);
   }
 }
-
+/*
 char getChar(){
   int k=0;
   while(Serial.available() > 0) {
@@ -101,8 +160,8 @@ char getChar(){
   Serial.write("\r\n");
   return serial_in_byte;           
 }
-
-void direct(int c){
+*/
+void execute_command(int c){
     if (buffer[0] == 'f'){  //Works!
       Serial.write("\n yasss \n");
       Serial.write(number);
@@ -139,9 +198,9 @@ void direct(int c){
     if (buffer[0] == 'z'){  //works!
       diagonalLeftBackward();
     }
-    if (serial_in_byte == '5'){
-      testUnit();
-    }
+    //if (serial_in_byte == '5'){
+    //  testUnit();
+    //}
     if(buffer[0] == 'k'){
       motorKick();
     }
