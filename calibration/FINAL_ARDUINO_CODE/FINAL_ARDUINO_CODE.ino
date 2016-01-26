@@ -35,13 +35,18 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define KICKER_LFT_POWER 100
 #define KICKER_RGT_POWER 100
 
+// Movement Constants
+#define MOTION_CONST 11.891304
+#define ROTATION_CONST 10.0
+#define KICKER_CONST 10.0
+
 // *** Globals ***
 
 // Initial motor position for each motor.
 int positions[ROTARY_COUNT] = {0};
 
 // serial buffer and current byte
-byte buffer[32];
+byte byte_buffer[32];
 int serial_in; // an int since Serial.read() returns an int.
 
 int number; // James' number. TODO: Remove
@@ -56,8 +61,7 @@ void setup() {
 }
 
 void loop() {
-int k = 0;
-  while(Serial.available() > 0 and k < 32) {
+  while(Serial.available() > 0) {
     serial_in = Serial.read();
     
     // for testing purposes
@@ -67,10 +71,12 @@ int k = 0;
     switch(serial_in){
       case 116 : // t
         fullTest();
+        restoreMotorPositions();
         break;
 
       case 102 : // f
         forwardMotion();
+        restoreMotorPositions();
         break;
       
       case 114 : // r 
@@ -97,11 +103,7 @@ int k = 0;
         warning();
         break; 
      }
-     buffer[k] = byte(serial_in);
-     k = k+1;
   }
-  //execute_command(c);
-  //getPositions();
 }
 
 void fullTest(){
@@ -146,7 +148,53 @@ void fullTest(){
 }
 
 void forwardMotion(){
+  int buff_index = 0;
+  int forward = 1;
+  char char_byte;
+  int parse_val = 1;
+  int rotary_val = 0;
+  
+  // buffer all numbers
+  delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms
+  while(Serial.available() > 0){
+    delay(10); // Why does this happen ?!
+    byte_buffer[buff_index++] = byte(Serial.read());
+  }
+  
+  // parse value
+  while (buff_index-- > 0){
+    char_byte = (char) byte_buffer[buff_index];
+    if (char_byte == '-')
+      forward = -1;
+    else if (char_byte >= '0' && char_byte <= '9'){
+      rotary_val += ((int) char_byte - '0') * parse_val;
+      parse_val *= 10;
+    }
+  }
+  // print values
+  Serial.print("Forward Value: ");
+  Serial.println(rotary_val);
+  rotary_val = (int) (MOTION_CONST * rotary_val);
+  Serial.println(rotary_val);
+  Serial.println(-1 * forward * positions[MOTOR_LFT]);
+  
+  // move forward/backward
+  if (forward > 0)
+    testForward();
+  else
+    testBackward();
+  
+  while (-1 * forward *  positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
+    updateMotorPositions();
+    printMotorPositions();
+  }
+  Serial.println("stopping");
+  motorAllStop();
+  
+  
   return;
+  
+
 }
 
 void rotate(){
@@ -182,8 +230,17 @@ void printMotorPositions() {
   delay(PRINT_DELAY);  // Delay to avoid flooding serial out
   
   for (int i = 0; i < ROTARY_COUNT; i++) {
-    Serial.print (" %."); Serial.print( positions[i]);
+    Serial.print( positions[i]); Serial.print (" "); 
   }
+}
+
+void restoreMotorPositions(){
+  int i;
+  for (i = 0; i < ROTARY_COUNT; i++){
+    positions[i] = 0;
+    Serial.print(positions[i]);
+  }
+  return;
 }
 /*
 char getChar(){
