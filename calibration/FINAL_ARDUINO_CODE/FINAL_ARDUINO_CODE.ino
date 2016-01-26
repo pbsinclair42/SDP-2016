@@ -12,9 +12,9 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
     4. do NOT push changes if you were testing/calibrating. This
        is done in basicmotors.ino and/or other files!
 
-TODO: Implement a function that constantly updates power to the motors during motion
+TODO: - Implement a function that constantly updates power to the motors during motion
       at an appropriate time-step(~50ms)
-
+      - Split rotations at more than 180 deg to two or more steps with max deg 180
 Serial Commands:
 
 f: move forward/backward (needs one numerical argument, with an optional minus)
@@ -43,15 +43,15 @@ t: sanity-test;
 
 // Power calibrations
 #define POWER_LFT  100
-#define POWER_RGT  95 // was 99. Check with others for yesterday.
-#define POWER_BCK 99
+#define POWER_RGT  95 // was 99. 
+#define POWER_BCK 95
 
-#define KICKER_LFT_POWER 100
-#define KICKER_RGT_POWER 100
+#define KICKER_LFT_POWER 90
+#define KICKER_RGT_POWER 9
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 4.8 // TODO: Calibrate
+#define ROTATION_CONST 4.25  // TODO: Calibrate
 #define KICKER_CONST 10.0 // TODO: Calibrate
 
 // *** Globals ***
@@ -71,6 +71,10 @@ void setup() {
 
   motorAllStop(); // for sanity
   SDPsetup();
+  updateMotorPositions();
+  printMotorPositions();
+  restoreMotorPositions();
+  printMotorPositions();
 
 }
 
@@ -94,8 +98,19 @@ void loop() {
         break;
       
       case 114 : // r 
+        Serial.println(positions[0]);
+        Serial.println(positions[1]);
+        Serial.println(positions[2]);
         rotate();
+        Serial.println(positions[0]);
+        Serial.println(positions[1]);
+        Serial.println(positions[2]);
+        //printMotorPositions();
         restoreMotorPositions();
+        Serial.println(positions[0]);
+        Serial.println(positions[1]);
+        Serial.println(positions[2]);
+        
         break;
 
       case 99 :  // c
@@ -189,6 +204,7 @@ void forwardMotion(){
   // print values
   Serial.print("Forward Value: ");
   Serial.println(rotary_val);
+  Serial.flush();
   rotary_val = (int) (MOTION_CONST * rotary_val);
   
   // move forward/backward
@@ -203,7 +219,6 @@ void forwardMotion(){
   Serial.println("stopping");
   motorAllStop();
   
-  
   return;
   
 
@@ -215,7 +230,7 @@ void rotate(){
   char char_byte;
   int parse_val = 1;
   int rotary_val = 0;
-  
+  int bias;
   // buffer all numbers
   delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms due to difference in bandwidth :?
   while(Serial.available() > 0){
@@ -234,10 +249,23 @@ void rotate(){
     }
   }
   
+  
+  
   // print values
   Serial.print("Rotary Value: ");
   Serial.println(rotary_val);
-  rotary_val = (int) (ROTATION_CONST * rotary_val);
+
+  rotary_val = (int) ((1 / 120.0) * rotary_val * rotary_val + 3 * rotary_val);
+  Serial.print("Rval: ");
+  Serial.println(rotary_val);
+  
+  /// random fix
+  updateMotorPositions();
+  bias = positions[0] + positions[1] + positions[2];
+  
+  // rf end
+  
+  
   
   // move forward/backward
   if (left > 0)
@@ -245,24 +273,25 @@ void rotate(){
   else
     rotateRight();
   
-  while (left *  (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotary_val){
+  while (left *  (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotary_val + left * bias){
     updateMotorPositions();
   }
-  Serial.println("stopping");
   motorAllStop();
   
   return;
 }
 
 void commsTest(){
-  while (true){
+  int i = 0;
+  Wire.beginTransmission(69); 
+  while (i < 100){
     if (Serial.available() > 0){
       uint8_t data[1] = {byte(Serial.read())}; // well, that was interesting -_-
-      Wire.beginTransmission(69); 
       Wire.write(data, 1);
-      byte why = Wire.endTransmission();
+      i++;
     } 
   }
+  byte why = Wire.endTransmission();
 }
 
 void milestoneOne(){
@@ -275,7 +304,12 @@ void warning(){
 }
 
 void updateMotorPositions() {
-
+/*
+  if (not_calibrated)
+    for bla bla lba
+     pos[i] = 0
+    return
+*/
   // Request motor position deltas from rotary slave board
   Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
 
@@ -305,14 +339,14 @@ void restoreMotorPositions(){
 
 void motorKick(){
   motorAllStop();
-  motorBackward(KICKER_LFT, 100);
-  motorBackward(KICKER_RGT, 100);                                            
+  delay(100);
+  motorBackward(KICKER_LFT, KICKER_LFT_POWER);
+  motorBackward(KICKER_RGT, KICKER_RGT_POWER);                                            
   delay(500);
-  motorForward(KICKER_LFT, 100);
-  motorForward(KICKER_RGT, 100);
+  motorForward(KICKER_LFT, KICKER_LFT_POWER);
+  motorForward(KICKER_RGT, KICKER_RGT_POWER);
   delay(500);
-  motorForward(KICKER_LFT, 0);
-  motorForward(KICKER_RGT, 0); 
+  motorAllStop();
 }
 
 // basic test functions for sanity!
