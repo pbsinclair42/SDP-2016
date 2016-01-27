@@ -42,7 +42,7 @@ t: sanity-test;
 
 // Power calibrations
 #define POWER_LFT  100
-#define POWER_RGT  98 // was 99. 
+#define POWER_RGT  99 // was 99. 
 #define POWER_BCK 95
 
 #define KICKER_LFT_POWER 100
@@ -50,7 +50,7 @@ t: sanity-test;
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 4.25  // A linear function is also in effect
+#define ROTATION_CONST 4.15  // A linear function is also in effect
 #define KICKER_CONST 10.0    // TODO: Calibrate
 
 // *** Globals ***
@@ -311,10 +311,34 @@ void restoreMotorPositions(){
 }
 
 void motorKick(){
+  int buff_index = 0;
+  int left = 1;
+  char char_byte;
+  int parse_val = 1;
+  int rotary_val = 0;
+  int bias;
+  
   motorAllStop();
+  while(Serial.available() > 0){
+    delay(10); // Why does this happen ?!
+    byte_buffer[buff_index++] = byte(Serial.read());
+  }
+  
+  // Parse value
+  while (buff_index-- > 0){
+    char_byte = (char) byte_buffer[buff_index];
+    if (char_byte == '-')
+      left = -1;
+    else if (char_byte >= '0' && char_byte <= '9'){
+      rotary_val += ((int) char_byte - '0') * parse_val;
+      parse_val *= 10;
+    }
+  }
+  
   delay(100);
-  motorBackward(KICKER_LFT, KICKER_LFT_POWER);
-  motorBackward(KICKER_RGT, KICKER_RGT_POWER);                                            
+  Serial.print(rotary_val);
+  motorBackward(KICKER_LFT, rotary_val);
+  motorBackward(KICKER_RGT, rotary_val);                                            
   delay(500);
   motorForward(KICKER_LFT, KICKER_LFT_POWER);
   motorForward(KICKER_RGT, KICKER_RGT_POWER);
