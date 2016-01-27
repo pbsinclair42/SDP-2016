@@ -260,16 +260,17 @@ void rotate(){
 }
 
 void commsTest(){
-  int i = 0;
-  Wire.beginTransmission(69); 
+  int i = 0; 
   while (i < 100){
     if (Serial.available() > 0){
-      uint8_t data[1] = {byte(Serial.read())}; // well, that was interesting -_-
-      Wire.write(data, 1);
+      Wire.beginTransmission(69);
+      byte x = Serial.read(); // well, that was interesting -_-
+      //Serial.print(x);
+      Wire.write(x);
       i++;
+      Wire.endTransmission();  
     } 
   }
-  byte unknown = Wire.endTransmission();
 }
 
 void milestoneOne(){
