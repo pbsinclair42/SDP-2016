@@ -260,14 +260,12 @@ void rotate(){
 }
 
 void commsTest(){
-  int i = 0; 
-  while (i < 100){
+  while (true){
     if (Serial.available() > 0){
       Wire.beginTransmission(69);
       byte x = Serial.read(); // well, that was interesting -_-
-      //Serial.print(x);
+      //Serial.println(x);
       Wire.write(x);
-      i++;
       Wire.endTransmission();  
     } 
   }
