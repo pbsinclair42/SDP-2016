@@ -287,7 +287,7 @@ void updateMotorPositions() {
   Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
 
   // Update the recorded motor positions
-  for (int i = 0; i < ROTARY_COUNT; i++) {
+  for ( int i = 0; i < ROTARY_COUNT; i++) {
     positions[i] += (int8_t) Wire.read();  // Must cast to signed 8-bit type
   }
 }

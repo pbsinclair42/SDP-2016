@@ -44,7 +44,7 @@ Each robot must have a flat board on top of it. This board will have coloured ci
 ### Sensors
 
 - Detect if currently holding ball
-- Detect how far from ‘an obstacle’
+- Detect how far from ‘an obstacle’ such as a wall
 - Detect if currently over a white line (?)
 
 ### LEGO / Communication
@@ -58,6 +58,10 @@ Each robot must have a flat board on top of it. This board will have coloured ci
 The arduino receives its orders over a serial RTF connection.. The RTF is set to the same frequency as the arduino board. A single character is send via this connection. We have written a case statement that checks for the characters F, B, L, S, …  which make the robot move in a certain way.
 
 ## Scope and boundaries 
+### Scope
+
+### Boundaries
+The robot will be controlled without using a GUI.
 
 ## Game rules
 to be released
