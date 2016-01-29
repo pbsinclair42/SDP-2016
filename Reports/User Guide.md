@@ -41,4 +41,4 @@
 
 ## Troubleshooting
 
-//TODO
+- Check that the RF stick and the arduino RF chip are on the same frequency.
