@@ -14,10 +14,10 @@ Now that we know the system is operational you can either send instructions thro
 
 ###Robot Commands
 For use in jserial of if you are writing your own command-chains, the commands look like this:
-f DISTANCE - Forwards/backwards with DISTANCE being the number of cm you wish to move, this supports negative numbers
-r DEGREES - rotationwhere DEGREES is the number of degrees you wish to rotate, this supports negative numbers
-k POWER - kicker launch with set power (up to 100)
-s - stop all motors
+* f DISTANCE - Forwards/backwards with DISTANCE being the number of cm you wish to move, this supports negative numbers
+* r DEGREES - rotationwhere DEGREES is the number of degrees you wish to rotate, this supports negative numbers
+* k POWER - kicker launch with set power (up to 100)
+* s - stop all motors
 
 To view example of command-chaining look at some of the files in /comms/ such as ForwardFifty.py
 
@@ -31,7 +31,7 @@ The robot consists of a lego frame with 3 NXT rotocaster wheels each with an NXT
 Contained within the frame is a cage for the batteries and the arduino xino.
 Mounted on the exerior of the robot is the rotary encoder board and Motor control board.
 
-To swap out the battery pack, simply remove the arduino from the top of the frame and lift the battery pack out.
+* To swap out the battery pack, simply remove the arduino from the top of the frame and lift the battery pack out.
 
 //TODO generate lego style instructions using LDD
 
