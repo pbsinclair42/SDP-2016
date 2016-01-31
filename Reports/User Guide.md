@@ -21,7 +21,7 @@
 - A simple kicker powered by two PF Medium motors
 - An arduino board connected to an 8xAA battery pack, a power board and a rotary encoder board
 
-### Seperate
+### Off the robot
 
 - USB to mini USB cable (used to upload programs to the Arduino)
 - RF stick (used to make the computer talk to the robot)
@@ -40,64 +40,31 @@
 //TODO
 
 ## Troubleshooting
-
-### Check that the RF stick and the arduino RF chip are on the same frequency.
-In the terminal type "screen /dev/ttyACM0 115200" if your USB stick is in the top left port and "screen /dev/ttyACM1 115200" if its in the right port. Next type "+++" 
+### The robot won't move
+#### Check that the RF stick and the arduino RF chip are on the same frequency.
+Connect the arduino in the robot, and the RF stick to the computer.
+In the terminal type "screen /dev/ttyACM0 115200" if your USB stick is in the top left port and
+"screen /dev/ttyACM1 115200" if its in the right port. Next type "+++", if you don't see the word "OK"
+then type "~~~". The terminal will not print out what you have typed once screen has started.
+After every command press enter, and then ctrl+a k to clear the output. You should expect it to say
+OK after each command. These commands will reset your RF stick to their factory settings.
 ATRE
 ATAC
 ATWR
 ATDN
 
+To get back into command mode, press +++ this time and continue entering commands as before.
 
+ATID0004
+ATAC
+ATRP1
+ATAC
 
+In the terminal type "screen /dev/ttyACM0 115200" if your USB stick is in the top left port and
+"screen /dev/ttyACM1 115200" if its in the right port.
 
-SRF Stick Setup Information
-
-===========================
-
-Note this guide is not complete, and may contain unnecessary steps, but this
-
-worked for my group, and should work no matter the initial configuration of your
-
-SRF stick / Arduino.
-
-Plug the SRF stick into a USB port on your dice machine.
-
-Connect your Arduino to the computer via the microUSB wire.
-
-The top USB ports are identified as follows:
-
-Top left: ttyACM0
-
-Top right: ttyACM1
-
-Run the following on terminal:
-
-$ screen /dev/ttyACMX 115200 (where X is the port number for your SRF stick)
-
-Enter command mode by typing either +++ or ~~~ (do not press enter).
-
-Once you are in command mode you should see OK.
-
-Note that you automatically exit command mode after 5 seconds of no commands.
-
-Also, the default settings for screen mean you cannot see what you type.
-
-For this to work, I think you have to do it in one session, so if you run out
-
-of time, start again (the ATAC command confirms settings and ATWR command writes
-
-settings).
-
-Press enter after each command and press ctrl-a shift-c to clear the output
-
-after every command, so you can confirm that a command has worked by receiving
-
-OK (if you receive ERR, you have entered the command incorrectly, if you
-
-do not receive OK, you have exited command mode).
-
-After getting into command mode, execute the following commands to reset the
+Next type "+++", if you don't see the word "OK"
+then type "~~~".
 
 SRF stick to factory settings:
 

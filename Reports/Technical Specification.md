@@ -7,15 +7,19 @@ Build a robot which can play football with other similar robots.
 
 
 ## Naming Conventions and Terminology
+Holonomic wheels : The wheels used on the robot. They have the capability to move forward and passivly move to the side.
+
 
 ## Facts and Assumptions
 
 ## The environment
 
-There is a football pitch with a camera above it. This camera feeds into the laboratory next door so it can be watched. There are 10cm high walls around the pitch and white masking tape will indicate the pitch markings.
+There is a football pitch with a camera above it. This camera feeds into the laboratory next door so
+it can be watched. There are 10cm high walls around the pitch and white masking tape will indicate
+the pitch markings. Consiquently, robot
 
 ## The competition
-Each robot must have a flat board on top of it. This board will have coloured circles on it. This is to make it possible for on lookers to tell which robot is which and to let the autonomous robots know where they and their surroundings are.
+Each robot must have a flat board on top of it. This board will have coloured circles on it. This is to make it possible for onlookers to tell which robot is which and to let the autonomous robots know where they and their surroundings are.
 
 
 
@@ -55,9 +59,9 @@ Each robot must have a flat board on top of it. This board will have coloured ci
 - Grab ball
 - Kick ball
 
-The arduino receives its orders over a serial RTF connection.. The RTF is set to the same frequency as the arduino board. A single character is send via this connection. We have written a case statement that checks for the characters F, B, L, S, …  which make the robot move in a certain way.
+The arduino receives its orders over a serial RTF connection. The RTF is set to the same frequency as the arduino board. A single character is send via this connection. We have written a case statement that checks for the characters F, B, L, S, …  which make the robot move in a certain way.
 
-## Scope and boundaries 
+## Scope and boundaries
 ### Scope
 
 ### Boundaries
