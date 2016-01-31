@@ -32,11 +32,6 @@ for fname in images:
 
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
-    '''rows,cols = gray.shape
-
-    M = cv2.getRotationMatrix2D((cols/2,rows/2),45,1)
-    gray = cv2.warpAffine(gray,M,(cols,rows))'''
- 
     # Find the chess board corners
     ret, corners = cv2.findChessboardCorners(gray, dim, None)
     #cv2.imshow('chess_board_corners', corners)
@@ -81,10 +76,12 @@ while c != 27:
     h,  w = frame.shape[:2]    
     newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,(w,h),0,(w,h))
 
+    # rotate image anticlockwise by 2 degrees
     rows,cols = frame.shape[:2]
-
     M = cv2.getRotationMatrix2D((cols/2,rows/2),3,1)
     frame = cv2.warpAffine(frame,M,(cols,rows))
+    #frame = cv2.warpPerspective()
+
     #These are the actual values needed to undistort:
     dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
 
@@ -94,7 +91,7 @@ while c != 27:
 
     cv2.imshow('Original', frame)
     cv2.imshow('Undistorted',dst)
-    cv2.imwrite('good.jpg', dst)
+    cv2.imwrite('pitch.jpg', dst)
 
     c = cv2.waitKey(2) & 0xFF
     
