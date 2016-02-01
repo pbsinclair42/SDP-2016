@@ -93,13 +93,13 @@ class Moveable(object):
 class Robot(Moveable):
     def __init__(self, p=None):
         super(Robot,self).__init__(p)
-        currentRotation=0
+        self.currentRotation=0
 
 
 class Ball(Moveable):
     def __init__(self, p=None):
         super(Ball,self).__init__(p)
-        status=BallStatus.free
+        self.status=BallStatus.free
 
 '''
 #for testing

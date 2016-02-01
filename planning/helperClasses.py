@@ -15,7 +15,7 @@ class Point(object):
 
 
     def distance(self, p):
-        """Finds the Euclidean (straight line) distance between two points
+        """Finds the Euclidean (straight line) distance between two points to 2 decimal places
 
         Args:
             p (point): the point to find the distance to
@@ -26,17 +26,20 @@ class Point(object):
         """
         if not isinstance(p, self.__class__):
             raise TypeError("Point expected, "+p.__class__.__name__+" found")
-        return sqrt((self.x-p.x)**2+(self.y-p.y)**2)
+        return round( sqrt((self.x-p.x)**2+(self.y-p.y)**2) , 2)
 
 
     def bearing(self, p):
-        """Finds the bearing between two points in radians, where 0 is positive in the y axis
+        """Finds the bearing from this to another point in radians
+        0 is taken to be positive in the y axis
+        3 decimal places of accuracy
+        if both points are identical, returns pi/2
 
         Args:
             p (point): the point to find the bearing to
 
         Returns:
-            float of the bearing between the points
+            float of the bearing between the points, between -pi and pi
 
         """
         if not isinstance(p, self.__class__):
@@ -45,16 +48,17 @@ class Point(object):
         yDisplacement = p.y-self.y
         # ensure no division by zero occurs
         if yDisplacement==0:
-            return pi/2 if xDisplacement>=0 else 3*pi/2
+            return round( pi/2 if xDisplacement>=0 else 3*pi/2 , 3)
         interiorAngle = atan(abs(xDisplacement)/abs(yDisplacement))
         if xDisplacement>=0 and yDisplacement>=0:
-            return interiorAngle
+            bearing = interiorAngle
         elif xDisplacement>=0: # and implicitly, yDisplacement<0
-            return pi - interiorAngle
+            bearing = pi - interiorAngle
         elif yDisplacement<0: # and implicitly, xDisplacement<0
-            return pi + interiorAngle
+            bearing = - pi + interiorAngle
         else: # implicitly xDisplacement<0 and yDisplacement>=0
-            return 2*pi - interiorAngle
+            bearing = -interiorAngle
+        return round(bearing, 3)
    
 
     def __str__(self):
