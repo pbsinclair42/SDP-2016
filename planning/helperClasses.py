@@ -21,7 +21,7 @@ class Point(object):
             p (point): the point to find the distance to
 
         Returns:
-            float of the distance between the points
+            float of the distance between the points in units
 
         """
         if not isinstance(p, self.__class__):
