@@ -13,7 +13,7 @@ def moveToObject(target):
         # calculate where you expect it to be at time t
         expectedPosition = target.predictedPosition(t)
         # calculate how far away you expect it to be at time t
-        distanceFromMe = me.currentPoint.distance(expectedPosition)
+        distanceFromMe = me.distance(expectedPosition)
         # calculate how far you could theoretically travel in t seconds
         distanceTravellable = MAX_SPEED*t
         # if you could theoretically travel to that point in t seconds,
@@ -30,7 +30,7 @@ def moveToPoint(point):
     if not isinstance(point,Point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
     distance = point.distance(me.currentPoint)
-    angle = me.currentPoint.bearing(point) - me.currentRotation
+    angle = me.bearing(point) - me.currentRotation
     # ensure the angle is between -pi and pi
     if angle < -pi:
         angle+=2*pi

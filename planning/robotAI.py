@@ -2,8 +2,10 @@ import threading
 
 from constants import *
 from globalObjects import *
+from helperClasses import BallStatus
 from actions import moveToObject, moveToPoint
 import visionAPI
+from arduinoAPI import grab
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
@@ -21,8 +23,13 @@ def updatePositions():
 
 def pickAction():
     """Decide what to do based on the system's current beliefs about the state of play"""
-    # TODO
-    pass
+    # TODO: replace this with sensible plans
+    if ball.status == BallStatus.free or ball.status == BallStatus.me:
+        if me.distance(ball)<ally.distance(ball):
+            if me.distance(ball)<GRAB_DISTANCE:
+                grab()
+            else:
+                moveToObject(ball)
 
 
 def tick():
