@@ -2,13 +2,28 @@ from constants import *
 from globalObjects import *
 from moveables import Moveable
 from helperClasses import Point, BallStatus
-from arduinoAPI import *
+import arduinoAPI
 
 
 def moveToObject(target):
     if not isinstance(target,Moveable):
         raise TypeError("Moveable expected, " + point.__class__.__name__ + " found")
-    # TODO
+    # iteratively work out how long it would take to catch up to the object
+    for t in range(0,int(10/TICK_TIME)+1):
+        # calculate where you expect it to be at time t
+        expectedPosition = target.predictedPosition(t)
+        # calculate how far away you expect it to be at time t
+        distanceFromMe = me.currentPoint.distance(expectedPosition)
+        # calculate how far you could theoretically travel in t seconds
+        distanceTravellable = MAX_SPEED*t
+        # if you could theoretically travel to that point in t seconds,
+        if ( distanceTravellable > distanceFromMe ):
+            # go there
+            moveToPoint(expectedPosition)
+            return True
+    # if it would take more than 10 seconds to catch up, don't bother trying
+    print("Can't catch up")
+    return False
 
 
 def moveToPoint(point):
@@ -21,4 +36,5 @@ def moveToPoint(point):
         angle+=2*pi
     elif angle > pi:
         angle-=2*pi
-    move(distance, angle)
+    # make that movement
+    arduinoAPI.move(distance, angle)
