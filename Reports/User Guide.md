@@ -13,18 +13,17 @@ Load up jerial.py, which is found in /comms/ - This is a serial writer to the ar
 Now that we know the system is operational you can either send instructions through jseral.py or if you have any prewritten command-chains then you can use those simply my launching that python program. 
 
 ###Robot Commands
+
 For use in jserial of if you are writing your own command-chains, the commands look like this:
 * f DISTANCE - Forwards/backwards with DISTANCE being the number of cm you wish to move, this supports negative numbers
-* r DEGREES - rotationwhere DEGREES is the number of degrees you wish to rotate, this supports negative numbers
+* r DEGREES - rotationwhere DEGREES is the number of degrees you wish to rotate, this supports negative numbers, where positive denotes c counter-clockwise direction
 * k POWER - kicker launch with set power (up to 100)
 * s - stop all motors
 To view example of command-chaining look at some of the files in /comms/ such as ForwardFifty.py
 
-
-
 ## 2. Hardware
 
-// TODO add images
+// Images TBA
 
 ### On the Robot
 
@@ -50,11 +49,11 @@ Mounted on the exerior of the robot is the rotary encoder board and Motor contro
 
 ### Overview
 
-//TODO
+The software consists of a sketch for the arduino microcontroller, a communication system, a planning/strategy system and a vision system, all of which are currently still in development;
 
 ### Installing the requirements
 
-//TODO
+TBA
 
 ## Troubleshooting
 ### The robot won't move
@@ -86,29 +85,19 @@ then type "~~~".
 SRF stick to factory settings:
 
 ATRE
-
 ATAC
-
 ATWR
-
 ATDN
 
 Now enter command mode again - it will be +++ this time:
 
-ATID00XX (where XX is your group number)
-
+ATID0004
 ATAC
-
 ATRP1
-
 ATAC
-
-ATCNXX (where XX is the hexidecimal number for your group's frequency)
-
+ATCN27 
 ATAC
-
 ATWR
-
 ATDN
 
 Now exit screen (ctrl-a k) and reset your Arduino radio device to factory
@@ -116,39 +105,26 @@ Now exit screen (ctrl-a k) and reset your Arduino radio device to factory
 default:
 
 $ screen /dev/ttyACMX 115200 (where X is the port number for you Ardunio USB
-
                               connection)
 
 Enter command mode (+++ or ~~~) and execute the following commands:
 
 ATRE
-
 ATAC
-
 ATWR
-
 ATDN
 
 Enter command mode (now +++) and execute the following commands:
 
-ATID00XX (where XX is your group number)
-
+ATID0004
 ATAC
-
 ATRP1
-
 ATAC
-
-ATCNXX (where XX is the hexidecimal number for your group's frequency)
-
+ATCN27
 ATAC
-
 ATBD 1C200 <--- This step is only for the Arduino, not the stick.
-
 ATAC
-
 ATWR
-
 ATDN
 
 Here is an Arduino script to test this has worked:
@@ -176,13 +152,8 @@ void serial_test() {
 }
 
 Program your Arduino, and disconnect it.
-
 Then open a screen for you SRF stick port.
-
 Press the reset button on your Ardunio.
-
 You should see "hello world" on the screen for you SRF stick port.
-
 Type in TEST into the screen (you won't be able to see this).
-
 You should see "Message received!".
