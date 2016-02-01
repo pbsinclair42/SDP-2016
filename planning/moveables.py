@@ -13,10 +13,12 @@ class Moveable(object):
         if p==None:
             self.currentPoint=None
             self.pointHistory=[]
+            # speed is in units per tick
             self.currentSpeed=None
             self.speedHistory=[]
             # note that direction corresponds to direction of movement and not necessarily the direction the object is facing
             self.direction=None
+            # acceleration is in units per tick per tick
             self.acceleration=None
         else:
             if not isinstance(p,Point):
@@ -80,6 +82,12 @@ class Moveable(object):
         xDisplacement = round(sin(self.direction)*displacement, 2)
         yDisplacement = round(cos(self.direction)*displacement, 2)
         return Point(self.currentPoint.x+xDisplacement, self.currentPoint.y+yDisplacement)
+
+    def __str__(self):
+        return str(self.__class__.__name__)+str(self.__dict__)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Robot(Moveable):
