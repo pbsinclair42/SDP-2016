@@ -2,7 +2,7 @@ from constants import *
 from globalObjects import *
 from moveables import Moveable
 from helperClasses import Point, BallStatus
-from robotAPI import *
+from arduinoAPI import *
 
 
 def moveToObject(target):
