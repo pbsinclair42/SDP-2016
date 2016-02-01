@@ -29,7 +29,7 @@ Each robot must have a flat board on top of it. This board will have coloured ci
 
 
 ## Functional requirements
-### Planning
+### Planning -- future
 - Collect ball
 - Pass
 - Shoot
@@ -38,8 +38,8 @@ Each robot must have a flat board on top of it. This board will have coloured ci
 - Block pass
 - Guard goal
 - Tell teammate plans (?)
-
-### Vision
+ 
+### Vision -- future
 ###### (all positions relative to the arena walls, so need to detect them too)
 
 - Get ball position
@@ -50,7 +50,7 @@ Each robot must have a flat board on top of it. This board will have coloured ci
 - Get ally rotation
 - Get enemy rotation
 
-### Sensors
+### Sensors -- future
 
 - Detect if currently holding ball
 - Detect how far from ‘an obstacle’ such as a wall
@@ -64,13 +64,8 @@ Each robot must have a flat board on top of it. This board will have coloured ci
 - Grab ball
 - Kick ball
 
-The arduino receives its orders over a serial RTF connection. The RTF is set to the same frequency as the arduino board. A single character is send via this connection. We have written a case statement that checks for the characters F, B, L, S, …  which make the robot move in a certain way.
+The arduino receives its orders over a serial RTF connection. The RTF is set to the same frequency as the arduino board. To control the robot, send a letter and a number to the it. We have written a case statement that checks for the characters F, B, L, S, …  and methods make the robot move for however long you have specified. For example you can send "f 10" to the robot, the case statement will catch the letter f and will activate the "moveForward" method. Within this proceedure, is a while loop wich will count down from 10 while making the robot move forward. This is calibrated to make it move forward 10 centimetres. This iteration has no emergency stop capability. For the next iteration, we need to investigate interupt signals to break this while loop.
 
-## Scope and boundaries
-### Scope
+In the past, we tried using number to instruct the direction. It was intuitive if you were using the number pad on a DICE computer. The number 8 would move forward, the number 2 would move backward... and so on for each of the numberpad keys. But, we had more than 9 methods for movement. In this iteration, we could go forwards, backwards, diagonally (in four directions), left, right and rotate. So there weren't enough keys to keep to one digit direction control. We couldn't make the direction a integer as kicking, so there weren't any real advantages over using letters.
 
-### Boundaries
-The robot will be controlled without using a GUI.
-
-## Game rules
-to be released
+In the next iteration, we aim to make full use of the holonomic wheels. The user will send a degree and a distance to the robot. The robot will not rotate but will strafe the correct displacement.

@@ -10,7 +10,7 @@ Before you test the comms system please remember to plug in the arduino battetri
 
 To set up the RF comms system, plug in the Rf stick into your machine - check it is using serial port ttyACM0 which can be found in /dev/.
 Load up jerial.py, which is found in /comms/ - This is a serial writer to the arduino, test everything works by trying some commands e.g. f10, r-90
-Now that we know the system is operational you can either send instructions through jseral.py or if you have any prewritten command-chains then you can use those simply my launching that python program. 
+Now that we know the system is operational you can either send instructions through jseral.py or if you have any prewritten command-chains then you can use those simply by launching that python program. 
 
 ###Robot Commands
 
@@ -23,19 +23,14 @@ To view example of command-chaining look at some of the files in /comms/ such as
 
 ## 2. Hardware
 
-// Images TBA
-
 ### On the Robot
+- 3 holonomic wheels: connected to the external of the frame with rotational symetry
+- 8xAA battery pack: lie at the bottom of the robot, at the centre of the frame, to keep the centre of gravity low and steady. The batteries need to be changed fairly often,  simply remove the arduino from the top of the frame and lift the battery pack out.
+- 3 NXT interactive servo motors: to turn the wheels
+- Rotary encoder board: To track the positions of the motors
+- Motor control board: to instruct the motors.
+- Arduino xino: communicate with the rotary encoder board and the motor controler board, it receives and processes commands.
 
-The robot consists of a lego frame with 3 NXT rotocaster wheels each with an NXT interactive servo motor.
-Contained within the frame is a cage for the batteries and the arduino xino.
-Mounted on the exerior of the robot is the rotary encoder board and Motor control board.
-* To swap out the battery pack, simply remove the arduino from the top of the frame and lift the battery pack out.
-
-
-- Three holonomic (omnidirectional) wheels, each powered by a single ungeared NXT motor
-- A simple kicker powered by two PF Medium motors
-- An arduino board connected to an 8xAA battery pack, a power board and a rotary encoder board
 
 ### Off the robot
 
@@ -43,20 +38,29 @@ Mounted on the exerior of the robot is the rotary encoder board and Motor contro
 - RF stick (used to make the computer talk to the robot)
 - Battery charger (charges batteries)
 - Battery tester (tests batteries)
-- A ball (Hint: get this in the opponent's goal)
+- A ball 
 
 ## 3. Software
 
 ### Overview
 
-The software consists of a sketch for the arduino microcontroller, a communication system, a planning/strategy system and a vision system, all of which are currently still in development;
+The software consists of a sketch for the arduino microcontroller, a communication system, a planning/strategy system and a vision system, all of which are currently still in development. The arduino IDE makes uploading and verifying arduino code a piece of cake. For communication we also make use of python and librarys serial and time. All of these can be downloaded or found on DICE.
 
 ### Installing the requirements
+#### Arduino IDE
+This is open source and can simply be downloaded from the arduino website.  It should already be installed on DICE, open the terminal and type "arduino" and the software will likely open.
 
-TBA
+#### python 2.7
+This downloadable from the python website. It should already be installed on DICE, open the terminal and type "python" and the interpreter will open. But you aren't finished yet, python doesn't include 'pyserial' by default, so run:
+    Pip install --user pyserial
+
+
+
 
 ## Troubleshooting
 ### The robot won't move
+#### Check the batteries aren't dead.
+Move the arduino and cabels out of your way and disconnect the battery pack from the arduino board. Pull the batteries out of the robot frame and swap each battery with a new/charged one. 
 #### Check that the RF stick and the arduino RF chip are on the same frequency.
 Connect the arduino in the robot, and the RF stick to the computer.
 In the terminal type "screen /dev/ttyACM0 115200" if your USB stick is in the top left port and
@@ -79,8 +83,7 @@ ATAC
 In the terminal type "screen /dev/ttyACM0 115200" if your USB stick is in the top left port and
 "screen /dev/ttyACM1 115200" if its in the right port.
 
-Next type "+++", if you don't see the word "OK"
-then type "~~~".
+Next type "+++", if you don't see the word "OK", then type "~~~".
 
 SRF stick to factory settings:
 
@@ -100,12 +103,11 @@ ATAC
 ATWR
 ATDN
 
-Now exit screen (ctrl-a k) and reset your Arduino radio device to factory
+Now exit screen (use ctrl-a k) and reset your Arduino radio device to factory
 
 default:
 
-$ screen /dev/ttyACMX 115200 (where X is the port number for you Ardunio USB
-                              connection)
+"screen /dev/ttyACM0 115200" if your Ardunio USB connection is in the top left port and "screen /dev/ttyACM1 115200" if its in the right port.
 
 Enter command mode (+++ or ~~~) and execute the following commands:
 
@@ -122,8 +124,7 @@ ATRP1
 ATAC
 ATCN27
 ATAC
-ATBD 1C200 <--- This step is only for the Arduino, not the stick.
-ATAC
+ATBD 1C200
 ATWR
 ATDN
 
