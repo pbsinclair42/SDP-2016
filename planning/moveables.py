@@ -83,6 +83,43 @@ class Moveable(object):
         yDisplacement = round(cos(self.direction)*displacement, 2)
         return Point(self.currentPoint.x+xDisplacement, self.currentPoint.y+yDisplacement)
 
+
+    def distance(self, other):
+        """Finds the Euclidean (straight line) distance between this object and another
+
+        Args:
+            other (Moveable or Point): the moveable or point to find the distance to
+
+        Returns:
+            float of the distance between the two in units
+
+        """
+        if isinstance(other,Moveable):
+            return self.currentPoint.distance(other.currentPoint)
+        elif isinstance(other,Point):
+            return self.currentPoint.distance(other)
+        else:
+            raise TypeError("Moveable or Point expected, " + point.__class__.__name__ + " found")
+
+
+    def bearing(self, other):
+        """Finds the bearing from this object to another in radians
+
+        Args:
+            other (Moveable or Point): the moveable or point to find the bearing to
+
+        Returns:
+            float of the bearing between the two, between -pi and pi
+
+        """
+        if isinstance(other,Moveable):
+            return self.currentPoint.bearing(other.currentPoint)
+        elif isinstance(other,Point):
+            return self.currentPoint.bearing(other)
+        else:
+            raise TypeError("Moveable or Point expected, " + point.__class__.__name__ + " found")
+
+
     def __str__(self):
         return str(self.__class__.__name__)+str(self.__dict__)
 
