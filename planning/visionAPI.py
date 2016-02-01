@@ -29,19 +29,19 @@ def getEnemyCoords():
     return [Point(80,10), Point(220,76)]
 
 def getMyRotation():
-    """Returns the rotation of our robot"""
+    """Returns the rotation of our robot in radians between -pi and pi"""
     # TODO: replace stub with info from vision system
-    return 12
+    return 1.2
 
 def getAllyRotation():
-    """Returns the rotation of our teammate"""
+    """Returns the rotation of our teammate in radians between -pi and pi"""
     # TODO: replace stub with info from vision system
-    return 120
+    return 1.63
 
 def getEnemyRotation():
-    """Returns the rotation of the two enemy robots"""
+    """Returns the rotation of the two enemy robots in radians between -pi and pi"""
     # TODO: replace stub with info from vision system
-    return [191, 67]
+    return [2.1, -0.67]
 
 def getAllRobotCoords():
     """Returns an array of the position of all the robots"""
