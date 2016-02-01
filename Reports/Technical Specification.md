@@ -11,7 +11,9 @@ Holonomic wheels : The wheels used on the robot. They have the capability to mov
 NXT interactive servo motor: A long white motor which has lots of gears inside of it making it fairly powerful.
 NXT Motor:         see above.
 rotocaster:        see holonomic wheels
-crossbow kicker:   a method of kicking the ball in a straight line. It involves a 
+crossbow kicker:   this kicker has a lego piece which will pretrude and retract to hit the ball.
+swing kicker:      above the height of the ball is a motor connected to a long stick. The motor turns, the stick rotates forward causing the end of it to hit 
+                   the ball.
 
 
 
