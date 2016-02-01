@@ -8,9 +8,12 @@ Build a robot which can play football with other similar robots.
 
 ## Naming Conventions and Terminology
 Holonomic wheels : The wheels used on the robot. They have the capability to move forward and passivly move to the side.
+NXT interactive servo motor: A long white motor which has lots of gears inside of it making it fairly powerful.
+NXT Motor:         see above.
+rotocaster:        see holonomic wheels
+crossbow kicker:   a method of kicking the ball in a straight line. It involves a 
 
 
-## Facts and Assumptions
 
 ## The environment
 
