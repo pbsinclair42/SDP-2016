@@ -68,20 +68,26 @@ class Moveable(object):
 
 
     def predictedPosition(self, t):
-        """Calculate the position of the object in t seconds if it continues accelerating at its current rate
+        """Calculate the position of the object in t ticks if it continues accelerating at its current rate
 
         Args:
-            t (float): the number of seconds into the future you're predicting the object's position.
+            t (int): the number of ticks into the future you're predicting the object's position.
                        Note that the large t gets, the less accurate the prediction will be.
 
         Returns:
             Point of the predicted position of the object
 
         """
-        displacement = self.currentSpeed*t + 0.5*self.acceleration*(t**2)
-        xDisplacement = round(sin(self.direction)*displacement, 2)
-        yDisplacement = round(cos(self.direction)*displacement, 2)
-        return Point(self.currentPoint.x+xDisplacement, self.currentPoint.y+yDisplacement)
+        try:
+            displacement = self.currentSpeed*t + 0.5*self.acceleration*(t**2)
+            xDisplacement = round(sin(self.direction)*displacement, 2)
+            yDisplacement = round(cos(self.direction)*displacement, 2)
+            return Point(self.currentPoint.x+xDisplacement, self.currentPoint.y+yDisplacement)
+        except TypeError:
+            if isinstance(t,int):
+                return self.currentPoint
+            else:
+                raise TypeError("Float expected, " + t.__class__.__name__ + " found")
 
 
     def distance(self, other):
@@ -99,7 +105,7 @@ class Moveable(object):
         elif isinstance(other,Point):
             return self.currentPoint.distance(other)
         else:
-            raise TypeError("Moveable or Point expected, " + point.__class__.__name__ + " found")
+            raise TypeError("Moveable or Point expected, " + other.__class__.__name__ + " found")
 
 
     def bearing(self, other):
