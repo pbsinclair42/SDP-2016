@@ -14,12 +14,12 @@ ser.isOpen()
 
 ser.write(bytes('c'))
 
-with open("test_group_4.bin", "rb") as f:
+with open("randomFile.bin", "rb") as f:
     while True:
         chunk = f.read(1)
 	if chunk:
 	    ser.write(chunk)
-	    time.sleep(0.03)
+	    time.sleep(0.5)
 	else:
 	    break
 

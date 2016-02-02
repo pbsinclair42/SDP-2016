@@ -11,11 +11,25 @@ class RobotCommunications(Communications):
     def __init__(self, debug=False):
         super(RobotCommunications, self).__init__(debug)
 
-    # Stops all motors
-    def stop(self):
-        self.write("s")
 
-    # Straight movement
+    def holo(self,degrees,distance):#move holonimically
+        self.write("h" + degrees + distance + "256")
+    def stop(self):# Stops all motors
+        self.write("s256")
+    def rotate(self,distance,degrees):#rotate X degrees and move y distance
+        self.write("r" + degrees + distance + "256")
+    def compensate(self,power):#make trajectories
+        self.write("c"+power + "256")
+    def kick(self,distance):#kick
+        self.write("k"+distance+"256")
+    def flush(self):#stop previous command
+        self.write("256")
+    def grab(self):#grab
+        self,write("g")
+    def test(self, argument):#test comms
+        print 'I got your message: ' + str(argument)
+
+    """# Straight movement
     def moveStraight(self, motorPower):
         self.write("f");# + str(motorPower))
 
@@ -43,7 +57,6 @@ class RobotCommunications(Communications):
     def rotateRight(self, motorPower):
         self.write("p")# + str(motorPower))
 
-    """
     # Rotate and Grab - 2 args: power_rotate, power_grab
     def rotateAndGrab(self, motorPower_r, motorPower_g):
         self.write("ROTATE_GRAB " + str(motorPower_r) + " " + str(motorPower_g))
@@ -62,6 +75,5 @@ class RobotCommunications(Communications):
     def kick(self, motorPower):
         self.write("ACTION KICK " + str(motorPower))
 
-    def test(self, argument):
-        print 'I got your message: ' + str(argument)
+
     """
