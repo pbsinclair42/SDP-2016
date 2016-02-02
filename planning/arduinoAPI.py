@@ -1,3 +1,9 @@
+import sys
+import os
+
+# enable access to the comms package
+sys.path.append(os.path.dirname(os.path.abspath("constants.py"))[:-8]+'comms')
+from RobotCommunications import RobotCommunications
 
 def turn(x):
     """Rotates the robot x radians clockwise.  Use negative numbers to rotate anticlockwise.  """
