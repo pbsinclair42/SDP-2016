@@ -42,7 +42,7 @@ for fname in images:
         objpoints.append(objp)
 
         corners2 = copy(corners)
-        _ = cv2.cornerSubPix(gray,corners2,(11,11),(-1,-1),criteria)
+        cv2.cornerSubPix(gray,corners2,(11,11),(-1,-1),criteria)
         imgpoints.append(corners2)
 
         # Draw and display the corners
@@ -78,8 +78,9 @@ while c != 27:
 
     # rotate image anticlockwise by 2 degrees
     rows,cols = frame.shape[:2]
+    print(frame.shape)
     M = cv2.getRotationMatrix2D((cols/2,rows/2),3,1)
-    frame = cv2.warpAffine(frame,M,(cols,rows))
+    # frame = cv2.warpAffine(frame,M,(cols,rows))
     #frame = cv2.warpPerspective()
 
     #These are the actual values needed to undistort:
@@ -108,5 +109,5 @@ pitch0 = {'new_camera_matrix' : newcameramtx,
 
 data = {0 : pitch0, 1: pitch1}
 
-with open(filename,'wb') as fp:
-    cPickle.dump(data,fp)
+'''with open(filename,'wb') as fp:
+    cPickle.dump(data,fp)'''
