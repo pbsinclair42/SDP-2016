@@ -5,7 +5,8 @@ To push your code use this sequence :
 `git commit -m "What I have done is..."`
 `git push`
 
-
+`git rev-list --left-right --count master...test-branch`
+Compare your test-branch with master. This will give output like "1   8" meaning that your branch is ahead of master by one commit and behind master by 8 commits.
 
 `git reset origin/master -- file`
 If you have over written a file, say this.txt, use this.
@@ -58,8 +59,6 @@ undoes any staged or unstaged changes. So you have the same version as is on the
 
 `git reset --hard origin/{branch}`
 hard resets your working tree to whatever is on origin.  Handy if you literally just want whatever's on the server for that branch.
-
-
 
 `git push origin --delete {branch_name} `
 To remove a remote branch.
