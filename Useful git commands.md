@@ -33,11 +33,13 @@ will create a new branch called {branch_name} which contains everything in base_
 will move you to the other branch
 
 `git branch --all `
-To see every branch - even the remote ones!
+To see every branch - even the remote ones! I use this to know which old branches there are so I can delete them!
 
 `git branch -d    `
 To delete the current branch
 You can use `git branch -d {branch_name}` to delete a specific branch.
+`git push origin :{branch-name}` or `git push origin --delete {branch_name}`
+Delete remote branch
 
 `git pull --rebase origin master `
 Will update your branch with the master changes. you will probably get some conflicts. git is really helpful, it tells you what you need to do to resolve them
