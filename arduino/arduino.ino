@@ -79,6 +79,11 @@ byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 unsigned long time; // used for the millis function.
 
+int rotary_target;
+int motion_target;
+int holono_target;
+
+
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
     motorAllStop(); // for sanity
@@ -153,50 +158,21 @@ void serialEvent() {
             Serial.print(CMD_RESEND);
             buffer_index-= 4;
         }
+        // TODO: Check for flush buffer and stop and set state and buffer accordingly
 
     }
-void fullTest(){
-    // Performs a test of all basic motions.
-    // Each is executed in 5 seconds.
-    // Subject to battery power, the robot should end up
-    // roughly wherever it started
-
-    testForward();
-    delay(3000);
-    motorAllStop();
-    
-    testBackward();
-    delay(3000);
-    motorAllStop();
-
-    testLeft();
-    delay(3000);
-    motorAllStop();
-
-    testRight();
-    delay(3000);
-    motorAllStop();
-
-    testLeftForward();
-    delay(3000);
-    motorAllStop();
-
-    testRightBackward();
-    delay(3000);
-    motorAllStop();
-
-    testRightForward();
-    delay(3000);
-    motorAllStop();
-
-    testLeftBackward();
-    delay(3000);
-    motorAllStop();
-    
-    return;
-}
 
 int rotMoveStep(){
+    if (!rotary_target){
+        rotary_target = (int) (ROTATION_CONST * command_buffer[command_index + 1]);
+    }
+    if (!motion_target){
+        motion_target = (int) (MOTION_CONST * command_buffer[command_index + 2]);
+    }
+    //TODO: Check rotation direction and set motors accordingly
+    updateMotorPositions(positions);
+
+    if (-1 * positions[MOTOR_LFT] < rotary_target)
 
 }
 
@@ -332,6 +308,46 @@ void motorKick(){
 }
 
 // basic test functions for sanity!
+void fullTest(){
+    // Performs a test of all basic motions.
+    // Each is executed in 5 seconds.
+    // Subject to battery power, the robot should end up
+    // roughly wherever it started
+
+    testForward();
+    delay(3000);
+    motorAllStop();
+    
+    testBackward();
+    delay(3000);
+    motorAllStop();
+
+    testLeft();
+    delay(3000);
+    motorAllStop();
+
+    testRight();
+    delay(3000);
+    motorAllStop();
+
+    testLeftForward();
+    delay(3000);
+    motorAllStop();
+
+    testRightBackward();
+    delay(3000);
+    motorAllStop();
+
+    testRightForward();
+    delay(3000);
+    motorAllStop();
+
+    testLeftBackward();
+    delay(3000);
+    motorAllStop();
+    
+    return;
+}
 
 void testRightBackward() {
     motorForward(MOTOR_LFT, POWER_LFT * 1);
