@@ -57,15 +57,16 @@ t: sanity-test;
 #define CMD_STOP    B00001000
 #define CMD_GRAB    B00010000
 #define CMD_FLUSH   B00100000
-#define CMD_DONE    B11111111
+#define CMD_END     B11111111
 #define CMD_ERROR   B11111110
 #define CMD_FULL    B11111100
-#define CMD_RESEND  B11111000
+#define CMD_RESEND  B11111000 // if all commands haven't been received in 500 miliseconds
+#define CMD_ACK     B11110000
 
 // utils
 #define BUFFERSIZE    256
 #define ROTARY_COUNT 3
-
+#define IDLE_STATE 0
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop and 
 // serialEvent functions which both support reading serial while moving and
@@ -93,19 +94,40 @@ void setup() {
 void loop() {
   int state_end;
     switch(MasterState){
-        case 0:
+        case IDLE_STATE:
             if (command_index != buffer_index){
                 MasterState = command_buffer[command_index];
+                restoreMotorPositions();
             }
         case CMD_ROTMOVE:
             state_end = rotMoveStep();
-            if (state_end) //TODO: Combine with upper line
-                MasterState = 0;
+            break;
         case CMD_HOLMOVE:
             state_end = holoMoveStep();
-            if (state_end)
-                 MasterState = 0;
-
+            break;
+        case CMD_KICK:
+            state_end = kickStep();
+            break;
+        case CMD_STOP:
+            state_end = 1;
+            motorAllStop();
+            break;
+        case CMD_GRAB:
+            state_end = grabStep();
+            break;
+        case CMD_FLUSH:
+            state_end = 0;
+            buffer_index = 0;
+            command_index = 0;
+            MasterState = IDLE_STATE;
+            break;
+        default:
+            Serial.println("Unrecognized Status Command. Please flush me!");
+            break;
+        if (state_end){
+            MasterState = IDLE_STATE;
+            command_index += 4;
+        }
     }
 }
 
@@ -116,9 +138,22 @@ time loop() runs.
 */
 
 void serialEvent() {
+    time = millis();
     while (Serial.available()) {
-        Serial.println(Serial.read());
+        command_buffer[buffer_index++] = Serial.read();
+
+        // Test for CMD_END
+        if (buffer_index % 4 == 0){
+            if (command_buffer[buffer_index - 1] == CMD_END){
+            Serial.print(CMD_ACK);
+            Serial.print(command_buffer[buffer_index - 4]);
+            Serial.print(command_buffer[buffer_index - 3]);
+            Serial.print(command_buffer[buffer_index - 2]);
+        } else if (time - millis() > 500){
+            Serial.print(CMD_RESEND);
+            buffer_index-= 4;
         }
+
     }
 void fullTest(){
     // Performs a test of all basic motions.
@@ -159,6 +194,10 @@ void fullTest(){
     motorAllStop();
     
     return;
+}
+
+int rotMoveStep(){
+
 }
 
 void forwardMotion(){
