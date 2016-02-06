@@ -5,13 +5,13 @@ import numpy as np
 
 COLS = 640
 ROWS = 480
-pitches = util.read_json("config/undistort.json")
-
+pitches = util.read_json("../config/undistort.json")
+#pitches = util.read_json("/config/undistort.json")
 
 def step(frame):
     functions = [
         perspective,
-        translate,
+        #translate,
         undistort,
         warp,
         ]
@@ -27,9 +27,9 @@ def pitch_to_numpy(pitch):
 
     return ret
 
-def translate(frame):
+'''def translate(frame):
     M = np.float32([[1,0,3],[0,1,0]])
-    return cv2.warpAffine(frame, M, (640,480))
+    return cv2.warpAffine(frame, M, (640,480))'''
 
 def undistort(frame):
 

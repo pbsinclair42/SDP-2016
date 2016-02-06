@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, '/afs/inf.ed.ac.uk/user/s12/s1237357/Desktop/group3-4-vision/vision')
+sys.path.insert(0, '/afs/inf.ed.ac.uk/user/s12/s1237357/Desktop/group3-4-vision/vision/config')
 from camera import Camera
 from calibrate import step
 from matplotlib import pyplot as plt
@@ -15,6 +18,8 @@ WHITE_HIGHER = np.array([36, 255, 255])
 BLUE_LOWER = np.array([70, 50, 50])
 BLUE_HIGHER = np.array([160, 255, 255])
 
+BRIGHT_BLUE_LOWER = np.array([0, 0, 0])
+BRIGHT_BLUE_HIGHER = np.array([0, 0, 0])
 
 PINK_LOWER = np.array([155, 100, 100]) 
 PINK_HIGHER = np.array([175, 255, 255])
@@ -80,6 +85,7 @@ while(1):
 	cv2.imshow('hsv', hsv) 
 	cv2.imshow('blurred lines', blur)
 	cv2.imshow('frame',frame)
+    cv2.imwrite('pitch.png', frame)
 	cv2.imshow('mask',mask)
 	cv2.imshow('res',res)
 	
