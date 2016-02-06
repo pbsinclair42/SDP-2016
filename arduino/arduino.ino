@@ -28,28 +28,21 @@ t: sanity-test;
 
 ***/
 
-
-
-// Rotary encoder definitions
-#define ROTARY_SLAVE_ADDRESS 5
-#define ROTARY_COUNT 3
-#define PRINT_DELAY 200
-
 // Motor Definitions
 #define MOTOR_LFT 0
 #define MOTOR_RGT 1
 #define MOTOR_BCK 2
-
-#define KICKER_LFT  5
-#define KICKER_RGT  3
+#define KICKER_LFT 3
+#define KICKER_RGT 4
+#define GRABBER 5
 
 // Power calibrations
 #define POWER_LFT  255
 #define POWER_RGT  252 // was 99. 
 #define POWER_BCK 242
 
-#define KICKER_LFT_POWER 100
-#define KICKER_RGT_POWER 100
+#define KICKER_LFT_POWER 255
+#define KICKER_RGT_POWER 255
 
 // Movement Constants
 #define MOTION_CONST 11.891304
@@ -57,7 +50,6 @@ t: sanity-test;
 #define KICKER_CONST 10.0    // TODO: Calibrate
 
 // COMMS API Byte Definitions
-
 #define CMD_ROTMOVE B00000001
 #define CMD_HOLMOVE B00000010
 #define CMD_KICK    B00000100
@@ -65,13 +57,12 @@ t: sanity-test;
 #define CMD_FLUSH   B00010000
 #define CMD_DONE    B11111111
 #define CMD_ERROR   B10101010
+
+
 // *** Globals ***
 
-// Initial motor position for each motor.
-int positions[ROTARY_COUNT] = {0};
-
-// serial buffer and current byte
-byte command_buffer[128];
+int positions[ROTARY_COUNT] = {0}; // Initial motor position for each motor.
+byte command_buffer[128]; // Reimplement better data type
 byte serial_in;
 unsigned long time; // used for the millis function.
 
@@ -80,16 +71,15 @@ void setup() {
 
   motorAllStop(); // for sanity
   SDPsetup();
+
+  // to get rid of potential bias
   updateMotorPositions(positions);
   restoreMotorPositions(positions);
-  testForward();
 
 }
 
 void loop() {
-  updateMotorPositions(positions);
-  printMotorPositions(positions);
-  
+  int dummy;
 }
 
 void fullTest(){
@@ -228,11 +218,6 @@ void rotate(){
   return;
 }
 
-void warning(){
-  Serial.println("Warning: Unrecognized command");
-  return;
-}
-
 void motorKick(){
   int buff_index = 0;
   int left = 1;
@@ -331,6 +316,7 @@ void testForward() {
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
 
 
 
