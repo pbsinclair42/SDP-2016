@@ -1,4 +1,4 @@
-#include "SDPArduino.h"
+#include "B4SDP.h"
 #include "Arduino.h"
 #include <Wire.h>
 
@@ -44,9 +44,9 @@ t: sanity-test;
 #define KICKER_RGT  3
 
 // Power calibrations
-#define POWER_LFT  100
-#define POWER_RGT  99 // was 99. 
-#define POWER_BCK 95
+#define POWER_LFT  255
+#define POWER_RGT  252 // was 99. 
+#define POWER_BCK 242
 
 #define KICKER_LFT_POWER 100
 #define KICKER_RGT_POWER 100
@@ -64,76 +64,32 @@ t: sanity-test;
 #define CMD_STOP    B00001000
 #define CMD_FLUSH   B00010000
 #define CMD_DONE    B11111111
+#define CMD_ERROR   B10101010
 // *** Globals ***
 
 // Initial motor position for each motor.
 int positions[ROTARY_COUNT] = {0};
 
 // serial buffer and current byte
-byte byte_buffer[32];
-int serial_in; // an int since Serial.read() returns an int.
+byte command_buffer[128];
+byte serial_in;
+unsigned long time; // used for the millis function.
 
-
-// main functions: setup and loop
+// Main Functions: Setup, Loop and SerialEvent
 void setup() {
 
   motorAllStop(); // for sanity
   SDPsetup();
-  updateMotorPositions();
-  restoreMotorPositions();
-  Serial.println(CMD_ROTMOVE);
-  Serial.println(CMD_HOLMOVE);
-  Serial.println(CMD_KICK);
-  Serial.println(CMD_STOP);
-  Serial.println(CMD_FLUSH);
+  updateMotorPositions(positions);
+  restoreMotorPositions(positions);
+  testForward();
+
 }
 
-
 void loop() {
-  while(Serial.available() > 0) {
-    serial_in = Serial.read();
-    
-    // for testing purposes
-    Serial.print("Received: ");
-    Serial.println((char)serial_in); 
-     
-    switch(serial_in){
-      case 116 : // t
-        fullTest();
-        restoreMotorPositions();
-        break;
-
-      case 102 : // f
-        forwardMotion();
-        restoreMotorPositions();
-        break;
-      
-      case 114 : // r 
-        rotate();
-        restoreMotorPositions();        
-        break;
-
-      case 99 :  // c
-        commsTest();
-        break;
-
-      case 109 : // m
-        milestoneOne();
-        break;
-      
-      case 107 : // k
-        motorKick();
-        break;
-
-      case 115 : // s
-        motorAllStop();
-        break;
-
-      default:
-        warning();
-        break; 
-     }
-  }
+  updateMotorPositions(positions);
+  printMotorPositions(positions);
+  
 }
 
 void fullTest(){
@@ -188,12 +144,12 @@ void forwardMotion(){
   delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms
   while(Serial.available() > 0){
     delay(10); // Why does this happen ?!
-    byte_buffer[buff_index++] = byte(Serial.read());
+    command_buffer[buff_index++] = byte(Serial.read());
   }
   
   // Parse value
   while (buff_index-- > 0){
-    char_byte = (char) byte_buffer[buff_index];
+    char_byte = (char) command_buffer[buff_index];
     if (char_byte == '-')
       forward = -1;
     else if (char_byte >= '0' && char_byte <= '9'){
@@ -215,7 +171,7 @@ void forwardMotion(){
     testBackward();
   
   while (-1 * forward *  positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
-    updateMotorPositions();
+    updateMotorPositions(positions);
   }
   motorAllStop();
   
@@ -234,12 +190,12 @@ void rotate(){
   delay(10); // ask mentor(s) about this bug. Make sure it doesn't fuck up RF comms due to difference in bandwidth :?
   while(Serial.available() > 0){
     delay(10); // Why does this happen ?!
-    byte_buffer[buff_index++] = byte(Serial.read());
+    command_buffer[buff_index++] = byte(Serial.read());
   }
   
   // Parse value
   while (buff_index-- > 0){
-    char_byte = (char) byte_buffer[buff_index];
+    char_byte = (char) command_buffer[buff_index];
     if (char_byte == '-')
       left = -1;
     else if (char_byte >= '0' && char_byte <= '9'){
@@ -255,7 +211,7 @@ void rotate(){
   rotary_val = (int) ((1 / 120.0) * rotary_val * rotary_val + 3 * rotary_val);
 
   // bias fix due to rotary encoder initial positions
-  updateMotorPositions();
+  updateMotorPositions(positions);
   bias = positions[0] + positions[1] + positions[2];
   
   // move forward/backward
@@ -265,60 +221,15 @@ void rotate(){
     rotateRight();
   
   while (left *  (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotary_val + left * bias){
-    updateMotorPositions();
+    updateMotorPositions(positions);
   }
   motorAllStop();
   
   return;
 }
 
-void commsTest(){
-  while (true){
-    if (Serial.available() > 0){
-      Wire.beginTransmission(69);
-      byte x = Serial.read(); // well, that was interesting -_-
-      //Serial.println(x);
-      Wire.write(x);
-      Wire.endTransmission();  
-    } 
-  }
-}
-
-void milestoneOne(){
-  return;
-}
-
 void warning(){
   Serial.println("Warning: Unrecognized command");
-  return;
-}
-
-void updateMotorPositions() {
-
-  // Request motor position deltas from rotary slave board
-  Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
-
-  // Update the recorded motor positions
-  for (int i = 0; i < ROTARY_COUNT; i++) {
-    positions[i] += (int8_t) Wire.read();  // Must cast to signed 8-bit type
-  }
-}
-
-
-void printMotorPositions() {
-  Serial.println("Motor positions (Left, Right, back): ");
-  delay(PRINT_DELAY);  // Delay to avoid flooding serial out
-  
-  for (int i = 0; i < ROTARY_COUNT; i++) {
-    Serial.print( positions[i]); Serial.print (" "); 
-  }
-}
-
-void restoreMotorPositions(){
-  int i;
-  for (i = 0; i < ROTARY_COUNT; i++){
-    positions[i] = 0;
-  }
   return;
 }
 
@@ -333,12 +244,12 @@ void motorKick(){
   motorAllStop();
   while(Serial.available() > 0){
     delay(10); // Why does this happen ?!
-    byte_buffer[buff_index++] = byte(Serial.read());
+    command_buffer[buff_index++] = byte(Serial.read());
   }
   
   // Parse value
   while (buff_index-- > 0){
-    char_byte = (char) byte_buffer[buff_index];
+    char_byte = (char) command_buffer[buff_index];
     if (char_byte == '-')
       left = -1;
     else if (char_byte >= '0' && char_byte <= '9'){
@@ -420,3 +331,6 @@ void testForward() {
   motorForward(MOTOR_RGT, POWER_RGT * 1);
   motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
+
+
