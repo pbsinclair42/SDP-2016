@@ -24,7 +24,7 @@ while c != 27:
 
 	current = time.time()
 	if current-start > elapsed*interval:
-		cv2.imwrite('%s_7x5.png' % str(elapsed + name_offset), frame)
+		cv2.imwrite('%s_8x5.png' % str(elapsed + name_offset), frame)
 		elapsed += 1
 
 

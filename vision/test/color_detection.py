@@ -16,28 +16,28 @@ def nothing(x):
 WHITE_LOWER = np.array([1, 0, 100])
 WHITE_HIGHER = np.array([36, 255, 255])
 
-BLUE_LOWER = np.array([100, 130, 130])
-BLUE_HIGHER = np.array([130, 255, 255])
+BLUE_LOWER = np.array([95, 110, 110])
+BLUE_HIGHER = np.array([120, 255, 255])
 
-BRIGHT_BLUE_LOWER = np.array([80, 80, 80])
-BRIGHT_BLUE_HIGHER = np.array([95, 255, 255])
+CYAN_LOWER = np.array([80, 90, 120])
+CYAN_HIGHER = np.array([100, 255, 255])
 
-PINK_LOWER = np.array([145, 130, 130]) 
+PINK_LOWER = np.array([140, 120, 120]) 
 PINK_HIGHER = np.array([170, 255, 255])
 
-RED_LOWER = np.array([0, 150, 150]) 
-RED_HIGHER = np.array([5, 255, 255])
+RED_LOWER = np.array([0, 170, 170]) 
+RED_HIGHER = np.array([4, 255, 255])
 
-MAROON_LOWER = np.array([175, 150, 150]) 
+MAROON_LOWER = np.array([176, 170, 170]) 
 MAROON_HIGHER = np.array([180, 255, 255])
 
 GREEN_LOWER = np.array([60, 110, 110])
 GREEN_HIGHER = np.array([75, 255, 255])
 
-BRIGHT_GREEN_LOWER = np.array([50, 130, 130])
+BRIGHT_GREEN_LOWER = np.array([50, 190, 190])
 BRIGHT_GREEN_HIGHER = np.array([55, 255, 255])
 
-YELLOW_LOWER = np.array([20, 130, 130])
+YELLOW_LOWER = np.array([27, 130, 130])
 YELLOW_HIGHER = np.array([40, 255, 255])
 
 c = Camera()
@@ -53,18 +53,18 @@ while(1):
 	yellow_mask = cv2.inRange(hsv, YELLOW_LOWER, YELLOW_HIGHER)
 	pink_mask = cv2.inRange(hsv, PINK_LOWER, PINK_HIGHER)
 	green_mask = cv2.inRange(hsv, BRIGHT_GREEN_LOWER, BRIGHT_GREEN_HIGHER)
-	bright_blue_mask = cv2.inRange(hsv, BRIGHT_BLUE_LOWER, BRIGHT_BLUE_HIGHER)
+	cyan_mask = cv2.inRange(hsv, CYAN_LOWER, CYAN_HIGHER)
 	blue_mask = cv2.inRange(hsv, BLUE_LOWER, BLUE_HIGHER)
 	red_mask = cv2.inRange(hsv, RED_LOWER, RED_HIGHER)
 	maroon_mask = cv2.inRange(hsv, MAROON_LOWER, MAROON_HIGHER)
 	red = cv2.bitwise_or(red_mask, maroon_mask)
 	
-	cv2.imshow('red', red)
+	cv2.imshow('pink', pink_mask)
 
 	yellow_ret, yellow_thresh = cv2.threshold(yellow_mask,127,255,cv2.THRESH_BINARY)
 	pink_ret, pink_thresh = cv2.threshold(pink_mask,127,255,cv2.THRESH_BINARY)
 	green_ret, green_thresh = cv2.threshold(green_mask,127,255,cv2.THRESH_BINARY)
-	_, bright_blue_thresh = cv2.threshold(bright_blue_mask,127,255,cv2.THRESH_BINARY)
+	_, bright_blue_thresh = cv2.threshold(cyan_mask,127,255,cv2.THRESH_BINARY)
 	red_ret, red_thresh = cv2.threshold(red,127,255,cv2.THRESH_BINARY)
 	blue_ret, blue_thresh = cv2.threshold(blue_mask,127,255,cv2.THRESH_BINARY)
 
@@ -72,7 +72,7 @@ while(1):
 	_, yellow_contours, _ = cv2.findContours(yellow_thresh, 1, 2)
 	_, pink_contours, _ = cv2.findContours(pink_thresh, 1, 2)
 	_, green_contours, _ = cv2.findContours(green_thresh, 1, 2)
-	_, bright_blue_contours, _ = cv2.findContours(bright_blue_thresh, 1, 2)
+	_, cyan_contours, _ = cv2.findContours(bright_blue_thresh, 1, 2)
 	_, red_contours, _ = cv2.findContours(red_thresh, 1, 2)
 	_, blue_contours, _ = cv2.findContours(blue_thresh, 1, 2)
 	
@@ -92,8 +92,8 @@ while(1):
 
 		center = (int(x),int(y))
 		radius = int(radius)
-
-		cv2.circle(frame,center,radius,(0,0,255),2)
+		if radius >= 2:
+			cv2.circle(frame,center,radius,(0,0,255),2)
 
 	for i in range(0, len(blue_contours)):
 		cnt = blue_contours[i]
@@ -109,8 +109,8 @@ while(1):
 
 		center = (int(x),int(y))
 		radius = int(radius)
-
-		cv2.circle(frame,center,7,(255,0,0),2)
+		if radius >= 2:
+			cv2.circle(frame,center,7,(255,0,0),2)
 			
 	for i in range(0, len(pink_contours)):
 		cnt = pink_contours[i]
@@ -127,7 +127,8 @@ while(1):
 		center = (int(x),int(y))
 		pink_balls.append(center)
 		radius = int(radius)
-		cv2.circle(frame,center,radius,(147,20,255),2)
+		if radius >= 2:
+			cv2.circle(frame,center,radius,(147,20,255),2)
 		
 	for i in range(0, len(green_contours)):
 		cnt = green_contours[i]
@@ -144,10 +145,11 @@ while(1):
 		center = (int(x),int(y))
 		green_balls.append(center)
 		radius = int(radius)
-		cv2.circle(frame,center,radius,(0,255,0),2)
+		if radius >= 2:
+			cv2.circle(frame,center,radius,(0,255,0),2)
 	
-	for i in range(0, len(bright_blue_contours)):
-		cnt = bright_blue_contours[i]
+	for i in range(0, len(cyan_contours)):
+		cnt = cyan_contours[i]
 		M = cv2.moments(cnt)
 		if M['m00'] == 0 :
 			continue
@@ -160,7 +162,8 @@ while(1):
 
 		center = (int(x),int(y))
 		radius = int(radius)
-		cv2.circle(frame,center,radius,(255,255,0),2)
+		if radius >= 2:
+			cv2.circle(frame,center,7,(255,255,0),2)
 
 	for i in range(0, len(yellow_contours)):
 		cnt = yellow_contours[i]
@@ -199,17 +202,18 @@ while(1):
 		if num_of_pink == 1:
 			cv2.putText(frame,'OUR',(center[0]-15, center[1]+30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, 220)
 			cv2.putText(frame,'ATTACKER',(center[0]-30, center[1]+40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, 220)
-		cv2.circle(frame,center,radius,(0,255,255),2)	
+		if radius >= 2:	
+			cv2.circle(frame,center,radius,(0,255,255),2)	
 
 	
-		
+	cv2.circle(frame,(320,240),5,(255,255,255),2)	
     # Bitwise-AND mask  and original image
 	#res = cv2.bitwise_and(frame,frame, mask= mask)
 	cv2.imshow('hsv', hsv) 
 	cv2.imshow('blurred lines', blur)
 	cv2.imshow('frame',frame)
-	cv2.imwrite('a2.png', frame)
-	cv2.imwrite('b.png', frame)
+	cv2.imwrite('transform.png', frame)
+	#cv2.imwrite('b.png', frame)
 	#cv2.imshow('mask',mask)
 	#cv2.imshow('res',res)
 	

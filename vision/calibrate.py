@@ -5,13 +5,13 @@ import numpy as np
 
 COLS = 640
 ROWS = 480
-pitches = util.read_json("../config/undistort.json")
-#pitches = util.read_json("/config/undistort.json")
+#pitches = util.read_json("../config/undistort.json")
+pitches = util.read_json("../config/undistort_pitch0.json")
 
 def step(frame):
     functions = [
         perspective,
-        #translate,
+        translate,
         undistort,
         warp,
         ]
@@ -27,9 +27,9 @@ def pitch_to_numpy(pitch):
 
     return ret
 
-'''def translate(frame):
-    M = np.float32([[1,0,3],[0,1,0]])
-    return cv2.warpAffine(frame, M, (640,480))'''
+def translate(frame):
+    M = np.float32([[1,0,-6],[0,1,-5]])
+    return cv2.warpAffine(frame, M, (640,480))
 
 def undistort(frame):
 
@@ -39,12 +39,11 @@ def undistort(frame):
                         pitch["new_camera_matrix"])
 
 def warp(frame):
-    M = cv2.getRotationMatrix2D((COLS/2, ROWS/2), 3, 1)
+    M = cv2.getRotationMatrix2D((COLS/2, ROWS/2), 1, 1)
     return cv2.warpAffine(frame, M, (COLS, ROWS))
 
 def perspective(frame):
-
-    pts1 = np.float32([[-5,0],[15,476],[609,474],[627,5]])
+    pts1 = np.float32([[32,10],[43,464],[604,466],[611,15]])
     pts2 = np.float32([[0,0],[0,475],[640,480],[640,0]])
 
     M = cv2.getPerspectiveTransform(pts1,pts2)
