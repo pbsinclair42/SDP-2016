@@ -22,8 +22,8 @@ BLUE_HIGHER = np.array([120, 255, 255])
 CYAN_LOWER = np.array([80, 90, 120])
 CYAN_HIGHER = np.array([100, 255, 255])
 
-PINK_LOWER = np.array([140, 120, 120]) 
-PINK_HIGHER = np.array([170, 255, 255])
+PINK_LOWER = np.array([140, 110, 110]) 
+PINK_HIGHER = np.array([175, 255, 255])
 
 RED_LOWER = np.array([0, 170, 170]) 
 RED_HIGHER = np.array([4, 255, 255])
@@ -37,7 +37,7 @@ GREEN_HIGHER = np.array([75, 255, 255])
 BRIGHT_GREEN_LOWER = np.array([50, 190, 190])
 BRIGHT_GREEN_HIGHER = np.array([55, 255, 255])
 
-YELLOW_LOWER = np.array([27, 130, 130])
+YELLOW_LOWER = np.array([30, 170, 170])
 YELLOW_HIGHER = np.array([40, 255, 255])
 
 c = Camera()
@@ -59,7 +59,7 @@ while(1):
 	maroon_mask = cv2.inRange(hsv, MAROON_LOWER, MAROON_HIGHER)
 	red = cv2.bitwise_or(red_mask, maroon_mask)
 	
-	cv2.imshow('pink', pink_mask)
+	cv2.imshow('blue', blue_mask)
 
 	yellow_ret, yellow_thresh = cv2.threshold(yellow_mask,127,255,cv2.THRESH_BINARY)
 	pink_ret, pink_thresh = cv2.threshold(pink_mask,127,255,cv2.THRESH_BINARY)

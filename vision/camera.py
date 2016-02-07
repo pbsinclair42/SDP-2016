@@ -20,18 +20,20 @@ class Camera(object):
 
     def __init__(self, port=0, pitch=0):
         self.capture = cv2.VideoCapture(port)
+        '''
         # for pitch0 PC1/ aharacle:
-        self.capture.set(properties['BRIGHTNESS'], 0.44)
+        self.capture.set(properties['BRIGHTNESS'], 0.5)
         self.capture.set(properties['CONTRAST'], 0.48)
         self.capture.set(properties['COLOR'], 0.5)
         self.capture.set(properties['HUE'], 0.5)
 
         '''
-        self.capture.set(properties['BRIGHTNESS'], 0.73)
-        self.capture.set(properties['CONTRAST'], 0.65)
-        self.capture.set(properties['COLOR'], 0.55)
-        self.capture.set(properties['HUE'], 0.47)
-        ''' 
+        # for pitch1 PC4/ knapdale
+        self.capture.set(properties['BRIGHTNESS'], 0.55)
+        self.capture.set(properties['CONTRAST'], 0.45)
+        self.capture.set(properties['COLOR'], 0.5)
+        self.capture.set(properties['HUE'], 0.5)
+        
 
     def get_frame(self, radial_dist=0):
         """
