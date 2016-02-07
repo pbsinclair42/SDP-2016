@@ -13,19 +13,19 @@ class RobotCommunications(Communications):
 
 
     def holo(self,degrees,distance):#move holonimically
-        self.write("h" + degrees + distance + "256")
+        self.write("h" + str(degrees) + str(distance) +"256")
     def stop(self):# Stops all motors
         self.write("s256")
     def rotate(self,distance,degrees):#rotate X degrees and move y distance
-        self.write("r" + degrees + distance + "256")
+        self.write("r" +str(distance))
     def compensate(self,power):#make trajectories
-        self.write("c"+power + "256")
+        self.write("c"+str(power) + "256")
     def kick(self,distance):#kick
-        self.write("k"+distance+"256")
+        self.write("k"+str(distance)+"256")
     def flush(self):#stop previous command
         self.write("256")
     def grab(self):#grab
-        self,write("g")
+        self.write("g")
     def test(self, argument):#test comms
         print 'I got your message: ' + str(argument)
 
