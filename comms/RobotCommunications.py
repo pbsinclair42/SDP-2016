@@ -13,25 +13,35 @@ class RobotCommunications(Communications):
 
 
     def holo(self,degrees,distance):
-        self.write(chr(2) + chr(degrees) + chr(distance) +chr(255))
-    def holo2(self,degrees,distance):
-        self.write(chr(130) + chr(degrees) + chr(distance) +chr(255))
-    def stop(self):# Stops all motors
-        self.write(chr(8)+chr(255)+chr(255)+chr(255))
+        x = self.write(chr(2) + chr(degrees) + chr(distance) +chr(255))
+        return x
+    def holoneg(self,degrees,distance):
+        x = self.write(chr(130) + chr(degrees) + chr(distance) +chr(255))
+        return x
+    def stop(self):
+        x=self.write(chr(8)+chr(255)+chr(255)+chr(255))
+        return x
     def rotate(self,distance,degrees):
-        self.write(chr(1) +chr(degrees)+chr(distance) + chr(255))
-    def rotate2(self,distance,degrees):
-        self.write(chr(129) +chr(degrees)+chr(distance) + chr(255))
+        x = self.write(chr(1) +chr(degrees)+chr(distance) + chr(255))
+        return x
+    def rotateneg(self,distance,degrees):
+        x = self.write(chr(129) +chr(degrees)+chr(distance) + chr(255))
+        return x
     def kick(self,distance):
-        self.write(chr(4)+chr(distance)+chr(255)+chr(255))
+        x = self.write(chr(4)+chr(distance)+chr(255)+chr(255))
+        return x
     def flush(self):#stop previous command
-        self.write(chr(255)+chr(255)+chr(255)+chr(255))
+        x = self.write(chr(255)+chr(255)+chr(255)+chr(255))
+        return x
     def grab(self):#grab
-        self.write((chr(16) + chr(255)+chr(255)+chr(255)))
+        x = self.write((chr(16) + chr(255)+chr(255)+chr(255)))
+        return x
     def ungrab(self):
-        self.write(chr(32) + chr(255)+chr(255)+chr(255))
+        x = self.write(chr(32) + chr(255)+chr(255)+chr(255))
+        return x
     def flush(self):
-        self.write(chr(64) + chr(255)+chr(255)+chr(255))
+        x = self.write(chr(64) + chr(255)+chr(255)+chr(255))
+        return x
     def test(self, argument):#test comms
         print 'I got your message: ' + str(argument)
 
