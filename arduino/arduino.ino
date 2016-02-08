@@ -136,6 +136,7 @@ void loop() {
             break;
         default:
             Serial.println(CMD_ERROR);
+            MasterState = IDLE_STATE;
             break;
         if (state_end){
             MasterState = IDLE_STATE;
@@ -180,6 +181,7 @@ void serialEvent() {
 int rotMoveStep(){
     byte left, degrees, centimeters;
     switch(rotMoveMode){
+
         // calculate rotation target and start rotating
         case 0 :
             degrees = command_buffer[command_index + 1];
