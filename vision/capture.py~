@@ -5,7 +5,7 @@
 # Press Esc to end it.
 
 import cv2, time
-from calibrate import *
+#from calibrate import *
 
 capture = cv2.VideoCapture(0)
 

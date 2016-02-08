@@ -1,49 +1,16 @@
 import time
-import serial
+from RobotCommunications import RobotCommunications
 
-# configure the serial connections (the parameters differs on the device you are connecting to)
-ser = serial.Serial(
-        port='/dev/ttyACM0',
-        baudrate=9600,
-        #parity=serial.PARITY_ODD,
-        #stopbits=serial.STOPBITS_TWO,
-        #bytesize=serial.SEVENBITS
-        )
-
-ser.isOpen()
-
-
-ser.write('f')
-time.sleep(1)
-ser.write('s')
-time.sleep(1)
-ser.write('f')
-time.sleep(1)
-ser.write('s')
-time.sleep(1)
-ser.write('l')
-time.sleep(1)
-ser.write('s')
-time.sleep(1)
-ser.write('l')
-time.sleep(1)
-ser.write('s')
-time.sleep(1)
-ser.write('b')
-time.sleep(1)
-ser.write('s')
-time.sleep(1)
-ser.write('b')
-time.sleep(1)
-ser.write('s')
-time.sleep(1)
-ser.write('r')
-time.sleep(1)
-ser.write('s')
-time.sleep(1)
-ser.write('r')
-ser.write('s')
-time.sleep(1)
-
-
-
+holo(0,50)
+sleep(4)
+rotate(0,180)
+sleep(4)
+kick(50)
+sleep(1)
+grab()
+sleep(2)
+holo(0,150)
+sleep(3)
+flush()
+kick(100)
+sleep(2)

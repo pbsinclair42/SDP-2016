@@ -37,11 +37,11 @@ t: sanity-test;
 #define MOTOR_RGT 1
 #define MOTOR_BCK 2
 
-#define KICKER_LFT  5
-#define KICKER_RGT  3
+#define KICKER  3
+#define GRABBER 4
 
 // Power calibrations
-#define POWER_LFT  100
+#define POWER_LFT  98
 #define POWER_RGT  99 // was 99. 
 #define POWER_BCK 95
 
@@ -115,7 +115,15 @@ void loop() {
       case 115 : // s
         motorAllStop();
         break;
-
+      case 103://g
+        motorgrab();
+        break;
+       case 111://o
+         opengrabber();
+         break;
+       case 105://i
+          closegrabber();
+          break;
       default:
         warning();
         break; 
@@ -286,7 +294,7 @@ void updateMotorPositions() {
   Wire.requestFrom(ROTARY_SLAVE_ADDRESS, ROTARY_COUNT);
 
   // Update the recorded motor positions
-  for (int i = 0; i < ROTARY_COUNT; i++) {
+  for ( int i = 0; i < ROTARY_COUNT; i++) {
     positions[i] += (int8_t) Wire.read();  // Must cast to signed 8-bit type
   }
 }
@@ -333,18 +341,50 @@ void motorKick(){
       parse_val *= 10;
     }
   }
-  
+  motorBackward(GRABBER, rotary_val); 
   delay(100);
   Serial.print(rotary_val);
-  motorBackward(KICKER_LFT, rotary_val);
-  motorBackward(KICKER_RGT, rotary_val);                                            
+  motorForward(KICKER, rotary_val);                                        
   delay(500);
-  motorForward(KICKER_LFT, KICKER_LFT_POWER);
-  motorForward(KICKER_RGT, KICKER_RGT_POWER);
+  motorBackward(KICKER, KICKER_LFT_POWER);
+  delay(500);
+  motorForward(GRABBER, rotary_val);
+   delay(500); 
+  motorAllStop();
+}
+
+void motorgrab(){
+  int buff_index = 0;
+  int left = 1;
+  char char_byte;
+  int parse_val = 1;
+  int rotary_val = 0;
+  int bias;
+  
+  motorAllStop();
+  rotary_val = 100;
+  delay(100);
+  Serial.print(rotary_val);
+  motorBackward(GRABBER, rotary_val);                                        
+  delay(500);
+  motorForward(GRABBER,rotary_val);
   delay(500);
   motorAllStop();
 }
 
+void opengrabber(){
+  Serial.write("hello");
+  motorAllStop();
+  motorBackward(GRABBER,100);
+  delay(500);
+  motorBackward(GRABBER,0);
+}
+void closegrabber(){
+  motorAllStop();
+  motorForward(GRABBER,100);
+  delay(500);
+  motorBackward(GRABBER,0);
+}
 // basic test functions for sanity!
 
 void testRightBackward() {
