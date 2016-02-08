@@ -37,8 +37,8 @@ t: sanity-test;
 #define KICKER 5 // TODO: Remove once second kicker motor has been added
 
 // Power calibrations
-#define POWER_LFT    255
-#define POWER_RGT    252  
+#define POWER_LFT 255
+#define POWER_RGT 252  
 #define POWER_BCK 242
 #define KICKER_PWR 255
 #define KICKER_LFT_POWER 255
@@ -167,7 +167,6 @@ void loop() {
             break;
         }
         if (state_end){
-            Serial.println("Blaaaaaaaaaaaaaaaah");
             MasterState = IDLE_STATE;
             command_index += 4;
         }
@@ -360,14 +359,11 @@ int grabStep(){
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
-                motorBackward()
+                motorBackward(GRABBER, 0);
+                rotMoveGrabMode = 0;
+                return 1;
             }
     }
-    motorAllStop();
-    motorBackward(GRABBER,255);
-    delay(500);
-    motorBackward(GRABBER, 0);
-    return 1;
 }
 
 int unGrabStep(){
@@ -376,43 +372,6 @@ int unGrabStep(){
   delay(500);
   motorBackward(GRABBER,0);
   return 1;
-}
-
-int motorKick(){
-    int buff_index = 0;
-    int left = 1;
-    char char_byte;
-    int parse_val = 1;
-    int rotary_val = 0;
-    int bias;
-    
-    motorAllStop();
-    while(Serial.available() > 0){
-        delay(10); // Why does this happen ?!
-        command_buffer[buff_index++] = byte(Serial.read());
-    }
-    
-    // Parse value
-    while (buff_index-- > 0){
-        char_byte = (char) command_buffer[buff_index];
-        if (char_byte == '-')
-            left = -1;
-        else if (char_byte >= '0' && char_byte <= '9'){
-            rotary_val += ((int) char_byte - '0') * parse_val;
-            parse_val *= 10;
-        }
-    }
-    
-    delay(100);
-    Serial.print(rotary_val);
-    motorBackward(KICKER_LFT, rotary_val);
-    motorBackward(KICKER_RGT, rotary_val);                                                                                        
-    delay(500);
-    motorForward(KICKER_LFT, KICKER_LFT_POWER);
-    motorForward(KICKER_RGT, KICKER_RGT_POWER);
-    delay(500);
-    motorAllStop();
-    return 1;
 }
 
 // basic test functions for sanity!
