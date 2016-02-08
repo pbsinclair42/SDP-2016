@@ -45,25 +45,30 @@ t: sanity-test;
 #define KICKER_RGT_POWER 255
 #define GRABBER_POWER 255
 
+// temporal calibrations
+#define KICK_TIME 500
+#define GRAB_TIME 400
+
 // Movement Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 4.15    // A linear function is also in effect
 #define KICKER_CONST 10.0        // TODO: Calibrate
 
 // COMMS API Byte Definitions
-#define CMD_ROTMOVE B00000001 // Buffered: MSB 1 performs CCW rotation
-#define CMD_HOLMOVE B00000010 // Buffered: NOT YET IMPLEMENTED
-#define CMD_KICK    B00000100 // Buffered
-#define CMD_STOP    B00001000 // Buffered
-#define CMD_GRAB    B00010000 // Buffered
-#define CMD_UNGRAB  B00100000 // Buffered
-#define CMD_FLUSH   B01000000 // Immediate. Flushes the buffer and awaits new commands
-#define CMD_END     B11111111 // Buffered
+#define CMD_ROTMOVE    B00000001 // Buffered: MSB 1 performs CCW rotation
+#define CMD_ROTMOVECCW B10000001 // Buffered: MSB 1 performs CCW rotation
+#define CMD_HOLMOVE    B00000010 // Buffered: NOT YET IMPLEMENTED
+#define CMD_KICK       B00000100 // Buffered
+#define CMD_STOP       B00001000 // Buffered
+#define CMD_GRAB       B00010000 // Buffered
+#define CMD_UNGRAB     B00100000 // Buffered
+#define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
+#define CMD_END        B11111111 // Buffered
 
-#define CMD_ERROR   B11111111 // Sent for errors
-#define CMD_FULL    B11111110 // Sent if buffer is full
-#define CMD_RESEND  B11111100 // if all commands haven't been received in 500 miliseconds
-#define CMD_ACK     B11111000 // Sent after command has been received
+#define CMD_ERROR      B11111111 // Sent for errors
+#define CMD_FULL       B11111110 // Sent if buffer is full
+#define CMD_RESEND     B11111100 // if all commands haven't been received in 500 miliseconds
+#define CMD_ACK        B11111000 // Sent after command has been received
 
 // utils
 #define BUFFERSIZE 256
@@ -85,9 +90,9 @@ byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 unsigned long serial_time; // used for the millis function.
-unsigned long rot_move_time;
+unsigned long command_time;
 // rotation parameters
-byte rotMoveMode = 0;
+byte rotMoveGrabMode = 0;
 int rotaryTarget;
 int rotaryBias;
 
@@ -113,13 +118,9 @@ void setup() {
 void loop() {
   //Serial.print(MasterState);
   int state_end = 0;
-  if (MasterState != 0){
-     Serial.println(MasterState); 
-  }
     switch(MasterState){
         case IDLE_STATE:
             if (command_index != buffer_index && command_index + 4 <= buffer_index){
-                Serial.println("I AM CHANGING STATE MOTHAFUCkaaaah");
                 Serial.print("CMD: ");
                 Serial.println(command_index);
                 Serial.print("BUF");
@@ -132,6 +133,9 @@ void loop() {
         case CMD_ROTMOVE:
             state_end = rotMoveStep();
             break;
+        case CMD_ROTMOVECCW:
+            state_end = rotMoveStep();
+            break;
         case CMD_HOLMOVE:
             state_end = holoMoveStep();
             break;
@@ -139,7 +143,6 @@ void loop() {
             state_end = kickStep();
             break;
         case CMD_GRAB:
-            Serial.println("I should be grabbing!");
             state_end = grabStep();
             break;
         case CMD_UNGRAB:
@@ -205,18 +208,17 @@ void serialEvent() {
                 command_index = 0;
                 motorAllStop();
             }
-        } else if (millis() - serial_time > 500){
-            Serial.print(CMD_RESEND);
+        } else if (millis() - serial_time > 500){ // TODO: Break this only here;
             while(buffer_index %4 != 0) {
                 buffer_index--;
             }
         }
-    }
+    } // check for non %4 buffer and then RESEND!
 }
 
 int rotMoveStep(){
     byte left, degrees, centimeters;
-    switch(rotMoveMode){
+    switch(rotMoveGrabMode){
 
         // calculate rotation target and start rotating
         case 0 :
@@ -225,7 +227,7 @@ int rotMoveStep(){
             left = left == 0 ? 1 : -1;
             
             if (!degrees){
-                rotMoveMode = 2;
+                rotMoveGrabMode = 2;
                 return 0;
             }
 
@@ -242,7 +244,7 @@ int rotMoveStep(){
             else
                 rotateRight();
 
-            rotMoveMode = 1;
+            rotMoveGrabMode = 1;
             return 0;
         
         // chck whether to stop during rotation;
@@ -256,7 +258,7 @@ int rotMoveStep(){
             else{
                 motorAllStop();
                 restoreMotorPositions(positions);
-                rotMoveMode = 2;
+                rotMoveGrabMode = 2;
             }
             return 0;
         
@@ -265,14 +267,14 @@ int rotMoveStep(){
             centimeters = command_buffer[command_index + 2];
             
             if (!centimeters){
-                rotMoveMode = 0;
+                rotMoveGrabMode = 0;
                 return 1;
             }
 
             rotaryTarget = (int) (MOTION_CONST * centimeters);
             testForward();
 
-            rotMoveMode = 3;
+            rotMoveGrabMode = 3;
             return 0;
 
         // perform movement
@@ -284,7 +286,7 @@ int rotMoveStep(){
             else{
                 motorAllStop();
                 restoreMotorPositions(positions);
-                rotMoveMode = 0;
+                rotMoveGrabMode = 0;
                 return 1;
             }
         default:
@@ -299,23 +301,68 @@ int holoMoveStep(){
 }
 
 int kickStep(){
-    byte kick_val = command_buffer[command_index + 1];
-    motorBackward(GRABBER, kick_val); 
-    delay(100);
-    Serial.print(kick_val);
-    motorForward(KICKER, kick_val);                                        
-    delay(500);
-    motorBackward(KICKER, KICKER_LFT_POWER);
-    delay(400);
-    motorBackward(KICKER, 0);
-    motorForward(GRABBER, kick_val);
-    delay(500); 
-    motorAllStop();
-    return 1;
+    byte kick_val;
+    switch(rotMoveGrabMode){
+        // initial state which starts ungrabbing
+        case 0:
+            command_time = millis();
+            motorBackward(GRABBER, GRABBER_POWER);
+            rotMoveGrabMode = 1;
+            return 0;
+        // if done with grabbing, start kicking
+        case 1:
+            if (millis() - command_time > GRAB_TIME){
+                motorBackward(GRABBER, 0);
+                motorForward(KICKER, command_buffer[command_index + 1]);
+                rotMoveGrabMode = 2;
+                command_time = millis(); // restore current time
+            }
+            return 0;
+        // if done with kicking - start "un-kicking"
+        case 2:
+            if (millis() - command_time > KICK_TIME){
+                motorBackward(KICKER, command_buffer[command_index + 1]);
+                rotMoveGrabMode = 3;
+                command_time = millis(); // restore current time
+            }
+            return 0;
+        // if done with "un-kicking" - re-grab
+        case 3:
+            if (millis() - command_time > KICK_TIME){
+                motorBackward(KICKER, 0);
+                motorForward(GRABBER, GRABBER_POWER);
+                rotMoveGrabMode = 4;
+                command_time = millis(); // restore current time
+            }
+            return 0;
+        // if re-grabbed, process is finished
+        case 4:
+            if (millis() - command_time > GRAB_TIME){
+                motorForward(GRABBER, 0);
+                rotMoveGrabMode = 0;
+                return 1; // make sure that the only way to return from this function is to 
+            }
+            return 0;
+        default:
+            rotMoveGrabMode = 0;
+            Serial.print(CMD_ERROR);
+            return -1;
+    }
+    return -1;
 }
 
 int grabStep(){
-    // TODO: Parallelize
+    switch(rotMoveGrabMode){
+        case 0:
+            motorBackward(GRABBER, GRABBER_POWER);
+            command_time = millis();
+            rotMoveGrabMode = 1;
+            return 0;
+        case 1:
+            if (millis() - command_time > GRAB_TIME){
+                motorBackward()
+            }
+    }
     motorAllStop();
     motorBackward(GRABBER,255);
     delay(500);
