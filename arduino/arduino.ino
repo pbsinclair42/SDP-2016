@@ -33,13 +33,14 @@ t: sanity-test;
 #define MOTOR_BCK 2
 #define KICKER_LFT 3
 #define KICKER_RGT 4
-#define GRABBER 5
-#define KICKER 4 // TODO: Remove once second kicker motor has been added
+#define GRABBER 4
+#define KICKER 3 // TODO: Remove once second kicker motor has been added
 
 // Power calibrations
 #define POWER_LFT    255
 #define POWER_RGT    252  
 #define POWER_BCK 242
+#define KICKER 255
 #define KICKER_LFT_POWER 255
 #define KICKER_RGT_POWER 255
 #define GRABBER_POWER 255
@@ -58,10 +59,11 @@ t: sanity-test;
 #define CMD_UNGRAB  B00100000 // Buffered
 #define CMD_FLUSH   B01000000 // Immediate. Flushes the buffer and awaits new commands
 #define CMD_END     B11111111 // Buffered
-#define CMD_ERROR   B11111110 // Sent for errors
-#define CMD_FULL    B11111100 // Sent if buffer is full
-#define CMD_RESEND  B11111000 // if all commands haven't been received in 500 miliseconds
-#define CMD_ACK     B11110000 // Sent after command has been received
+
+#define CMD_ERROR   B11111111 // Sent for errors
+#define CMD_FULL    B11111110 // Sent if buffer is full
+#define CMD_RESEND  B11111100 // if all commands haven't been received in 500 miliseconds
+#define CMD_ACK     B11111000 // Sent after command has been received
 
 // utils
 #define BUFFERSIZE 256
@@ -98,23 +100,33 @@ int holono_target;
 
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
-    motorAllStop(); // for sanity
     SDPsetup();
-
+    motorAllStop(); // for sanity
+    
+    Serial.print(CMD_END);
+    Serial.print(CMD_GRAB);
     // to get rid of potential bias
     updateMotorPositions(positions);
     restoreMotorPositions(positions);
+    
+    
 }
 
 void loop() {
   //Serial.print(MasterState);
-  int state_end;
+  int state_end = 0;
     switch(MasterState){
         case IDLE_STATE:
             if (command_index != buffer_index && command_index + 4 <= buffer_index){
+                Serial.println("I AM CHANGING STATE MOTHAFUCkaaaah");
+                Serial.print("CMD: ");
+                Serial.println(command_index);
+                Serial.print("BUF");
+                Serial.println(buffer_index);
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
-            }
+                delay(1000);  
+          }
             break;
         case CMD_ROTMOVE:
             state_end = rotMoveStep();
@@ -126,7 +138,9 @@ void loop() {
             state_end = kickStep();
             break;
         case CMD_GRAB:
+            Serial.println("I should be grabbing!");
             state_end = grabStep();
+            motorForward(4, 255);
             break;
         case CMD_UNGRAB:
             state_end = unGrabStep();
@@ -142,16 +156,20 @@ void loop() {
             MasterState = IDLE_STATE;
             break;
         default:
+            Serial.print("VERY BAD ERROR");
+            Serial.print(MasterState);
             Serial.println(CMD_ERROR);
+            delay(10000);
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
+        }
         if (state_end){
+            Serial.println("Blaaaaaaaaaaaaaaaah");
             MasterState = IDLE_STATE;
             command_index += 4;
         }
     }
-}
 
 /* 
 SerialEvent occurs whenever a new data comes in the
@@ -177,6 +195,7 @@ void serialEvent() {
             // report bad command
             else{
                 Serial.print(CMD_ERROR);
+                Serial.print(command_buffer[buffer_index - 1]);
                 buffer_index = buffer_index - 4;
             }
             
@@ -296,9 +315,9 @@ int kickStep(){
 int grabStep(){
     // TODO: Parallelize
     motorAllStop();
-    motorBackward(GRABBER,100);
+    motorBackward(GRABBER,255);
     delay(500);
-    motorBackward(GRABBER,0);
+    motorBackward(GRABBER, 0);
     return 1;
 }
 
@@ -449,3 +468,4 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
