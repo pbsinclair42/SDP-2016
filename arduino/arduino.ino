@@ -34,13 +34,13 @@ t: sanity-test;
 #define KICKER_LFT 3
 #define KICKER_RGT 4
 #define GRABBER 4
-#define KICKER 3 // TODO: Remove once second kicker motor has been added
+#define KICKER 5 // TODO: Remove once second kicker motor has been added
 
 // Power calibrations
 #define POWER_LFT    255
 #define POWER_RGT    252  
 #define POWER_BCK 242
-#define KICKER 255
+#define KICKER_PWR 255
 #define KICKER_LFT_POWER 255
 #define KICKER_RGT_POWER 255
 #define GRABBER_POWER 255
@@ -102,19 +102,20 @@ int holono_target;
 void setup() {
     SDPsetup();
     motorAllStop(); // for sanity
-    
+    Serial.println("What the fuck is going on?");
     Serial.print(CMD_END);
     Serial.print(CMD_GRAB);
     // to get rid of potential bias
     updateMotorPositions(positions);
     restoreMotorPositions(positions);
-    
-    
 }
 
 void loop() {
   //Serial.print(MasterState);
   int state_end = 0;
+  if (MasterState != 0){
+     Serial.println(MasterState); 
+  }
     switch(MasterState){
         case IDLE_STATE:
             if (command_index != buffer_index && command_index + 4 <= buffer_index){
@@ -140,7 +141,6 @@ void loop() {
         case CMD_GRAB:
             Serial.println("I should be grabbing!");
             state_end = grabStep();
-            motorForward(4, 255);
             break;
         case CMD_UNGRAB:
             state_end = unGrabStep();
@@ -159,7 +159,6 @@ void loop() {
             Serial.print("VERY BAD ERROR");
             Serial.print(MasterState);
             Serial.println(CMD_ERROR);
-            delay(10000);
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
@@ -191,9 +190,11 @@ void serialEvent() {
                 Serial.print(command_buffer[buffer_index - 4]);
                 Serial.print(command_buffer[buffer_index - 3]);
                 Serial.print(command_buffer[buffer_index - 2]);
+                Serial.print(command_buffer[buffer_index - 1]);
             }
             // report bad command
             else{
+                Serial.println("SANITY CHECK");
                 Serial.print(CMD_ERROR);
                 Serial.print(command_buffer[buffer_index - 1]);
                 buffer_index = buffer_index - 4;
@@ -305,7 +306,8 @@ int kickStep(){
     motorForward(KICKER, kick_val);                                        
     delay(500);
     motorBackward(KICKER, KICKER_LFT_POWER);
-    delay(500);
+    delay(400);
+    motorBackward(KICKER, 0);
     motorForward(GRABBER, kick_val);
     delay(500); 
     motorAllStop();
