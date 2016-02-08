@@ -107,6 +107,7 @@ void setup() {
 }
 
 void loop() {
+  //Serial.print(MasterState);
   int state_end;
     switch(MasterState){
         case IDLE_STATE:
@@ -114,6 +115,7 @@ void loop() {
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
             }
+            break;
         case CMD_ROTMOVE:
             state_end = rotMoveStep();
             break;
@@ -142,6 +144,7 @@ void loop() {
         default:
             Serial.println(CMD_ERROR);
             MasterState = IDLE_STATE;
+            state_end = 1;
             break;
         if (state_end){
             MasterState = IDLE_STATE;
@@ -160,21 +163,29 @@ void serialEvent() {
     serial_time = millis();
     while (Serial.available()) {
         command_buffer[buffer_index++] = Serial.read();
-
-        // Test for CMD_END
+        Serial.println(command_buffer[buffer_index - 1]);
+        Serial.println(buffer_index);
+        Serial.println("-------------");
         if (buffer_index % 4 == 0){
+            // acknowledge proper command
             if (command_buffer[buffer_index - 1] == CMD_END){
                 Serial.print(CMD_ACK);
                 Serial.print(command_buffer[buffer_index - 4]);
                 Serial.print(command_buffer[buffer_index - 3]);
                 Serial.print(command_buffer[buffer_index - 2]);
             }
+            // report bad command
+            else{
+                Serial.print(CMD_ERROR);
+                buffer_index = buffer_index - 4;
+            }
+            
             if (command_buffer[buffer_index - 4] == CMD_FLUSH){
                 buffer_index = 0;
                 command_index = 0;
                 motorAllStop();
             }
-        } else if (serial_time - millis() > 500){
+        } else if (millis() - serial_time > 500){
             Serial.print(CMD_RESEND);
             while(buffer_index %4 != 0) {
                 buffer_index--;
