@@ -162,10 +162,16 @@ void serialEvent() {
             Serial.print(command_buffer[buffer_index - 4]);
             Serial.print(command_buffer[buffer_index - 3]);
             Serial.print(command_buffer[buffer_index - 2]);
+            if (command_buffer[buffer_index - 4] == CMD_FLUSH){
+                buffer_index = 0;
+                command_index = 0;
+                motorAllStop();
+            }
         } else if (time - millis() > 500){
             Serial.print(CMD_RESEND);
-            buffer_index -= 4;
+            while(buffer_index-- %4 != 0) {}
         }
+
 
     }
 
@@ -247,6 +253,7 @@ int rotMoveStep(){
             
     }
 int holoMoveStep(){
+    Serial.print(CMD_ERROR);
     Serial.println("Holonomic motion not yet implemented");
     return 1;
 }
@@ -317,10 +324,10 @@ void motorKick(){
     motorForward(KICKER_RGT, KICKER_RGT_POWER);
     delay(500);
     motorAllStop();
+    return 1;
 }
 
 // basic test functions for sanity!
-
 void fullTest(){
     // Performs a test of all basic motions.
     // Each is executed in 5 seconds.
