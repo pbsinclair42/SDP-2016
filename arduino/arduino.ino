@@ -38,9 +38,8 @@ t: sanity-test;
 
 // Power calibrations
 #define POWER_LFT    255
-#define POWER_RGT    252 // was 99. 
+#define POWER_RGT    252  
 #define POWER_BCK 242
-
 #define KICKER_LFT_POWER 255
 #define KICKER_RGT_POWER 255
 #define GRABBER_POWER 255
@@ -51,33 +50,45 @@ t: sanity-test;
 #define KICKER_CONST 10.0        // TODO: Calibrate
 
 // COMMS API Byte Definitions
-#define CMD_ROTMOVE B00000001
-#define CMD_HOLMOVE B00000010
-#define CMD_KICK    B00000100
-#define CMD_STOP    B00001000
-#define CMD_GRAB    B00010000
-#define CMD_FLUSH   B00100000
-#define CMD_END     B11111111
-#define CMD_ERROR   B11111110
-#define CMD_FULL    B11111100
+#define CMD_ROTMOVE B00000001 // Buffered: MSB 1 performs CCW rotation
+#define CMD_HOLMOVE B00000010 // Buffered: NOT YET IMPLEMENTED
+#define CMD_KICK    B00000100 // Buffered
+#define CMD_STOP    B00001000 // Buffered
+#define CMD_GRAB    B00010000 // Buffered
+#define CMD_FLUSH   B00100000 // Immediate. Flushes the buffer and awaits new commands
+#define CMD_END     B11111111 // Buffered
+#define CMD_ERROR   B11111110 // Sent for errors
+#define CMD_FULL    B11111100 // Sent if buffer is full
 #define CMD_RESEND  B11111000 // if all commands haven't been received in 500 miliseconds
-#define CMD_ACK     B11110000
+#define CMD_ACK     B11110000 // Sent after command has been received
 
 // utils
 #define BUFFERSIZE    256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
+
 // *** Globals ***
+
 // A finite state machine is required to provide concurrency between loop and 
 // serialEvent functions which both support reading serial while moving and
 // rotary-encoder-based motion
-
 byte MasterState = 0; 
-int positions[ROTARY_COUNT] = {0}; // Initial motor position for each motor.
+
+// positions of wheels based on rotary encoder values
+int positions[ROTARY_COUNT] = {0};
+
+// circular command buffer
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 unsigned long time; // used for the millis function.
+
+// rotation parameters
+byte rotMoveMode = 0;
+int rotaryTarget;
+int rotaryBias;
+
+
 
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
@@ -89,13 +100,11 @@ void setup() {
     restoreMotorPositions(positions);
 }
 
-
-
 void loop() {
   int state_end;
     switch(MasterState){
         case IDLE_STATE:
-            if (command_index != buffer_index){
+            if (command_index != buffer_index && command_index + 4 <= buffer_index){
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions();
             }
@@ -108,12 +117,12 @@ void loop() {
         case CMD_KICK:
             state_end = kickStep();
             break;
+        case CMD_GRAB:
+            state_end = grabStep();
+            break;
         case CMD_STOP:
             state_end = 1;
             motorAllStop();
-            break;
-        case CMD_GRAB:
-            state_end = grabStep();
             break;
         case CMD_FLUSH:
             state_end = 0;
@@ -122,7 +131,7 @@ void loop() {
             MasterState = IDLE_STATE;
             break;
         default:
-            Serial.println("Unrecognized Status Command. Please flush me!");
+            Serial.println(CMD_ERROR);
             break;
         if (state_end){
             MasterState = IDLE_STATE;
@@ -151,10 +160,139 @@ void serialEvent() {
             Serial.print(command_buffer[buffer_index - 2]);
         } else if (time - millis() > 500){
             Serial.print(CMD_RESEND);
-            buffer_index-= 4;
+            buffer_index -= 4;
         }
 
     }
+
+int rotMoveStep(){
+
+    switch(rotMoveMode){
+        // calculate rotation target and start rotating
+        case 0 :
+            int degrees = command_buffer[command_index + 1];
+            byte left = (MasterState >> 7); // left becomes MSB of master state/current command
+            left = left == 0 ? 1 : -1;
+            
+            if (!degrees){
+                rotMoveMode = 2;
+                return 0;
+            }
+
+            if (degrees <= 180) 
+                rotaryTarget = (int) ((1 / 120.0) * degrees * degrees + 3 * degrees);
+            else
+                rotaryTarget == ROTATION_CONST;
+
+            updateMotorPositions(positions);
+            rotaryBias = positions[0] + positions[1] + positions[2];
+
+            if (left == 1)
+                rotateLeft();
+            else
+                rotateRight();
+
+            rotMoveMode = 1;
+            return 0;
+        
+        // chck whether to stop during rotation;
+        case 1 :
+            byte left = MasterState >> 7; // left becomes MSB of master state/current command
+            left = left == 0 ? 1 : -1;
+
+            if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias)){
+                updateMotorPositions()
+            }
+            else{
+                motorAllStop();
+                restoreMotorPositions();
+                rotMoveMode = 2;
+            }
+            return 0;
+        
+        // calculate movement target and start moving forward
+        case 2 :
+            byte centimeters = command_buffer[command_index + 2];
+            
+            if (!centimeters){
+                rotMoveMode = 0;
+                return 1;
+            }
+
+            rotaryTarget = (int) (MOTION_CONST * centimeters);
+            testForward();
+
+            rotMoveMode = 3;
+            return 0;
+
+        // perform movement
+        case 3 :
+            if (-1 * forward *    positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
+                updateMotorPositions(positions);
+                return 0;
+            }
+            else{
+                motorAllStop();
+                restoreMotorPositions();
+                rotMoveMode = 0;
+                return 1;
+            }
+        default:
+            return -1;
+            break;
+            
+    }
+int holoMoveStep(){
+    Serial.println("Holonomic motion not yet implemented");
+    return 1;
+}
+
+int kickStep(){
+    return 1;
+}
+
+int grabStep(){
+    return 1;
+}
+
+void motorKick(){
+    int buff_index = 0;
+    int left = 1;
+    char char_byte;
+    int parse_val = 1;
+    int rotary_val = 0;
+    int bias;
+    
+    motorAllStop();
+    while(Serial.available() > 0){
+        delay(10); // Why does this happen ?!
+        command_buffer[buff_index++] = byte(Serial.read());
+    }
+    
+    // Parse value
+    while (buff_index-- > 0){
+        char_byte = (char) command_buffer[buff_index];
+        if (char_byte == '-')
+            left = -1;
+        else if (char_byte >= '0' && char_byte <= '9'){
+            rotary_val += ((int) char_byte - '0') * parse_val;
+            parse_val *= 10;
+        }
+    }
+    
+    delay(100);
+    Serial.print(rotary_val);
+    motorBackward(KICKER_LFT, rotary_val);
+    motorBackward(KICKER_RGT, rotary_val);                                                                                        
+    delay(500);
+    motorForward(KICKER_LFT, KICKER_LFT_POWER);
+    motorForward(KICKER_RGT, KICKER_RGT_POWER);
+    delay(500);
+    motorAllStop();
+}
+
+// basic test functions for sanity!
+
 void fullTest(){
     // Performs a test of all basic motions.
     // Each is executed in 5 seconds.
@@ -196,142 +334,6 @@ void fullTest(){
     return;
 }
 
-int rotMoveStep(){
-
-}
-
-void forwardMotion(){
-    int buff_index = 0;
-    int forward = 1;
-    char char_byte;
-    int parse_val = 1;
-    int rotary_val = 0;
-    
-    // Buffer all numbers
-    delay(10); // ask Nantas about this bug. Make sure it doesn't fuck up RF comms
-    while(Serial.available() > 0){
-        delay(10); // Why does this happen ?!
-        command_buffer[buff_index++] = byte(Serial.read());
-    }
-    
-    // Parse value
-    while (buff_index-- > 0){
-        char_byte = (char) command_buffer[buff_index];
-        if (char_byte == '-')
-            forward = -1;
-        else if (char_byte >= '0' && char_byte <= '9'){
-            rotary_val += ((int) char_byte - '0') * parse_val;
-            parse_val *= 10;
-        }
-    }
-    // Debugs for rotary value
-    //Serial.print("Forward Value: ");
-    //Serial.println(rotary_val);
-    //Serial.flush(); // waits for serial printing to finish! TODO:Remove
-    
-    rotary_val = (int) (MOTION_CONST * rotary_val);
-    
-    // Move forward/backward
-    if (forward > 0)
-        testForward();
-    else
-        testBackward();
-    
-    while (-1 * forward *    positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
-        updateMotorPositions(positions);
-    }
-    motorAllStop();
-    
-    return;
-}
-
-void rotate(){
-    int buff_index = 0;
-    int left = 1;
-    char char_byte;
-    int parse_val = 1;
-    int rotary_val = 0;
-    int bias;
-    
-    // Buffer all numbers
-    delay(10); // ask mentor(s) about this bug. Make sure it doesn't fuck up RF comms due to difference in bandwidth :?
-    while(Serial.available() > 0){
-        delay(10); // Why does this happen ?!
-        command_buffer[buff_index++] = byte(Serial.read());
-    }
-    
-    // Parse value
-    while (buff_index-- > 0){
-        char_byte = (char) command_buffer[buff_index];
-        if (char_byte == '-')
-            left = -1;
-        else if (char_byte >= '0' && char_byte <= '9'){
-            rotary_val += ((int) char_byte - '0') * parse_val;
-            parse_val *= 10;
-        }
-    }
-    // Debugs for rotary value
-    //Serial.print("Rotary Value: ");
-    //Serial.println(rotary_val);
-
-    // Linear function to correct all motion less than 180 deg
-    rotary_val = (int) ((1 / 120.0) * rotary_val * rotary_val + 3 * rotary_val);
-
-    // bias fix due to rotary encoder initial positions
-    updateMotorPositions(positions);
-    bias = positions[0] + positions[1] + positions[2];
-    
-    // move forward/backward
-    if (left > 0)
-        rotateLeft();
-    else
-        rotateRight();
-    
-    while (left *    (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotary_val + left * bias){
-        updateMotorPositions(positions);
-    }
-    motorAllStop();
-    
-    return;
-}
-
-void motorKick(){
-    int buff_index = 0;
-    int left = 1;
-    char char_byte;
-    int parse_val = 1;
-    int rotary_val = 0;
-    int bias;
-    
-    motorAllStop();
-    while(Serial.available() > 0){
-        delay(10); // Why does this happen ?!
-        command_buffer[buff_index++] = byte(Serial.read());
-    }
-    
-    // Parse value
-    while (buff_index-- > 0){
-        char_byte = (char) command_buffer[buff_index];
-        if (char_byte == '-')
-            left = -1;
-        else if (char_byte >= '0' && char_byte <= '9'){
-            rotary_val += ((int) char_byte - '0') * parse_val;
-            parse_val *= 10;
-        }
-    }
-    
-    delay(100);
-    Serial.print(rotary_val);
-    motorBackward(KICKER_LFT, rotary_val);
-    motorBackward(KICKER_RGT, rotary_val);                                                                                        
-    delay(500);
-    motorForward(KICKER_LFT, KICKER_LFT_POWER);
-    motorForward(KICKER_RGT, KICKER_RGT_POWER);
-    delay(500);
-    motorAllStop();
-}
-
-// basic test functions for sanity!
 
 void testRightBackward() {
     motorForward(MOTOR_LFT, POWER_LFT * 1);
