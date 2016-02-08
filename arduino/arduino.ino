@@ -11,18 +11,17 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
         3. read the comments before-hand.
 
 
-TODO: - Implement a function that constantly updates power to the motors during motion
-            at an appropriate time-step(~50ms)
-            - Split rotations at more than 180 deg to two or more steps with max deg 180
+TODO: 
+    - Split rotations at more than 180 deg to two or more steps with max deg 180
 
 COMMS API 
 
 1: Rotate & Move <CMD byte> <Degree to rotate> <Degree to move> <end byte>
 2: Holonomic Motion <CMD byte> <Degree to rotate> <Degree to move> <end byte>
-3: Kick <CMD byte> <Power/Cm> <end byte>
-4: STOP <CMD byte> <end byte>
-5: FLUSH Buffer
-m: milestone one movement (not yet implemented)
+3: Kick <CMD byte> <Power/Cm> <end byte> <end byte>
+4: STOP <CMD byte> <end byte> <end byte> <end byte>
+5: FLUSH Buffer <CMD byte> <end byte> <end byte> <end byte>
+6. 
 t: sanity-test;
 
 
@@ -35,6 +34,7 @@ t: sanity-test;
 #define KICKER_LFT 3
 #define KICKER_RGT 4
 #define GRABBER 5
+#define KICKER 4 // TODO: Remove once second kicker motor has been added
 
 // Power calibrations
 #define POWER_LFT    255
@@ -55,7 +55,8 @@ t: sanity-test;
 #define CMD_KICK    B00000100 // Buffered
 #define CMD_STOP    B00001000 // Buffered
 #define CMD_GRAB    B00010000 // Buffered
-#define CMD_FLUSH   B00100000 // Immediate. Flushes the buffer and awaits new commands
+#define CMD_UNGRAB  B00100000 // Buffered
+#define CMD_FLUSH   B01000000 // Immediate. Flushes the buffer and awaits new commands
 #define CMD_END     B11111111 // Buffered
 #define CMD_ERROR   B11111110 // Sent for errors
 #define CMD_FULL    B11111100 // Sent if buffer is full
@@ -63,7 +64,7 @@ t: sanity-test;
 #define CMD_ACK     B11110000 // Sent after command has been received
 
 // utils
-#define BUFFERSIZE    256
+#define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
@@ -81,8 +82,8 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
-unsigned long time; // used for the millis function.
-
+unsigned long serial_time; // used for the millis function.
+unsigned long rot_move_time;
 // rotation parameters
 byte rotMoveMode = 0;
 int rotaryTarget;
@@ -120,6 +121,9 @@ void loop() {
         case CMD_GRAB:
             state_end = grabStep();
             break;
+        case CMD_UNGRAB:
+            state_end = unGrabStep();
+            break;
         case CMD_STOP:
             state_end = 1;
             motorAllStop();
@@ -147,7 +151,7 @@ time loop() runs.
 */
 
 void serialEvent() {
-    time = millis();
+    serial_time = millis();
     while (Serial.available()) {
         command_buffer[buffer_index++] = Serial.read();
 
@@ -248,11 +252,35 @@ int holoMoveStep(){
 }
 
 int kickStep(){
+    kick_val = command_buffer[command_index + 1];
+    motorBackward(GRABBER, kick_val); 
+    delay(100);
+    Serial.print(kick_val);
+    motorForward(KICKER, kick_val);                                        
+    delay(500);
+    motorBackward(KICKER, KICKER_LFT_POWER);
+    delay(500);
+    motorForward(GRABBER, kick_val);
+    delay(500); 
+    motorAllStop();
     return 1;
 }
 
 int grabStep(){
+    // TODO: Parallelize
+    motorAllStop();
+    motorBackward(GRABBER,100);
+    delay(500);
+    motorBackward(GRABBER,0);
     return 1;
+}
+
+int unGrabStep(){
+  // TODO: Parallelize
+  motorForward(GRABBER,100);
+  delay(500);
+  motorBackward(GRABBER,0);
+  return 1;
 }
 
 void motorKick(){
