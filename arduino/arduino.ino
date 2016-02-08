@@ -107,7 +107,7 @@ void loop() {
         case IDLE_STATE:
             if (command_index != buffer_index && command_index + 4 <= buffer_index){
                 MasterState = command_buffer[command_index];
-                restoreMotorPositions();
+                restoreMotorPositions(positions);
             }
         case CMD_ROTMOVE:
             state_end = rotMoveStep();
@@ -158,30 +158,32 @@ void serialEvent() {
         // Test for CMD_END
         if (buffer_index % 4 == 0){
             if (command_buffer[buffer_index - 1] == CMD_END){
-            Serial.print(CMD_ACK);
-            Serial.print(command_buffer[buffer_index - 4]);
-            Serial.print(command_buffer[buffer_index - 3]);
-            Serial.print(command_buffer[buffer_index - 2]);
+                Serial.print(CMD_ACK);
+                Serial.print(command_buffer[buffer_index - 4]);
+                Serial.print(command_buffer[buffer_index - 3]);
+                Serial.print(command_buffer[buffer_index - 2]);
+            }
             if (command_buffer[buffer_index - 4] == CMD_FLUSH){
                 buffer_index = 0;
                 command_index = 0;
                 motorAllStop();
             }
-        } else if (time - millis() > 500){
+        } else if (serial_time - millis() > 500){
             Serial.print(CMD_RESEND);
-            while(buffer_index-- %4 != 0) {}
+            while(buffer_index %4 != 0) {
+                buffer_index--;
+            }
         }
-
-
     }
+}
 
 int rotMoveStep(){
-
+    byte left, degrees, centimeters;
     switch(rotMoveMode){
         // calculate rotation target and start rotating
         case 0 :
-            int degrees = command_buffer[command_index + 1];
-            byte left = (MasterState >> 7); // left becomes MSB of master state/current command
+            degrees = command_buffer[command_index + 1];
+            left = (MasterState >> 7); // left becomes MSB of master state/current command
             left = left == 0 ? 1 : -1;
             
             if (!degrees){
@@ -207,22 +209,22 @@ int rotMoveStep(){
         
         // chck whether to stop during rotation;
         case 1 :
-            byte left = MasterState >> 7; // left becomes MSB of master state/current command
+            left = MasterState >> 7; // left becomes MSB of master state/current command
             left = left == 0 ? 1 : -1;
 
-            if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias)){
-                updateMotorPositions()
+            if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
+                updateMotorPositions(positions);
             }
             else{
                 motorAllStop();
-                restoreMotorPositions();
+                restoreMotorPositions(positions);
                 rotMoveMode = 2;
             }
             return 0;
         
         // calculate movement target and start moving forward
         case 2 :
-            byte centimeters = command_buffer[command_index + 2];
+            centimeters = command_buffer[command_index + 2];
             
             if (!centimeters){
                 rotMoveMode = 0;
@@ -237,21 +239,21 @@ int rotMoveStep(){
 
         // perform movement
         case 3 :
-            if (-1 * forward *    positions[MOTOR_LFT] < rotary_val && forward * positions[MOTOR_RGT] < rotary_val){
+            if (-1 * positions[MOTOR_LFT] < rotaryTarget && positions[MOTOR_RGT] < rotaryTarget){
                 updateMotorPositions(positions);
                 return 0;
             }
             else{
                 motorAllStop();
-                restoreMotorPositions();
+                restoreMotorPositions(positions);
                 rotMoveMode = 0;
                 return 1;
             }
         default:
             return -1;
-            break;
-            
+            break;       
     }
+}
 int holoMoveStep(){
     Serial.print(CMD_ERROR);
     Serial.println("Holonomic motion not yet implemented");
@@ -259,7 +261,7 @@ int holoMoveStep(){
 }
 
 int kickStep(){
-    kick_val = command_buffer[command_index + 1];
+    byte kick_val = command_buffer[command_index + 1];
     motorBackward(GRABBER, kick_val); 
     delay(100);
     Serial.print(kick_val);
@@ -290,7 +292,7 @@ int unGrabStep(){
   return 1;
 }
 
-void motorKick(){
+int motorKick(){
     int buff_index = 0;
     int left = 1;
     char char_byte;
@@ -430,6 +432,7 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
 
 
 
