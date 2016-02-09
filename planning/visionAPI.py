@@ -202,7 +202,10 @@ def getAllyRotation(frame=None):
 
 
 def getEnemyRotation(frame=None):
-    """Returns the rotation of the two enemy robots in radians between -pi and pi"""
+    """Returns the rotation of the two enemy robots in radians between -pi and pi
+
+    Note that the pink robot is enemy A and the green robot is enemy B
+    """
     # if we have a connection to the camera...
     if camera!=None:
         # get the current frame if it's not been inputted
