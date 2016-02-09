@@ -98,7 +98,9 @@ def getMyCoords(frame=None):
             frame = camera.get_frame()
         # get the info from the frame
         pixelCoordinates = robotTracker.getRobotCoordinates(frame,'us',our_robot_color)
-        cartesianCoordinates = robotTracker.transformCoordstoDecartes(pixelCoordinates)
+        # if you couldn't find us, return None
+        if pixelCoordinates==None:
+            return None
         return Point(pixelCoordinates[0],pixelCoordinates[1])
     else:
         # if we have no connection to the camera, just return some dummy data
@@ -113,7 +115,9 @@ def getAllyCoords(frame=None):
             frame = camera.get_frame()
         # get the info from the frame
         pixelCoordinates = robotTracker.getRobotCoordinates(frame,'us',our_mate_color)
-        cartesianCoordinates = robotTracker.transformCoordstoDecartes(pixelCoordinates)
+        # if you couldn't find the ally, return None
+        if pixelCoordinates==None:
+            return None
         return Point(pixelCoordinates[0],pixelCoordinates[1])
     else:
         # if we have no connection to the camera, just return some dummy data
@@ -131,10 +135,18 @@ def getEnemyCoords(frame=None):
             frame = camera.get_frame()
         # get the info from the frame
         pinkPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','pink_robot')
-        pinkCartesianCoordinates = robotTracker.transformCoordstoDecartes(pinkPixelCoordinates)
+        # if you couldn't find the pink enemy, return none for him
+        if pinkPixelCoordinates==None:
+            pinkPoint=None
+        else:
+            pinkPoint = Point(pinkPixelCoordinates[0],pinkPixelCoordinates[1])
         greenPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','green_robot')
-        greenCartesianCoordinates = robotTracker.transformCoordstoDecartes(greenPixelCoordinates)
-        return[Point(pinkPixelCoordinates[0],pinkPixelCoordinates[1]),Point(greenPixelCoordinates[0],greenPixelCoordinates[1])]
+        # if you couldn't find the green enemy, return none for him
+        if greenPixelCoordinates==None:
+            greenPoint=None
+        else:
+            greenPoint = Point(greenPixelCoordinates[0],greenPixelCoordinates[1])
+        return[pinkPoint,greenPoint]
     else:
         # if we have no connection to the camera, just return some dummy data
         return [Point(80,10), Point(220,76)]
