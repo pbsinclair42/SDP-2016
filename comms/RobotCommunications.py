@@ -11,38 +11,45 @@ class RobotCommunications(Communications):
     def __init__(self, debug=False):
         super(RobotCommunications, self).__init__(debug)
 
-
+    # TODO: program arduino for holonomic movement
     def holo(self,degrees,distance):
         x = self.write(chr(2) + chr(degrees) + chr(distance) +chr(255))
         return x
+    # TODO: program arduino for holonomic movement
     def holoneg(self,degrees,distance):
         x = self.write(chr(130) + chr(degrees) + chr(distance) +chr(255))
         return x
+    # TODO: program arduino for stop
     def stop(self):
         x=self.write(chr(8)+chr(255)+chr(255)+chr(255))
         return x
-    # rotate `degrees` degrees, then move `distance` cm
+    # rotate `degrees` degrees anticlockwise, then move `distance` cm
     def rotate(self,distance,degrees):
         x = self.write(chr(1) +chr(degrees)+chr(distance) + chr(255))
         return x
+    # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
         x = self.write(chr(129) +chr(degrees)+chr(distance) + chr(255))
         return x
+    # kick with power `distance`
+    # TODO: calibrate to match distance
     def kick(self,distance):
         x = self.write(chr(4)+chr(distance)+chr(255)+chr(255))
         return x
-    def flush(self):#stop previous command
+    # cancel previous command and any queued commands
+    def flush(self):
         x = self.write(chr(128)+chr(255)+chr(255)+chr(255))
         return x
-    def grab(self):#grab
+    # grab the ball
+    # ensure the grabber is opened before calling!
+    def grab(self):
         x = self.write((chr(16) + chr(255)+chr(255)+chr(255)))
         return x
+    # open the grabber, ready to grab
     def ungrab(self):
         x = self.write(chr(32) + chr(255)+chr(255)+chr(255))
         return x
-    def flush(self):
-        x = self.write(chr(64) + chr(255)+chr(255)+chr(255))
-        return x
-    def test(self, argument):#test comms
+    # send a test message to ensure comms are working
+    def test(self, argument):
         print 'I got your message: ' + str(argument)
 
