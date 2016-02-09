@@ -197,6 +197,9 @@ void serialEvent() {
                 buffer_index = 0;
                 command_index = 0;
                 motorAllStop();
+                rotMoveGrabMode = 0;
+                masterState = 0;
+                
             }
         } else if (millis() - serial_time > 500){ // TODO: Break this only here;
             while(buffer_index %4 != 0) {
