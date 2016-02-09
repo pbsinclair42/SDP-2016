@@ -145,6 +145,17 @@ class Robot(Moveable):
         self.currentRotation=0
         self.name=name
 
+    def updateRotation(self, rotation):
+        """Update the rotation with a new value
+
+        If the vision system failed to find the rotation of the robot this frame, 
+        just assume the rotation hasn't changed
+
+        Args:
+            rotation (float): the direction the robot is facing in radians"""
+        if rotation!=None:
+            self.currentRotation==rotation
+
 
 class Ball(Moveable):
     def __init__(self, p=None, name=None):

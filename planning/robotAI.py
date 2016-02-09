@@ -15,7 +15,7 @@ def updatePositions():
     # update the system's beliefs about the robots
     for i in range(0,len(robots)):
         robots[i].update(details[i][0])
-        robots[i].rotation=details[i][1]
+        robots[i].updateRotation(details[i][1])
     # get the info on the ball from the vision system and update the system's beliefs about the ball
     ball.update(visionAPI.getBallCoords())
     ball.status = visionAPI.getBallStatus()
