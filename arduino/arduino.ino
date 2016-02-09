@@ -46,8 +46,8 @@ t: sanity-test;
 #define GRABBER_POWER 255
 
 // temporal calibrations
-#define KICK_TIME 500
-#define GRAB_TIME 400
+#define KICK_TIME 550
+#define GRAB_TIME 450
 
 // Movement Constants
 #define MOTION_CONST 11.891304
@@ -107,18 +107,16 @@ int holono_target;
 void setup() {
     SDPsetup();
     motorAllStop(); // for sanity
-    Serial.println("What the fuck is going on?");
-    Serial.print(CMD_END);
-    Serial.print(CMD_GRAB);
+    Serial.println("begin");
     // to get rid of potential bias
     updateMotorPositions(positions);
     restoreMotorPositions(positions);
-}
+  }
 
 void loop() {
-  //Serial.print(MasterState);
+  delay(50);
   int state_end = 0;
-    switch(MasterState){
+  switch(MasterState){
         case IDLE_STATE:
             if (command_index != buffer_index && command_index + 4 <= buffer_index){
                 Serial.print("CMD: ");
@@ -127,7 +125,6 @@ void loop() {
                 Serial.println(buffer_index);
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
-                delay(1000);  
           }
             break;
         case CMD_ROTMOVE:
@@ -159,7 +156,6 @@ void loop() {
             MasterState = IDLE_STATE;
             break;
         default:
-            Serial.print("VERY BAD ERROR");
             Serial.print(MasterState);
             Serial.println(CMD_ERROR);
             MasterState = IDLE_STATE;
@@ -182,22 +178,23 @@ void serialEvent() {
     serial_time = millis();
     while (Serial.available()) {
         command_buffer[buffer_index++] = Serial.read();
-        Serial.println(command_buffer[buffer_index - 1]);
-        Serial.println(buffer_index);
-        Serial.println("-------------");
         if (buffer_index % 4 == 0){
             // acknowledge proper command
             if (command_buffer[buffer_index - 1] == CMD_END){
                 Serial.print(CMD_ACK);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 4]);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 3]);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 2]);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 1]);
             }
             // report bad command
             else{
-                Serial.println("SANITY CHECK");
                 Serial.print(CMD_ERROR);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 1]);
                 buffer_index = buffer_index - 4;
             }
@@ -244,6 +241,7 @@ int rotMoveStep(){
                 rotateRight();
 
             rotMoveGrabMode = 1;
+            printMotorPositions(positions);
             return 0;
         
         // chck whether to stop during rotation;
@@ -274,6 +272,7 @@ int rotMoveStep(){
             testForward();
 
             rotMoveGrabMode = 3;
+            printMotorPositions(positions);
             return 0;
 
         // perform movement
@@ -286,6 +285,7 @@ int rotMoveStep(){
                 motorAllStop();
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 0;
+                printMotorPositions(positions);
                 return 1;
             }
         default:
@@ -312,7 +312,7 @@ int kickStep(){
         case 1:
             if (millis() - command_time > GRAB_TIME){
                 motorBackward(GRABBER, 0);
-                motorForward(KICKER, command_buffer[command_index + 1]);
+                motorForward(KICKER, (int) command_buffer[command_index + 1]);
                 rotMoveGrabMode = 2;
                 command_time = millis(); // restore current time
             }
