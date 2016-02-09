@@ -31,7 +31,7 @@ class RobotCommunications(Communications):
         x = self.write(chr(4)+chr(distance)+chr(255)+chr(255))
         return x
     def flush(self):#stop previous command
-        x = self.write(chr(255)+chr(255)+chr(255)+chr(255))
+        x = self.write(chr(128)+chr(255)+chr(255)+chr(255))
         return x
     def grab(self):#grab
         x = self.write((chr(16) + chr(255)+chr(255)+chr(255)))
