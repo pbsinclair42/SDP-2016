@@ -34,7 +34,8 @@ class Tracker():
         return self.removeUselessContours(contours)
 
     def removeUselessContours( self, contours ) :
-
+        if contours is None:
+            return None
         real_contours = []
         for contour in contours:
             _, radius = cv2.minEnclosingCircle(contour)
@@ -45,10 +46,9 @@ class Tracker():
 
     # Extracts a center from a single contour
     def getContourCenter(self, contour):
-
+        if contour is None:
+            return None
         center, _ = cv2.minEnclosingCircle(contour)
-        #print radius
-
         return center
 
 
@@ -92,7 +92,8 @@ class Tracker():
 
 
     # Returns the distance between 2 points
-    def distance(self, point_1, point_2):
+    @staticmethod
+    def distance(point_1, point_2):
 
         dx = ( point_1[0] - point_2[0] )
         dy = ( point_1[1] - point_2[1] )
@@ -159,6 +160,8 @@ class BallTracker(Tracker):
     def getBallCoordinates(self, frame):
 
         contours = self.getContours(frame, self.color, adjustments)
+        if contours is None:
+            return None
         ball_contour = self.getBiggestContour(contours)
 
         return self.getContourCenter(ball_contour)
@@ -190,7 +193,7 @@ class RobotTracker(Tracker):
 
         side_contours = self.getContours(frame, self.side_colors[side], adjustments)
         pink_contours = self.getContours(frame, 'pink', adjustments)
-        #print len(pink_contours)
+
         for contour in side_contours:
 
             contour_center = self.getContourCenter(contour)
@@ -200,10 +203,10 @@ class RobotTracker(Tracker):
                 pink_contour_center = self.getContourCenter(pink_contour)
 
                 dist = self.distance( pink_contour_center, contour_center )
-                #print dist
+
                 if dist < 20*20 :
                     pink_contour_count += 1
-            #print pink_contour_count
+
             if pink_contour_count == self.num_pink[position]:
                 return contour_center
 
@@ -224,7 +227,6 @@ class RobotTracker(Tracker):
             if green_contours == []:
                 return None, None
 
-            #print center
             orientation_green = self.getKClosestContours(1, center, green_contours)
 
             green_center = self.getContourCenter(orientation_green[0])

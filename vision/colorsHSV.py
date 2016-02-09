@@ -10,7 +10,7 @@ color_range[('aharacle','pink')] = ( np.array([150, 110, 110]), np.array([175, 2
 color_range[('aharacle','red')] = ( np.array([0, 175, 175]), np.array([3, 255, 255]) )
 color_range[('aharacle','maroon')] = ( np.array([177, 175, 175]), np.array([180, 255, 255]) )
 color_range[('aharacle','green')] = ( np.array([50, 190, 190]), np.array([55, 255, 255]) )
-color_range[('aharacle','bright_green')] = ( np.array([52, 190, 190]), np.array([60, 255, 255]) )
+color_range[('aharacle','bright_green')] = ( np.array([45, 180, 180]), np.array([60, 255, 255]) )
 color_range[('aharacle','yellow')] = ( np.array([25, 145, 145]), np.array([40, 255, 255]) )
 
 # pitch0 (D.304) kilmore/PC3

@@ -36,17 +36,13 @@ def linear_regression( points ):
 
     X_intermediary = np.dot(X.T, X)
     Y_intermediary = np.dot(X.T, yc)
-    #print X_intermediary
-    #print Y_intermediary
 
     R = np.dot( inv(X_intermediary), Y_intermediary )
     
     k = R[1][0]
     last_2 = points[-2:]
-    #print last_2
     first_x = last_2[0][0]
     second_x = last_2[1][0]
-    #print first_x
     
     if first_x < second_x :
         return [1, k]
@@ -60,13 +56,19 @@ def add_points( (x1, y1), (x2, y2) ):
     return ( x1 + x2, y1 + y2 )
 
 c = Camera()
+color = raw_input("Specify ball color: ")
+while 1:
+    if color == 'blue' or color == 'red':
+        break
+    else:    
+        color = raw_input("Wrong color! Enter ball color again: ")
 
-t = BallTracker('red')
+t = BallTracker(color)
 ballpos = None
 while ballpos is None:
     frame = c.get_frame()
     ballpos = t.getBallCoordinates(frame)
-ballpos = Tracker.transformCoordsToDecartes(ballpos)
+ballpos = Tracker.transformCoordstoDecartes(ballpos)
 
 previous_positions =  np.array( [ ballpos ] )
 
@@ -75,12 +77,11 @@ while True:
 
     frame = c.get_frame()
     ballpos = t.getBallCoordinates(frame)
-    print ballpos
-    #print len(previous_positions)
+    #print ballpos
 
     if ballpos is None:
         continue
-    ballpos = Tracker.transformCoordsToDecartes(ballpos)
+    ballpos = Tracker.transformCoordstoDecartes(ballpos)
     previous_positions = np.append(previous_positions, [ballpos], axis = 0)
 
     last_k_positions = previous_positions[-k:]
@@ -89,8 +90,8 @@ while True:
     direction_vector = [ 20 * x for x in direction_vector ]
 
 
-    p1 = Tracker.transformCoordsToCV(round_point(ballpos))
-    p2 = Tracker.transformCoordsToCV(round_point(add_points(ballpos, direction_vector)))
+    p1 = Tracker.transformCoordstoCV(round_point(ballpos))
+    p2 = Tracker.transformCoordstoCV(round_point(add_points(ballpos, direction_vector)))
     frame = cv2.circle(frame, p1, 20, (0,0,0), 2)
     cv2.line(frame, p1, p2, (0,255,122), 2)
 
