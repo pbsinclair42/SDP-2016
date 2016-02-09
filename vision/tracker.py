@@ -15,11 +15,12 @@ adjustments['blur'] = (11,11) # needs to be parametrized .. TODO
 
 class Tracker():
 
-    def get_contours(self, frame, color, adjustments):
+    def getContours(self, frame, color, adjustments):
 
         blur_intensity = adjustments['blur']
         blurred_frame = cv2.GaussianBlur(frame, blur_intensity, 0)
         hsv_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_BGR2HSV)
+
         if color == 'red':
             red_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'red')][0], color_range[(computer_name,'red')][1])
             maroon_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'maroon')][0], color_range[(computer_name,'maroon')][1])
@@ -30,45 +31,50 @@ class Tracker():
         _, threshold = cv2.threshold(mask, 127, 255, 0)
         _, contours, _ = cv2.findContours(threshold, 1, 2)
 
-        return contours
+        return self.removeUselessContours(contours)
+
+    def removeUselessContours( self, contours ) :
+
+        real_contours = []
+        for contour in contours:
+            _, radius = cv2.minEnclosingCircle(contour)
+            if radius > 1.3 and radius < 20:
+                real_contours.append(contour)
+
+        return real_contours
 
     # Extracts a center from a single contour
-    def get_contour_center(self, contour):
+    def getContourCenter(self, contour):
 
-        (cx, cy), radius = cv2.minEnclosingCircle(contour)
+        center, _ = cv2.minEnclosingCircle(contour)
         #print radius
 
-        return ( cx, cy ), radius
+        return center
 
 
     # Extracts the centers of a list of contours
-    def get_contour_centers(self, contours):
+    def getContourCenters(self, contours):
 
-        return [ self.get_contour_center(x) for x in contours ]
+        return [ self.getContourCenter(x) for x in contours ]
 
-    def getK_furthest_contours(self, k, p, contours):
-        ##print len(contours)
-        ##print contours
-        distances = [ self.distance( p[0], self.get_contour_center(c)[0] ) for c in contours]
+
+    def getKFurthestContours(self, k, p, contours):
+
+        distances = [ self.distance( p, self.getContourCenter(c) ) for c in contours ]
         distances_sorted = np.argsort(distances)
-        ##print distances
-        ##print distances_sorted
-        return [ contours[x] for x in distances_sorted[-k:]]
+        return [ contours[x] for x in distances_sorted[-k:] ]
 
-    def getK_closest_contours(self, k, p, contours):#
 
-        distances = [ self.distance( p[0], self.get_contour_center(c)[0] ) for c in contours]
-        #print 80 * "="
-        #print distances
+    def getKClosestContours(self, k, p, contours):
+
+        distances = [ self.distance( p, self.getContourCenter(c) ) for c in contours ]
         distances_sorted = np.argsort(distances)
-        #print 80 * "="
-        #print distances_sorted
-        #print [ contours[x] for x in distances_sorted[:k]]
+
         return [ contours[x] for x in distances_sorted[:k]]
 
 
     # Gives us the contour with the biggest area from a list of contours
-    def get_biggest_contour(self, contours):
+    def getBiggestContour(self, contours):
 
         max_area = -1
         max_contour_position = -1
@@ -93,7 +99,8 @@ class Tracker():
 
         return dx * dx + dy * dy 
 
-    def average_point(self, points):
+
+    def meanPoint(self, points):
 
         tx = 0.0
         ty = 0.0
@@ -103,24 +110,29 @@ class Tracker():
             ty += point[1]
 
         l = len(points)
+        if l == 0:
+            return None
 
         return ( tx / l, ty / l )
 
-    def getDirectionVector( self, center, orientation_p ):
 
-        (cx, cy) = center
-        (ox, oy) = orientation_p
+    def getDirectionVector( self, (cx, cy), (ox, oy) ):
+
+        diff_x = cx - ox
+        diff_y = cy - oy
+
+        if diff_x == 0:
+            return (0, -diff_x)
 
         k = (cy - oy) / (cx - ox)
 
-        t  = 10
+        if ox >= cx :
+            dir_vector = [1, k]
+        else :
+            dir_vector = [-1, -k]
 
-        if ox < cx :
-            t = -10
+        return dir_vector
 
-        dv = (1, k)
-
-        return [ t * x for x in dv ]
 
     def rotateVector( self, (x, y), angle ):
         x_new = x * math.cos(angle) - y * math.sin(angle)
@@ -130,39 +142,31 @@ class Tracker():
     
     @staticmethod
     def transformCoordstoDecartes( (x, y) ):
-        return ( x - 320, -y + 240 )
+        return ( x - 320, 240 - y )
 
     @staticmethod
     def transformCoordstoCV( (x, y) ) :
         return ( x + 320, 240 - y )
 
+
 class BallTracker(Tracker):
 
-    def __init__(self, ballColor):
-        self.color = ballColor
+    def __init__(self, ball_color):
+        self.color = ball_color
 
 
     # Extracts the ( center, radius ) of our ball
-    def get_ball_coordinates(self, frame):
+    def getBallCoordinates(self, frame):
 
-        contours = self.get_contours(frame, self.color, adjustments)
-        ball_contour = self.get_biggest_contour(contours)
+        contours = self.getContours(frame, self.color, adjustments)
+        ball_contour = self.getBiggestContour(contours)
 
-        return self.get_contour_center(ball_contour)
-
-    ## Prints the circle around the ball onto the frame
-    def show_ball_frame(self, frame):
-
-        center, radius = self.get_ball_coordinates(frame)
-        cv2.circle(frame, center, (radius+10), (255,255,255), 2)
-        cv2.imshow('test', frame)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        return self.getContourCenter(ball_contour)
 
 
 class RobotTracker(Tracker):
 
-    def __init__(self, our_color='yellow', attacker_pink = 1):
+    def __init__(self, our_color='yellow', num_of_pink = 1):
 
         self.side_colors = {}
         if (our_color == 'yellow'):
@@ -173,98 +177,110 @@ class RobotTracker(Tracker):
             self.side_colors['opponent'] = 'yellow'
 
         self.num_pink = {}
-        self.num_pink['attacker'] = attacker_pink
-        self.num_pink['defender'] = 4 - attacker_pink
+        if num_of_pink == 1:
+            self.num_pink['pink_robot'] = 4 - num_of_pink
+            self.num_pink['green_robot'] = num_of_pink
+        else:    
+            self.num_pink['pink_robot'] = num_of_pink
+            self.num_pink['green_robot'] = 4 - num_of_pink
  
 
     # Gets the coordinates of the robot on a particular SIDE (us or opponent) and for a particular POSITION (attacker or defender)
-    def get_robot_coordinates(self, frame, side, position):
+    def getRobotCoordinates(self, frame, side, position):
 
-        possible_opponent_contours = self.get_contours(frame, self.side_colors[side], adjustments)
-        pink_contours = self.get_contours(frame, 'pink', adjustments)
+        side_contours = self.getContours(frame, self.side_colors[side], adjustments)
+        pink_contours = self.getContours(frame, 'pink', adjustments)
+        #print len(pink_contours)
+        for contour in side_contours:
 
-        #'''print self.get_contour_centers(pink_contours)
-        #print ('---------------')
-        #print self.get_contour_centers(possible_opponent_contours)'''
-
-        print len(possible_opponent_contours)
-
-        for contour in possible_opponent_contours:
-            contour_center, radius = self.get_contour_center(contour)
+            contour_center = self.getContourCenter(contour)
             pink_contour_count = 0
-            if radius < 2 or radius > 15:
-                continue
-            for pink_contour in pink_contours:
-                pink_contour_center, radius = self.get_contour_center(pink_contour)
 
-                if radius < 2 or radius > 15:
-                    continue
+            for pink_contour in pink_contours:
+                pink_contour_center = self.getContourCenter(pink_contour)
 
                 dist = self.distance( pink_contour_center, contour_center )
+                #print dist
                 if dist < 20*20 :
                     pink_contour_count += 1
-            print("Pink: ", pink_contour_count)
-
+            #print pink_contour_count
             if pink_contour_count == self.num_pink[position]:
-                return contour_center, radius
+                return contour_center
 
         return None
 
-    def get_robot_orientation(self, frame, side, position):
 
-        center = self.get_robot_coordinates(frame, side, position)
+    def getRobotOrientation(self, frame, side, position):
+
+        center = self.getRobotCoordinates(frame, side, position)
+        if center is None:
+            return None, None
 
         if self.num_pink[position] == 3:
-            orientation_color = 'pink'
-            pass
+
+            green_contours = self.getContours(frame, 'bright_green', adjustments)
+            pink_contours = self.getContours(frame, 'pink', adjustments)
+
+            if green_contours == []:
+                return None, None
+
+            #print center
+            orientation_green = self.getKClosestContours(1, center, green_contours)
+
+            green_center = self.getContourCenter(orientation_green[0])
+
+            orientation_pink = self.getKClosestContours(3, green_center, pink_contours)
+            orientation_pink = self.getKFurthestContours(2, green_center, orientation_pink)
+            if len(orientation_pink) != 2:
+                return None, None
+
+            pink_centers = self.getContourCenters(orientation_pink)
+            mean_pink_point = self.meanPoint(pink_centers)
+
+            center = self.transformCoordstoDecartes( center )
+            mean_pink_point = self.transformCoordstoDecartes( mean_pink_point )
+            direction_vector = self.getDirectionVector(center, mean_pink_point)
+
+            angle_radians = np.arctan2( direction_vector[1], direction_vector[0] )
+            angle_degrees = math.degrees( angle_radians )
+
         else:
-            orientation_color = 'bright_green'
 
-            orientation_contours_pink = self.get_contours(frame, 'pink', adjustments)
-            #orientation_contours_green = self.get_contours(frame, 'bright_green', adjustments)
+            pink_contours = self.getContours(frame, 'pink', adjustments)
+            orientation_pink = self.getKClosestContours(1, center, pink_contours)
 
-            pink_contour = self.getK_closest_contours(1, center, orientation_contours_pink)
+            if orientation_pink == []:
+                return None, None
 
+            pink_center = self.getContourCenter(orientation_pink[0])
 
-            pink_center = self.get_contour_center(pink_contour[0])
+            center = self.transformCoordstoDecartes(center)
+            pink_center = self.transformCoordstoDecartes( pink_center )
 
-            center = self.transformCoordstoDecartes(center[0])
+            direction_vector = self.getDirectionVector( center, pink_center )
+            direction_vector = self.rotateVector( direction_vector, math.radians(215) )
 
-            #closest_green = self.getK_closest_contours(1, pink_center, orientation_contours_green)
-            pink_center = self.transformCoordstoDecartes( pink_center[0] )
-            #green_center = self.get_contour_center(closest_green[0])
-            #green_center = self.transformCoordstoDecartes( green_center[0] )
-            #midpoint = self.average_point( [pink_center, green_center] )
-
-            #print("Center: ", center)
-            #print("Midpoint", midpoint)
-            direction_vector1 = self.getDirectionVector( center, pink_center )
-            direction_vector2 = self.rotateVector( direction_vector1, math.radians(205) )
-            
-            print ('Direction Vector1:', direction_vector1)
-            print ('Direction Vector2:', direction_vector2)
-
-            angle_radians = np.arctan2( direction_vector2[1], direction_vector2[0] )
+            angle_radians = np.arctan2( direction_vector[1], direction_vector[0] )
             angle_degrees = math.degrees(angle_radians)
 
-        return angle_degrees, direction_vector1, direction_vector2
+        return (angle_degrees, direction_vector), center
 
 
-    def opponent_defender_coordinates(self, frame):
+    def opponent_green_coordinates(self, frame):
         
-        return self.get_robot_coordinates(frame, 'opponent', 'defender')
+        return self.getRobotCoordinates(frame, 'opponent', 'green_robot')
 
 
-    def opponent_attacker_coordinates(self, frame):
+    def opponent_pink_coordinates(self, frame):
         
-        return self.get_robot_coordinates(frame, 'opponent', 'attacker')
+        return self.getRobotCoordinates(frame, 'opponent', 'pink_robot')
 
 
-    def our_defender_coordinates(self, frame):
+    def our_green_coordinates(self, frame):
         
-        return self.get_robot_coordinates(frame, 'us', 'defender')
+        return self.getRobotCoordinates(frame, 'us', 'green_robot')
 
 
-    def our_attacker_coordinates(self, frame):
+    def our_pink_coordinates(self, frame):
         
-        return self.get_robot_coordinates(frame, 'us', 'attacker')   
+        return self.getRobotCoordinates(frame, 'us', 'pink_robot')   

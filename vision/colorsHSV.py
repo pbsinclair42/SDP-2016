@@ -2,7 +2,7 @@ import numpy as np
 
 # color_range[('COMPUTER_NAME, COLOR_NAME')] = ( LOWER_TRESHOLD, UPPER_TRESHOLD )
 color_range = {}
-# pitch0 (D.304) ghost.name = aharacle/PC1 works the same on kilmore/PC3 
+# pitch0 (D.304) ghost.name = aharacle/PC1
 color_range[('aharacle','white')] = ( np.array([1, 0, 100]), np.array([36, 255, 255]) )
 color_range[('aharacle','blue')] = ( np.array([95, 110, 110]), np.array([125, 255, 255]) )
 color_range[('aharacle','bright_blue')] = ( np.array([80, 110, 110]), np.array([105, 255, 255]) )
@@ -23,6 +23,17 @@ color_range[('kilmore','maroon')] = ( np.array([176, 175, 175]), np.array([180, 
 color_range[('kilmore','green')] = ( np.array([50, 190, 190]), np.array([55, 255, 255]) )
 color_range[('kilmore','bright_green')] = ( np.array([52, 190, 190]), np.array([60, 255, 255]) )
 color_range[('kilmore','yellow')] = ( np.array([25, 145, 145]), np.array([40, 255, 255]) )
+
+# pitch0 (D.304) kilmore/PC2
+color_range[('dunoon','white')] = ( np.array([1, 0, 100]), np.array([36, 255, 255]) )
+color_range[('dunoon','blue')] = ( np.array([105, 110, 110]), np.array([125, 255, 255]) )
+color_range[('dunoon','bright_blue')] = ( np.array([65, 120, 120]), np.array([100, 255, 255]) )
+color_range[('dunoon','pink')] = ( np.array([140, 110, 110]), np.array([175, 255, 255]) )
+color_range[('dunoon','red')] = ( np.array([0, 175, 175]), np.array([4, 255, 255]) )
+color_range[('dunoon','maroon')] = ( np.array([176, 175, 175]), np.array([180, 255, 255]) )
+color_range[('dunoon','green')] = ( np.array([50, 190, 190]), np.array([55, 255, 255]) )
+color_range[('dunoon','bright_green')] = ( np.array([52, 190, 190]), np.array([60, 255, 255]) )
+color_range[('dunoon','yellow')] = ( np.array([25, 145, 145]), np.array([40, 255, 255]) )
 
 # pitch0 (D.303) ghost.name = knapdale/PC4
 color_range[('knapdale','white')] = ( np.array([1, 0, 100]), np.array([36, 255, 255]) )
