@@ -1,12 +1,12 @@
 from moveables import Robot, Ball
 
 # our supreme robot
-me = Robot()
+me = Robot(name="me")
 # Team 3's robot
-ally = Robot()
+ally = Robot(name="ally")
 # the two robots we're against
-enemies = [Robot(), Robot()]
+enemies = [Robot(name="enemyA"), Robot(name="enemyB")]
 # a list containing all robots on the field for convenience
 robots = [me, ally]+enemies
 # guess what this could possibly be
-ball = Ball()
+ball = Ball(name="ball")

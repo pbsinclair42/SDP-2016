@@ -38,33 +38,39 @@ class Moveable(object):
             newPoint (Point): the new coordinates of this object
 
         """
-        # save the new position
-        self.currentPoint = newPoint
-        self.pointHistory.append(newPoint)
-        # only store a max of _HISTORY_SIZE points in the history
-        if len(self.pointHistory)>self._HISTORY_SIZE:
-            self.pointHistory.pop(0)
+        # if we've temporarily lost the object, assume it's in the same place
+        if newPoint==None:
+            newPoint=self.currentPoint
+            print("Lost position of "+(self.name if self.name!=None else "moveable"))
+        # if we've yet to find the robot, don't bother updating anything
+        if newPoint!=None:
+            # save the new position
+            self.currentPoint = newPoint
+            self.pointHistory.append(newPoint)
+            # only store a max of _HISTORY_SIZE points in the history
+            if len(self.pointHistory)>self._HISTORY_SIZE:
+                self.pointHistory.pop(0)
 
-        # calculate and save the current direction
-        self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
+            # calculate and save the current direction
+            self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
 
-        # calculate and save the new speed
-        try:
-            newSpeed=self.pointHistory[0].distance(self.pointHistory[-1])/(len(self.pointHistory)-1)
-            self.speedHistory.append(newSpeed)
-            self.currentSpeed = newSpeed
-            # only store a max of _HISTORY_SIZE-1 points in the history
-            if len(self.speedHistory) > self._HISTORY_SIZE-1:
-                self.speedHistory.pop(0)
-        except ZeroDivisionError:
-            pass
+            # calculate and save the new speed
+            try:
+                newSpeed=self.pointHistory[0].distance(self.pointHistory[-1])/(len(self.pointHistory)-1)
+                self.speedHistory.append(newSpeed)
+                self.currentSpeed = newSpeed
+                # only store a max of _HISTORY_SIZE-1 points in the history
+                if len(self.speedHistory) > self._HISTORY_SIZE-1:
+                    self.speedHistory.pop(0)
+            except ZeroDivisionError:
+                pass
 
-        # calculate and save the new acceleration
-        try:
-            self.acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
-        except (ZeroDivisionError, IndexError):
-            # if we don't have enough data to calculate an acceleration (not enough speeds recorded), wait for now
-            pass
+            # calculate and save the new acceleration
+            try:
+                self.acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
+            except (ZeroDivisionError, IndexError):
+                # if we don't have enough data to calculate an acceleration (not enough speeds recorded), wait for now
+                pass
 
 
     def predictedPosition(self, t):
@@ -134,15 +140,17 @@ class Moveable(object):
 
 
 class Robot(Moveable):
-    def __init__(self, p=None):
+    def __init__(self, p=None, name=None):
         super(Robot,self).__init__(p)
         self.currentRotation=0
+        self.name=name
 
 
 class Ball(Moveable):
-    def __init__(self, p=None):
+    def __init__(self, p=None, name=None):
         super(Ball,self).__init__(p)
         self.status=BallStatus.free
+        self.name=name
 
 '''
 #for testing
