@@ -1,7 +1,12 @@
 from helperClasses import Point, BallStatus
+import sys
+import os
+from constants import ROOT_DIR
 
-# Note that the vision system should pick one of the enemy robots to be enemy A and one to be enemy B, and keep that consistent throughout.
-# It doesn't matter which is which, so long as it stays the same
+# enable access to the vision package
+sys.path.append(ROOT_DIR+'vision')
+
+
 
 def getBallCoords():
     """Returns the position of the ball relative to the pitch"""

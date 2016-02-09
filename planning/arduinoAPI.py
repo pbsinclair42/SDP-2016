@@ -1,9 +1,10 @@
 import sys
 import os
 from math import *
+from constants import ROOT_DIR
 
 # enable access to the comms package
-sys.path.append(os.path.dirname(os.path.abspath("constants.py"))[:-8]+'comms')
+sys.path.append(ROOT_DIR+'comms')
 from RobotCommunications import RobotCommunications
 
 # try to connect to the comms system.  If unsuccessful, continue simulation nonetheless
