@@ -11,7 +11,11 @@ from RobotCommunications import RobotCommunications
 try:
     commsSystem = RobotCommunications()
 except BaseException:
-    print("Robot not connected")
+    print
+    print("****************************")
+    print("WARNING: Robot not connected")
+    print("****************************")
+    print
     commsSystem = False
 
 def turn(x):
