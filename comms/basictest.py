@@ -1,11 +1,15 @@
 import time
 from RobotCommunications import RobotCommunications
+r = RobotCommunications()
 
-holo(0,50)
+r.rotate(0,180)
+#r.grab()
+#r.ungrab()
+#r.rotate(0,10)
+"""sleep(4)
+r.rotate(0,180)
 sleep(4)
-rotate(0,180)
-sleep(4)
-kick(50)
+r.kick(50)
 sleep(1)
 grab()
 sleep(2)
@@ -13,4 +17,4 @@ holo(0,150)
 sleep(3)
 flush()
 kick(100)
-sleep(2)
+sleep(2)"""

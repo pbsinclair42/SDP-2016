@@ -21,6 +21,7 @@ class RobotCommunications(Communications):
     def stop(self):
         x=self.write(chr(8)+chr(255)+chr(255)+chr(255))
         return x
+    # rotate `degrees` degrees, then move `distance` cm
     def rotate(self,distance,degrees):
         x = self.write(chr(1) +chr(degrees)+chr(distance) + chr(255))
         return x
@@ -31,7 +32,7 @@ class RobotCommunications(Communications):
         x = self.write(chr(4)+chr(distance)+chr(255)+chr(255))
         return x
     def flush(self):#stop previous command
-        x = self.write(chr(255)+chr(255)+chr(255)+chr(255))
+        x = self.write(chr(128)+chr(255)+chr(255)+chr(255))
         return x
     def grab(self):#grab
         x = self.write((chr(16) + chr(255)+chr(255)+chr(255)))
