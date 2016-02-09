@@ -91,17 +91,15 @@ byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 unsigned long serial_time; // used for the millis function.
 unsigned long command_time;
+
 // rotation parameters
 byte rotMoveGrabMode = 0;
 int rotaryTarget;
 int rotaryBias;
 
-
-
 int rotary_target;
 int motion_target;
 int holono_target;
-
 
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
@@ -119,10 +117,6 @@ void loop() {
   switch(MasterState){
         case IDLE_STATE:
             if (command_index != buffer_index && command_index + 4 <= buffer_index){
-                Serial.print("CMD: ");
-                Serial.println(command_index);
-                Serial.print("BUF");
-                Serial.println(buffer_index);
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
           }
@@ -363,15 +357,25 @@ int grabStep(){
                 rotMoveGrabMode = 0;
                 return 1;
             }
+            return 0;
     }
 }
 
 int unGrabStep(){
-  // TODO: Parallelize
-  motorForward(GRABBER,100);
-  delay(500);
-  motorBackward(GRABBER,0);
-  return 1;
+    switch(rotMoveGrabMode){
+        case 0:
+            motorForward(GRABBER, GRABBER_POWER);
+            command_time = millis();
+            rotMoveGrabMode = 1;
+            return 0;
+        case 1:
+            if (millis() - command_time > GRAB_TIME){
+                motorForward(GRABBER, 0);
+                rotMoveGrabMode = 0;
+                return 1;
+            }
+            return 0;
+    }
 }
 
 // basic test functions for sanity!
