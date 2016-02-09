@@ -6,36 +6,46 @@ from camera import Camera
 c = Camera()
 
 frame = c.get_frame()
+
+colors = {}
+colors['yellow'] = (0,255,255)
+colors['light_blue'] = (255,255,0)
+colors['pink'] = (127,0,255)
+colors['green'] = (0,255,0)
+colors['red'] = (0,0,255)
+colors['blue'] = (255,0,0)
+
  
 print "\nPossible team colors: yellow/light_blue\n"
-our_team_color = raw_input("Please specify your team colour: ")
-num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
+our_team_color = raw_input("Specify your team colour: ")
+num_of_pink = raw_input("Specify the number of pink dots on your robot: ")
+ball_color = raw_input("Specify ball color: ")
+
 # create our robot as object:
 our_robot = RobotTracker(our_team_color, int(num_of_pink))
+ball = BallTracker(ball_color)
 
 # convert string colors into GBR
+our_circle_color = colors[our_team_color]
 if our_team_color == 'yellow':
-    our_circle_color = (0,255,255)
-    opponent_circle_color = (255,255,0)
+    opponent_circle_color = colors['light_blue']
 else :
-    our_circle_color = (255,255,0)
-    opponent_circle_color = (0,255,255)
+    opponent_circle_color = colors['yellow']
 
-# assign our robot a color
+# assign colors and names to the robots
 if int(num_of_pink) == 1:
     our_letters = 'GREEN'
-    our_col = (0,255,0)
+    our_col = colors['green']
     our_robot_color = 'green_robot'
     mate_letters = 'PINK'
-    mate_col = (127,0,255)
-
+    mate_col = colors['pink']
     our_mate_color = 'pink_robot' 
 else:
     our_letters = 'PINK'
-    our_col = (127,0,255)
+    our_col = colors['pink']
     our_robot_color = 'pink_robot' 
     mate_letters = 'GREEN' 
-    mate_col = (0,255,0)
+    mate_col = colors['green']
     our_mate_color = 'green_robot' 
 
 # main feed controller:
@@ -45,13 +55,17 @@ while True:
         break
     frame = c.get_frame()
   
-    # get robot orientations and centers  
+    # get robot orientations and centers, also get ball coordinates
+    ball_center = ball.getBallCoordinates(frame)
     our_orientation, our_robot_center = our_robot.getRobotOrientation(frame, 'us', our_robot_color)
     our_mate_orientation, our_mate_center = our_robot.getRobotOrientation(frame, 'us', our_mate_color)
     pink_opponent_orientation, pink_opponent_center = our_robot.getRobotOrientation(frame, 'opponent', 'pink_robot')
     green_opponent_orientation, green_opponent_center = our_robot.getRobotOrientation(frame, 'opponent', 'green_robot')
 
-    # draw circle  around robots
+    if ball_center != None:
+        cv2.circle(frame, ( int(ball_center[0]), int(ball_center[1])), 7, colors[ball_color], 2)
+        cv2.putText(frame,'BALL',(int(ball_center[0])-15, int(ball_center[1])+15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, colors[ball_color])
+    # draw circle  around robots:
     if our_orientation != None:
         _, v0 = our_orientation
         x0, y0 = our_robot_center
