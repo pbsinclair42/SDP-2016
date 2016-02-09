@@ -26,39 +26,45 @@ except cv2Error:
     print
     camera=None
 
-# if we managed to connect to the camera, set up the robot
+# if we managed to connect to the camera, set up the robot variables
 if camera!=None:
     print "\nPossible team colors: yellow/light_blue\n"
     our_team_color = raw_input("Please specify your team colour: ")
     num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
-    ball_color = raw_input("Specify ball color: ")
+    ball_color = raw_input("Specify ball color (red/blue): ")
     # create our trackers:
     robotTracker = RobotTracker(our_team_color, int(num_of_pink))
     ball = BallTracker(ball_color)
 
-    # convert string colors into GBR
-    if our_team_color == 'yellow':
-        our_circle_color = (0,255,255)
-        opponent_circle_color = (255,255,0)
-    else :
-        our_circle_color = (255,255,0)
-        opponent_circle_color = (0,255,255)
+    colors = {  'yellow': (0,255,255),
+                'light_blue': (255,255,0),
+                'pink': (127,0,255),
+                'green': (0,255,0),
+                'red': (0,0,255),
+                'blue': (255,0,0)
+             }
 
-    # assign our robot a color
+    # convert string colors into GBR
+    our_circle_color = colors[our_team_color]
+    if our_team_color == 'yellow':
+        opponent_circle_color = colors['light_blue']
+    else :
+        opponent_circle_color = colors['yellow']
+
+    # assign colors and names to the robots
     if int(num_of_pink) == 1:
         our_letters = 'GREEN'
-        our_col = (0,255,0)
+        our_col = colors['green']
         our_robot_color = 'green_robot'
         mate_letters = 'PINK'
-        mate_col = (127,0,255)
-
+        mate_col = colors['pink']
         our_mate_color = 'pink_robot' 
     else:
         our_letters = 'PINK'
-        our_col = (127,0,255)
+        our_col = colors['pink']
         our_robot_color = 'pink_robot' 
         mate_letters = 'GREEN' 
-        mate_col = (0,255,0)
+        mate_col = colors['green']
         our_mate_color = 'green_robot' 
 
 
@@ -79,6 +85,7 @@ def getBallCoords(frame=None):
         # if we have no connection to the camera, just return some dummy data
         return Point(15,20)
 
+
 def getBallStatus(frame=None):
     """Returns which robot, if any, is holding the ball"""
     # if we have a connection to the camera...
@@ -91,6 +98,7 @@ def getBallStatus(frame=None):
     else:
         # if we have no connection to the camera, just return some dummy data
         return BallStatus.free
+
 
 def getMyCoords(frame=None):
     """Returns the position of our robot relative to the pitch"""
@@ -109,6 +117,7 @@ def getMyCoords(frame=None):
         # if we have no connection to the camera, just return some dummy data
         return Point(40,35)
 
+
 def getAllyCoords(frame=None):
     """Returns the position of our teammate relative to the pitch"""
     # if we have a connection to the camera...
@@ -125,6 +134,7 @@ def getAllyCoords(frame=None):
     else:
         # if we have no connection to the camera, just return some dummy data
         return Point(100,155)
+
 
 def getEnemyCoords(frame=None):
     """Returns the positions of the two enemy robots relative to the pitch
@@ -154,6 +164,7 @@ def getEnemyCoords(frame=None):
         # if we have no connection to the camera, just return some dummy data
         return [Point(80,10), Point(220,76)]
 
+
 def getMyRotation(frame=None):
     """Returns the rotation of our robot in radians between -pi and pi"""
     # if we have a connection to the camera...
@@ -171,6 +182,7 @@ def getMyRotation(frame=None):
         # if we have no connection to the camera, just return some dummy data
         return 1.2
 
+
 def getAllyRotation(frame=None):
     """Returns the rotation of our teammate in radians between -pi and pi"""
     # if we have a connection to the camera...
@@ -187,6 +199,7 @@ def getAllyRotation(frame=None):
     else:
         # if we have no connection to the camera, just return some dummy data
         return 1.63
+
 
 def getEnemyRotation(frame=None):
     """Returns the rotation of the two enemy robots in radians between -pi and pi"""
@@ -207,6 +220,7 @@ def getEnemyRotation(frame=None):
         # if we have no connection to the camera, just return some dummy data
         return [2.1, -0.67]
 
+
 def getAllRobotCoords(frame=None):
     """Returns an array of the position of all the robots"""
     # if we have a connection to the camera...
@@ -216,6 +230,7 @@ def getAllRobotCoords(frame=None):
             frame = camera.get_frame()
     return [getMyCoords(frame), getAllyCoords(frame)]+getEnemyCoords(frame)
 
+
 def getAllRobotRotations(frame=None):
     """Returns an array of the rotation of all the robots"""
     # if we have a connection to the camera...
@@ -224,6 +239,7 @@ def getAllRobotRotations(frame=None):
         if frame is None:
             frame = camera.get_frame()
     return [getMyRotation(frame), getAllyRotation(frame)]+getEnemyRotation(frame)
+
 
 def getAllRobotDetails(frame=None):
     """Returns an array of tuples of the position and rotation of all the robots"""
