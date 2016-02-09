@@ -11,6 +11,8 @@ from camera import Camera
 
 camera = Camera()
 
+# NOTE: UNKNOWN ERROR: Each call of camera.get_frame() is exactly 5 calls behind the actual value!
+
 # check if the camera is connected
 try:
     frame = camera.get_frame()
@@ -95,7 +97,9 @@ def getMyCoords(frame=None):
         if frame==None:
             frame = camera.get_frame()
         # get the info from the frame
-        robotTracker.getRobotCoordinates(frame,'us',our_robot_color)
+        pixelCoordinates = robotTracker.getRobotCoordinates(frame,'us',our_robot_color)
+        cartesianCoordinates = robotTracker.transformCoordstoDecartes(pixelCoordinates)
+        return Point(pixelCoordinates[0],pixelCoordinates[1])
     else:
         # if we have no connection to the camera, just return some dummy data
         return Point(40,35)
@@ -107,17 +111,30 @@ def getAllyCoords(frame=None):
         # get the current frame if it's not been inputted
         if frame==None:
             frame = camera.get_frame()
+        # get the info from the frame
+        pixelCoordinates = robotTracker.getRobotCoordinates(frame,'us',our_mate_color)
+        cartesianCoordinates = robotTracker.transformCoordstoDecartes(pixelCoordinates)
+        return Point(pixelCoordinates[0],pixelCoordinates[1])
     else:
         # if we have no connection to the camera, just return some dummy data
         return Point(100,155)
 
 def getEnemyCoords(frame=None):
-    """Returns the positions of the two enemy robots relative to the pitch"""
+    """Returns the positions of the two enemy robots relative to the pitch
+
+    Note that the pink robot is enemy A and the green robot is enemy B
+    """
     # if we have a connection to the camera...
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame==None:
             frame = camera.get_frame()
+        # get the info from the frame
+        pinkPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','pink_robot')
+        pinkCartesianCoordinates = robotTracker.transformCoordstoDecartes(pinkPixelCoordinates)
+        greenPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','green_robot')
+        greenCartesianCoordinates = robotTracker.transformCoordstoDecartes(greenPixelCoordinates)
+        return[Point(pinkPixelCoordinates[0],pinkPixelCoordinates[1]),Point(greenPixelCoordinates[0],greenPixelCoordinates[1])]
     else:
         # if we have no connection to the camera, just return some dummy data
         return [Point(80,10), Point(220,76)]
