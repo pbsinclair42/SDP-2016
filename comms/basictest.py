@@ -2,7 +2,17 @@ import time
 from RobotCommunications import RobotCommunications
 r = RobotCommunications()
 
-r.rotate(0,180)
+#r.rotate(0,90)
+#time.sleep(1)
+#r.rotate(0,180)
+##time.sleep(1)
+#r.rotate(0,190)
+r.rotate(0,90)
+#r.rotate(0,90)
+#r.rotate(0,90)
+#r.rotate(0,90)
+
+#r.kick(100)
 #r.grab()
 #r.ungrab()
 #r.rotate(0,10)

@@ -5,12 +5,12 @@ import time
 class Communications(object):
 
     def __init__(self,
-                 debug=False,
-                 setConnectionOff=False,
-                 port='/dev/ttyACM0',
-                 baudrate=9600,
-                 #timeout=2
-                 ):
+            debug=False,
+            setConnectionOff=False,
+            port='/dev/ttyACM0',
+            baudrate=9600,
+            #timeout=2
+            ):
         if setConnectionOff is False:
 
             try:
@@ -22,7 +22,7 @@ class Communications(object):
 
     def write(self, command):
         self.port.write(command + '')
-        time.sleep(0.005)
+        #time.sleep(0.005)
         out = ''
         while self.port.inWaiting() >0:
             out += self.port.read(1)
@@ -36,9 +36,9 @@ class Communications(object):
         elif out == "CMD_ERROR":#error
             print("ERROR")
             write(command)
-        elif out != '':
+        else:
             print ">>" + out
             return out
-            #might want to return this so the planner can use it
+        #might want to return this so the planner can use it
         if self.debug:
             print self.port.readline()

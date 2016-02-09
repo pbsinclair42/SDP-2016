@@ -51,7 +51,7 @@ t: sanity-test;
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 4.15    // A linear function is also in effect
+#define ROTATION_CONST 1.3    // A linear function is also in effect
 #define KICKER_CONST 10.0        // TODO: Calibrate
 
 // COMMS API Byte Definitions
@@ -198,7 +198,7 @@ void serialEvent() {
                 command_index = 0;
                 motorAllStop();
                 rotMoveGrabMode = 0;
-                masterState = 0;
+                MasterState = 0;
                 
             }
         } else if (millis() - serial_time > 500){ // TODO: Break this only here;
@@ -215,20 +215,25 @@ int rotMoveStep(){
 
         // calculate rotation target and start rotating
         case 0 :
+            // get the number of degrees from the command
             degrees = command_buffer[command_index + 1];
+            // set "left" to the most signfificant bit of the current command
             left = (MasterState >> 7); // left becomes MSB of master state/current command
+            // Should it turn left or right?
             left = left == 0 ? 1 : -1;
             
+            // if zero degrees have been given
             if (!degrees){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-
-            if (degrees <= 180) 
-                rotaryTarget = (int) ((1 / 120.0) * degrees * degrees + 3 * degrees);
-            else
-                rotaryTarget == ROTATION_CONST;
-
+            // degree value should be less than 180. 
+            if (degrees < 180){ 
+                rotaryTarget = ROTATION_CONST * degrees;
+                //rotaryTarget = (int) ((1 / 120.0) * degrees * degrees + 3 * degrees);
+            }else{ 
+                rotaryTarget = 2.6 * degrees;  //Why 2.7?
+            }
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
 
@@ -309,7 +314,7 @@ int kickStep(){
         case 1:
             if (millis() - command_time > GRAB_TIME){
                 motorBackward(GRABBER, 0);
-                motorForward(KICKER, (int) command_buffer[command_index + 1]);
+                motorForward(KICKER, (200 - ((5*((int) command_buffer[command_index + 1])*(41*((int) command_buffer[command_index + 1])-36))/(((int) command_buffer[command_index + 1])-1))));
                 rotMoveGrabMode = 2;
                 command_time = millis(); // restore current time
             }
