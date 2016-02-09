@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
+from calibrate import *
+from socket import gethostname
 
+computer_name = gethostname().split('.')[0]
+print "Adjusting settings for: " + computer_name
 properties={'POS_MSEC' : 0, 
     'POS_FRAMES' : 1,
     'FRAME_WIDTH' : 3, 
@@ -20,20 +24,31 @@ class Camera(object):
 
     def __init__(self, port=0, pitch=0):
         self.capture = cv2.VideoCapture(port)
-        '''
-        # for pitch0 PC1/ aharacle:
-        self.capture.set(properties['BRIGHTNESS'], 0.5)
-        self.capture.set(properties['CONTRAST'], 0.48)
-        self.capture.set(properties['COLOR'], 0.5)
-        self.capture.set(properties['HUE'], 0.5)
-
-        '''
-        # for pitch1 PC4/ knapdale
-        self.capture.set(properties['BRIGHTNESS'], 0.55)
-        self.capture.set(properties['CONTRAST'], 0.45)
-        self.capture.set(properties['COLOR'], 0.5)
-        self.capture.set(properties['HUE'], 0.5)
-        
+        if (computer_name == 'aharacle' or computer_name == 'kilmore'):
+            # for pitch0 PC1/ aharacle:
+            self.capture.set(properties['BRIGHTNESS'], 0.5)
+            self.capture.set(properties['CONTRAST'], 0.45)
+            self.capture.set(properties['COLOR'], 0.5)
+            self.capture.set(properties['HUE'], 0.5)
+        elif (computer_name == 'knapdale'):    
+            # for pitch1 PC4/ knapdale
+            self.capture.set(properties['BRIGHTNESS'], 0.55)
+            self.capture.set(properties['CONTRAST'], 0.45)
+            self.capture.set(properties['COLOR'], 0.5)
+            self.capture.set(properties['HUE'], 0.5)
+        elif (computer_name == 'amble'):
+            # for SDP lab PC/ amble
+            self.capture.set(properties['BRIGHTNESS'], 0.4)
+            self.capture.set(properties['CONTRAST'], 0.4)
+            self.capture.set(properties['COLOR'], 0.5)
+            self.capture.set(properties['HUE'], 0.5)
+        else:
+            self.capture.set(properties['BRIGHTNESS'], 0.5)
+            self.capture.set(properties['CONTRAST'], 0.5)
+            self.capture.set(properties['COLOR'], 0.5)
+            self.capture.set(properties['HUE'], 0.5)
+                
+            
 
     def get_frame(self, radial_dist=0):
         """
@@ -42,6 +57,7 @@ class Camera(object):
         Returns the frame if available, otherwise returns None.
         """
         status, frame = self.capture.read()
+        frame = step(frame)
         return frame
 
 
