@@ -185,18 +185,6 @@ while(1):
 		cx = int(M['m10']/M['m00'])
 		cy = int(M['m01']/M['m00'])
 
-		'''
-		print "-----------------------"
-		#---------this is for detecting top plate-----------
-		x,y,w,h = cv2.boundingRect(cnt)
-		print x, y, w, h
-		#yellow_mask = cv2.rectangle(yellow_mask,(x,y),(100,100),(0,255,0),2)
-		rect = cv2.minAreaRect(cnt)
-		box = cv2.boxPoints(rect)
-		box = np.int0(box)
-		#mask = cv2.drawContours(mask,[box],0,(0,0,255),2)
-		cv2.rectangle(frame, (x-10,y-10),(x+w+5,y+h+5),(0,255,0),2)
-		'''
 		num_of_pink = 0
 		num_of_green = 0
 		(x,y),radius = cv2.minEnclosingCircle(cnt)
@@ -219,18 +207,8 @@ while(1):
 		if radius >= 2:	
 			cv2.circle(frame,center,20,(90,0,0),2)	
 
-	
-	#cv2.circle(frame,(320,240),5,(0,0,0),2)	
-    # Bitwise-AND mask  and original image
-	#res = cv2.bitwise_and(frame,frame, mask= mask)
-	#cv2.imshow('hsv', hsv) 
-	#cv2.imshow('blurred lines', blur)
 	cv2.imshow('frame',frame)
-	#cv2.imwrite('frame.png', frame)
-	#cv2.imwrite('transform.png', frame)
-	#cv2.imwrite('b.png', frame)
-	#cv2.imshow('mask',mask)
-	#cv2.imshow('res',res)
+
 	
 	k = cv2.waitKey(5) & 0xFF
 	if k == 27:
