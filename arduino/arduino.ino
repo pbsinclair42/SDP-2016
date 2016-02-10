@@ -51,7 +51,7 @@ t: sanity-test;
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 4.15    // A linear function is also in effect
+#define ROTATION_CONST 3.675   // A linear function is also in effect
 #define KICKER_CONST 10.0        // TODO: Calibrate
 
 // COMMS API Byte Definitions
@@ -112,7 +112,6 @@ void setup() {
   }
 
 void loop() {
-  delay(50);
   int state_end = 0;
   switch(MasterState){
         case IDLE_STATE:
@@ -184,9 +183,14 @@ void serialEvent() {
                 Serial.print(command_buffer[buffer_index - 2]);
                 Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 1]);
+                Serial.print("-B");
+                Serial.print(buffer_index);
+                Serial.println();
+                
             }
             // report bad command
             else{
+                Serial.println("ERROR!");
                 Serial.print(CMD_ERROR);
                 Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 1]);
@@ -194,14 +198,16 @@ void serialEvent() {
             }
             
             if (command_buffer[buffer_index - 4] == CMD_FLUSH){
+                Serial.println("ERROR!");
                 buffer_index = 0;
                 command_index = 0;
                 motorAllStop();
                 rotMoveGrabMode = 0;
-                masterState = 0;
+                MasterState = 0;
                 
             }
         } else if (millis() - serial_time > 500){ // TODO: Break this only here;
+            Serial.println("ERROR!");
             while(buffer_index %4 != 0) {
                 buffer_index--;
             }
@@ -223,11 +229,12 @@ int rotMoveStep(){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-
+            /*
             if (degrees <= 180) 
                 rotaryTarget = (int) ((1 / 120.0) * degrees * degrees + 3 * degrees);
             else
-                rotaryTarget == ROTATION_CONST;
+            */
+            rotaryTarget = (int) (ROTATION_CONST * degrees);
 
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
