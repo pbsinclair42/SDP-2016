@@ -45,7 +45,7 @@ def shoot():
     me.goal = Goals.shoot
     # function to aim at the goal
     def aim():
-        me.bearing(goalCenter)
+        return me.bearing(goalCenter)
     me.plan = [ {'action':Goals.rotateToAngle,'targetFunction': aim},
                 {'action':Goals.kick}]
 
@@ -67,7 +67,13 @@ def moveToPoint(point):
 
 def turnToDirection(angle):
     me.moving=True
-    turn(me.currentRotation-angle)
+    angle = me.currentRotation-angle
+    # ensure the angle is between -pi and pi
+    if angle < -pi:
+        angle+=2*pi
+    elif angle > pi:
+        angle-=2*pi
+    turn(angle)
 
 
 def interceptObject(target):

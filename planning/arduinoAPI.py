@@ -20,16 +20,16 @@ except BaseException:
 
 def turn(x):
     """Rotates the robot x radians anticlockwise.  Use negative numbers to rotate clockwise.  """
-    x = degrees(x)
+    x = int(degrees(x))
     if commsSystem:
-        if (x>255 or x<255):
+        if (x>255 or x< (-255)):
             print("Max turn is 255 degrees")
             # set x to 255 times the sign of x
             x=255*x/abs(x)
         if (x>=0):
             commsSystem.rotateneg(0, abs(x))
         elif (x<=0):
-            commsSystem.rotate(0, x)
+            commsSystem.rotate(0, abs(x))
     print("Turning "+str(abs(x))+"degrees "+("clockwise" if x<=0 else "anticlockwise"))
 
 
