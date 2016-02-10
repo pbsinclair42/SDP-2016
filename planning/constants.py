@@ -3,7 +3,7 @@ from os.path import abspath
 # root directory:
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
 # the number of seconds between updating the robot position
-TICK_TIME = 0.1
+TICK_TIME = 1
 # our robot's max speed (cm per tick)
 MAX_SPEED = 1
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
@@ -27,8 +27,8 @@ ROBOT_WIDTH = 20
 # how close to a target point you need to be to count as equal, give or take normal vision inaccuracy (centimeters)
 POINT_ACCURACY = 1
 # how close to a target angle you need to be to count as equal, give or take normal vision inaccuracy (radians)
-ANGLE_ACCURACY = 0.15
+ANGLE_ACCURACY = 0.3
 # how close to a target point you need to be to count as 'close enough' for the sake of doing stuff (centimeters)
 ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (radians)
-ITLL_DO_ANGLE = radians(5)
+ITLL_DO_ANGLE = radians(10)

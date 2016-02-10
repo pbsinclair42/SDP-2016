@@ -264,7 +264,7 @@ int rotMoveStep(){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-            rotaryTarget = (int) calculateRotaryTarget(degrees);
+            rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);
 
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
@@ -424,10 +424,10 @@ int unGrabStep(){
     }
 }
 
-int calculateRotaryTarget(float x3){
+float calculateRotaryTarget(float x3){
 	// linear function approximation, e.g. finding y3 based on y1, y2, x1, x2, x3
 	// for fixed rotational value calibrations
-	byte x1, x2;
+	float x1, x2;
     float y1, y2;
 	
 	if (x3 < 30) {

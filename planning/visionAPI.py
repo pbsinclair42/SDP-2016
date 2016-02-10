@@ -12,11 +12,11 @@ from camera import Camera
 
 camera = Camera()
 
-# NOTE: UNKNOWN ERROR: Each call of camera.get_frame() is exactly 5 calls behind the actual value!
+# NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!
 
 # check if the camera is connected
 try:
-    frame = camera.get_frame()
+    frame = camera.get_frame_hack()
 except cv2Error:
     # if you can't get a frame from the camera, warn the user, but continue
     print
@@ -74,7 +74,7 @@ def getBallCoords(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # get the coordinates of the ball
         ball_center = ball.getBallCoordinates(frame)
         # if you couldn't find it, return None
@@ -92,7 +92,7 @@ def getBallStatus(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # TODO: work out the ball status and return it
         return BallStatus.free
     else:
@@ -106,7 +106,7 @@ def getMyCoords(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # get the info from the frame
         pixelCoordinates = robotTracker.getRobotCoordinates(frame,'us',our_robot_color)
         # if you couldn't find us, return None
@@ -124,7 +124,7 @@ def getAllyCoords(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # get the info from the frame
         pixelCoordinates = robotTracker.getRobotCoordinates(frame,'us',our_mate_color)
         # if you couldn't find the ally, return None
@@ -145,7 +145,7 @@ def getEnemyCoords(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # get the info from the frame
         pinkPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','pink_robot')
         greenPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','green_robot')
@@ -171,7 +171,7 @@ def getMyRotation(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # get the info from the frame
         rotation = robotTracker.getRobotOrientation(frame, 'us', our_robot_color)[0]
         # if you couldn't find the rotation, return None
@@ -189,7 +189,7 @@ def getAllyRotation(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # get the info from the frame
         rotation = robotTracker.getRobotOrientation(frame, 'us', our_mate_color)[0]
         # if you couldn't find the rotation, return None
@@ -210,7 +210,7 @@ def getEnemyRotation(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
         # get the info from the frame
         pinkRotation = robotTracker.getRobotOrientation(frame, 'opponent', 'pink_robot')[0]
         greenRotation = robotTracker.getRobotOrientation(frame, 'opponent', 'green_robot')[0]
@@ -230,7 +230,7 @@ def getAllRobotCoords(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
     return [getMyCoords(frame), getAllyCoords(frame)]+getEnemyCoords(frame)
 
 
@@ -240,7 +240,7 @@ def getAllRobotRotations(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
     return [getMyRotation(frame), getAllyRotation(frame)]+getEnemyRotation(frame)
 
 
@@ -250,5 +250,41 @@ def getAllRobotDetails(frame=None):
     if camera!=None:
         # get the current frame if it's not been inputted
         if frame is None:
-            frame = camera.get_frame()
+            frame = camera.get_frame_hack()
+        # get the info from the frame
+        ourRotation , ourCoords = robotTracker.getRobotOrientation(frame, 'us', our_robot_color)
+        allyRotation , allyCoords = robotTracker.getRobotOrientation(frame, 'us', our_mate_color)
+        pinkRotation , pinkCoords = robotTracker.getRobotOrientation(frame, 'opponent', 'pink_robot')
+        greenRotation , greenCoords = robotTracker.getRobotOrientation(frame, 'opponent', 'green_robot')
+        
+        if ourRotation!=None:
+            ourRotation = radians(ourRotation[0])
+        if allyRotation!=None:
+            allyRotation = radians(allyRotation[0])
+        if pinkRotation!=None:
+            pinkRotation = radians(pinkRotation[0])
+        if greenRotation!=None:
+            greenRotation = radians(greenRotation[0])
+
+        if ourCoords==None:
+            ourPoint=None
+        else:
+            ourCoords = robotTracker.transformCoordstoCV(ourCoords)
+            ourPoint = Point(ourCoords[0]*X_RATIO,ourCoords[1]*Y_RATIO)
+        if allyCoords==None:
+            allyPoint=None
+        else:
+            allyCoords = robotTracker.transformCoordstoCV(allyCoords)
+            allyPoint = Point(allyCoords[0]*X_RATIO,allyCoords[1]*Y_RATIO)
+        if pinkCoords==None:
+            pinkPoint=None
+        else:
+            pinkCoords = robotTracker.transformCoordstoCV(pinkCoords)
+            pinkPoint = Point(pinkCoords[0]*X_RATIO,pinkCoords[1]*Y_RATIO)
+        if greenCoords==None:
+            greenPoint=None
+        else:
+            greenCoords = robotTracker.transformCoordstoCV(greenCoords)
+            greenPoint = Point(greenCoords[0]*X_RATIO,greenCoords[1]*Y_RATIO)
+        return [(ourPoint,ourRotation),(allyPoint,allyRotation),(pinkPoint,pinkRotation),(greenPoint,greenRotation)]
     return zip(getAllRobotCoords(frame), getAllRobotRotations(frame))

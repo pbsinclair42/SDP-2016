@@ -25,11 +25,18 @@ class RobotCommunications(Communications):
         return x
     # rotate `degrees` degrees anticlockwise, then move `distance` cm
     def rotate(self,distance,degrees):
+        print("rotate")
         x = self.write(chr(1) +chr(int(degrees))+chr(int(distance)) + chr(255))
         return x
     # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
-        x = self.write(chr(129) +chr(int(degrees))+chr(int(distance)) + chr(255))
+        print("rotateneg")
+        x = self.write(chr(129) +chr(254)+chr(int(0)) + chr(255))
+        import time
+        time.sleep(degrees/180)
+        self.stop()
+        #x = self.write(chr(1) +chr(180-int(degrees))+chr(int(distance)) + chr(255))
+        #x = self.write(chr(129) +chr(int(degrees))+chr(int(distance)) + chr(255))
         return x
     # kick with power `distance`
     # TODO: calibrate to match distance

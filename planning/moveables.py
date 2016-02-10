@@ -7,7 +7,7 @@ from helperClasses import Point, BallStatus, Goals
 class Moveable(object):
     """An object in the game that can move (ie robot or ball)"""
     #TODO: walls
-    _HISTORY_SIZE = 4
+    _HISTORY_SIZE = 10
 
     def __init__(self, p=None):
         if p==None:
@@ -167,7 +167,7 @@ class Robot(Moveable):
             self.rotationHistory.pop(0)
         self.rotationHistory.append(self.currentRotation)
         if rotation!=None:
-            self.currentRotation=rotation
+            self.currentRotation= rotation
 
 
 class Ball(Moveable):

@@ -6,6 +6,7 @@ from helperClasses import BallStatus, Goals, essentiallyEqual, nearEnough
 from actions import collectBall, shoot, moveToPoint, turnToDirection
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop
+from math import degrees
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
@@ -25,13 +26,16 @@ def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
         action = "0"
-        while action!="1" and action!="2":
+        while action not in ['1','2','3']:
             print("What action should I do now?")
-            action = raw_input("1. Collect ball\n2. Shoot ball\n? ")
+            action = raw_input("1. Collect ball\n2. Shoot ball\n3. Stop\n? ")
         if action=="1":
             collectBall()
-        else:
+        elif action=="2":
             shoot()
+        else:
+            import sys
+            sys.exit()
 
 
 def executePlan():
@@ -44,33 +48,42 @@ def executePlan():
 
     if currentAction==Goals.rotateToAngle:
         # calculate what angle we're aiming for
-        targetAngle = me.plan[0]['targetFunction']()
+        targetAngle = me.plan[0]['targetFunction']()/2
+        print("Target angle:",degrees(targetAngle))
         # if we've yet to start it turning, start it now
         if not me.moving and not nearEnough(me.currentRotation, targetAngle):
+            print("turning")
             turnToDirection(targetAngle)
         # if we're close enough, we're done
         if not me.moving: # and implicitly, nearEnough(me.currentRotation, targetAngle)
+            print("Done!")
             me.plan.pop(0)
         # if not, stop if we've arrived
         elif nearEnough(me.currentRotation, targetAngle):
+            print("Stopped!")
             stop()
         #TODO: go back if you overshoot
+
         # otherwise check if it's stopped, and restart it if so, otherwise wait for it to do its stuff
         else:
             # check if it's not turned for the past two ticks
             try:
                 oldRotation = me.rotationHistory[-2]
             except IndexError:
+                print("Not enough history yet")
                 # slightly hacky way of just skipping over this if otherwise
                 oldRotation = -200
             # if it hasn't turned for two ticks
             if essentiallyEqual(me.currentRotation, oldRotation):
-                # we're assuming that we've stopped turning, but flush to make sure
-                flush()
+                print("It's stopped itself!")
+                # we're assuming that we've stopped turning, but stop to make sure
+                stop()
                 # check if you're at the right angle
                 if nearEnough(me.currentRotation, targetAngle):
                     # if we're close enough already, move on to the next step of the plan
                     me.plan.pop(0)
+            else:
+                print("Still going")
 
     elif currentAction==Goals.moveToPoint:
         # calculate where we're headed
@@ -96,7 +109,7 @@ def executePlan():
             # if it hasn't moved for two ticks
             if essentiallyEqual(me.currentPoint, oldPoint):
                 # we're assuming that we've stopped moving, but flush to make sure
-                flush()
+                stop()
                 # check if you're at the right position
                 if nearEnough(me.currentPoint, targetPoint):
                     # if we're close enough already, move on to the next step of the plan
@@ -104,8 +117,8 @@ def executePlan():
 
     elif currentAction==Goals.kick:
         # TODO: add power function for kicking
-        kick(255)
-        me.plan.pop(0)
+        kick(200)
+        # TODO include me.plan.pop(0)
     elif currentAction==Goals.ungrab:
         ungrab()
         me.plan.pop(0)

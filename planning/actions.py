@@ -3,7 +3,7 @@ from globalObjects import *
 from moveables import Moveable
 from helperClasses import Point, BallStatus, Goals
 from arduinoAPI import turn, move
-from math import sin, cos
+from math import sin, cos, degrees
 
 def collectBall():
     """Make `collectBall` the goal of our robot, and implement the plan for achieving this"""
@@ -45,7 +45,7 @@ def shoot():
     me.goal = Goals.shoot
     # function to aim at the goal
     def aim():
-        return me.bearing(goalCenter)
+        return -me.bearing(goalCenter)
     me.plan = [ {'action':Goals.rotateToAngle,'targetFunction': aim},
                 {'action':Goals.kick}]
 
@@ -67,13 +67,15 @@ def moveToPoint(point):
 
 def turnToDirection(angle):
     me.moving=True
-    angle = me.currentRotation-angle
+    angleToMove = me.currentRotation-angle
+    print("Angle to move:",degrees(angleToMove))
     # ensure the angle is between -pi and pi
-    if angle < -pi:
-        angle+=2*pi
-    elif angle > pi:
-        angle-=2*pi
-    turn(angle)
+    if angleToMove < -pi:
+        angleToMove+=2*pi
+    elif angleToMove > pi:
+        angleToMove-=2*pi
+    #remember, negative is clockwise
+    turn(angleToMove)
 
 
 def interceptObject(target):

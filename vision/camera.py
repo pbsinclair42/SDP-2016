@@ -60,6 +60,23 @@ class Camera(object):
         frame = step(frame)
         return frame
 
+    def get_frame_hack(self, radial_dist=0):
+        """
+        Retrieve a frame from the camera.
+
+        Returns the frame if available, otherwise returns None.
+        """
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        return frame
 
     def close(self):
         self.capture.release()

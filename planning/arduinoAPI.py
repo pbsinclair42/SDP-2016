@@ -2,6 +2,7 @@ import sys
 import os
 from math import *
 from constants import ROOT_DIR
+from globalObjects import me
 
 # enable access to the comms package
 sys.path.append(ROOT_DIR+'comms')
@@ -37,7 +38,7 @@ def move(distance, angle):
     """Moves `distance` cm at a direction of `angle` radians"""
     # TODO: update for holo movement
     if commsSystem:
-        commsSystem.rotate(distance,0)
+        commsSystem.rotate(distance,angle)
     print("Moving "+str(distance)+"cm at an angle of "+str(angle)+" radians")
 
 
@@ -67,6 +68,7 @@ def stop():
     if commsSystem:
         commsSystem.stop()
     me.moving=False
+    me.rotationHistory=[]
     print("Stopping all motors")
 
 
@@ -75,4 +77,5 @@ def flush():
     if commsSystem:
         commsSystem.flush()
     me.moving=False
+    me.rotationHistory=[]
     print("Clearing all commands")
