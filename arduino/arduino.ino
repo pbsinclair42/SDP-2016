@@ -47,7 +47,7 @@ t: sanity-test;
 
 // temporal calibrations
 #define KICK_TIME 550
-#define GRAB_TIME 450
+#define GRAB_TIME 650
 
 // Movement Constants
 #define MOTION_CONST 11.891304
@@ -389,7 +389,7 @@ int grabStep(){
             rotMoveGrabMode = 1;
             return 0;
         case 1:
-            if (millis() - command_time > GRAB_TIME + finishGrabbing * 500){
+            if (millis() - command_time > GRAB_TIME){
                 motorForward(GRABBER, 0);
                 rotMoveGrabMode = 0;
                 finishGrabbing = 0;
