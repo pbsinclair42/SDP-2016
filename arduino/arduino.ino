@@ -46,12 +46,12 @@ t: sanity-test;
 #define GRABBER_POWER 255
 
 // temporal calibrations
-#define KICK_TIME 500
-#define GRAB_TIME 400
+#define KICK_TIME 550
+#define GRAB_TIME 450
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 4.15    // A linear function is also in effect
+#define ROTATION_CONST 3.675   // A linear function is also in effect
 #define KICKER_CONST 10.0        // TODO: Calibrate
 
 // COMMS API Byte Definitions
@@ -91,43 +91,33 @@ byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 unsigned long serial_time; // used for the millis function.
 unsigned long command_time;
+
 // rotation parameters
 byte rotMoveGrabMode = 0;
 int rotaryTarget;
 int rotaryBias;
 
-
-
 int rotary_target;
 int motion_target;
 int holono_target;
-
 
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
     SDPsetup();
     motorAllStop(); // for sanity
-    Serial.println("What the fuck is going on?");
-    Serial.print(CMD_END);
-    Serial.print(CMD_GRAB);
+    Serial.println("begin");
     // to get rid of potential bias
     updateMotorPositions(positions);
     restoreMotorPositions(positions);
-}
+  }
 
 void loop() {
-  //Serial.print(MasterState);
   int state_end = 0;
-    switch(MasterState){
+  switch(MasterState){
         case IDLE_STATE:
             if (command_index != buffer_index && command_index + 4 <= buffer_index){
-                Serial.print("CMD: ");
-                Serial.println(command_index);
-                Serial.print("BUF");
-                Serial.println(buffer_index);
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
-                delay(1000);  
           }
             break;
         case CMD_ROTMOVE:
@@ -159,7 +149,6 @@ void loop() {
             MasterState = IDLE_STATE;
             break;
         default:
-            Serial.print("VERY BAD ERROR");
             Serial.print(MasterState);
             Serial.println(CMD_ERROR);
             MasterState = IDLE_STATE;
@@ -182,32 +171,43 @@ void serialEvent() {
     serial_time = millis();
     while (Serial.available()) {
         command_buffer[buffer_index++] = Serial.read();
-        Serial.println(command_buffer[buffer_index - 1]);
-        Serial.println(buffer_index);
-        Serial.println("-------------");
         if (buffer_index % 4 == 0){
             // acknowledge proper command
             if (command_buffer[buffer_index - 1] == CMD_END){
                 Serial.print(CMD_ACK);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 4]);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 3]);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 2]);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 1]);
+                Serial.print("-B");
+                Serial.print(buffer_index);
+                Serial.println();
+                
             }
             // report bad command
             else{
-                Serial.println("SANITY CHECK");
+                Serial.println("ERROR!");
                 Serial.print(CMD_ERROR);
+                Serial.print("-");
                 Serial.print(command_buffer[buffer_index - 1]);
                 buffer_index = buffer_index - 4;
             }
             
             if (command_buffer[buffer_index - 4] == CMD_FLUSH){
+                Serial.println("ERROR!");
                 buffer_index = 0;
                 command_index = 0;
                 motorAllStop();
+                rotMoveGrabMode = 0;
+                MasterState = 0;
+                
             }
         } else if (millis() - serial_time > 500){ // TODO: Break this only here;
+            Serial.println("ERROR!");
             while(buffer_index %4 != 0) {
                 buffer_index--;
             }
@@ -229,8 +229,7 @@ int rotMoveStep(){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-
-                rotaryTarget = ROTATION_CONST * degrees;
+            rotaryTarget = ROTATION_CONST * degrees;
 
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
@@ -241,6 +240,7 @@ int rotMoveStep(){
                 rotateRight();
 
             rotMoveGrabMode = 1;
+            printMotorPositions(positions);
             return 0;
         
         // chck whether to stop during rotation;
@@ -271,6 +271,7 @@ int rotMoveStep(){
             testForward();
 
             rotMoveGrabMode = 3;
+            printMotorPositions(positions);
             return 0;
 
         // perform movement
@@ -283,6 +284,7 @@ int rotMoveStep(){
                 motorAllStop();
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 0;
+                printMotorPositions(positions);
                 return 1;
             }
         default:
@@ -309,7 +311,7 @@ int kickStep(){
         case 1:
             if (millis() - command_time > GRAB_TIME){
                 motorBackward(GRABBER, 0);
-                motorForward(KICKER, command_buffer[command_index + 1]);
+                motorForward(KICKER, (int) command_buffer[command_index + 1]);
                 rotMoveGrabMode = 2;
                 command_time = millis(); // restore current time
             }
@@ -360,15 +362,25 @@ int grabStep(){
                 rotMoveGrabMode = 0;
                 return 1;
             }
+            return 0;
     }
 }
 
 int unGrabStep(){
-  // TODO: Parallelize
-  motorForward(GRABBER,100);
-  delay(500);
-  motorBackward(GRABBER,0);
-  return 1;
+    switch(rotMoveGrabMode){
+        case 0:
+            motorForward(GRABBER, GRABBER_POWER);
+            command_time = millis();
+            rotMoveGrabMode = 1;
+            return 0;
+        case 1:
+            if (millis() - command_time > GRAB_TIME){
+                motorForward(GRABBER, 0);
+                rotMoveGrabMode = 0;
+                return 1;
+            }
+            return 0;
+    }
 }
 
 // basic test functions for sanity!
