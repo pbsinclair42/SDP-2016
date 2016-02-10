@@ -1,7 +1,7 @@
 from constants import *
 from globalObjects import *
 from moveables import Moveable
-from helperClasses import Point, BallStatus
+from helperClasses import Point, BallStatus, Goals
 import arduinoAPI
 
 def collectBall():
@@ -9,8 +9,10 @@ def collectBall():
     pass
 
 def shoot():
-    #TODO
-    pass
+    me.goals.append(Goals.rotateToAngle)
+    me.target = me.bearing(goalCenter)
+    print(me.target)
+
 
 def moveToObject(target):
     if not isinstance(target,Moveable):

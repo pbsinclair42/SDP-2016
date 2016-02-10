@@ -13,12 +13,12 @@ class Moveable(object):
         if p==None:
             self.currentPoint=None
             self.pointHistory=[]
-            # speed is in units per tick
+            # speed is in xm per tick
             self.currentSpeed=None
             self.speedHistory=[]
             # note that direction corresponds to direction of movement and not necessarily the direction the object is facing
             self.direction=None
-            # acceleration is in units per tick per tick
+            # acceleration is in cm per tick per tick
             self.acceleration=None
         else:
             if not isinstance(p,Point):
@@ -103,7 +103,7 @@ class Moveable(object):
             other (Moveable or Point): the moveable or point to find the distance to
 
         Returns:
-            float of the distance between the two in units
+            float of the distance between the two in cm
 
         """
         if isinstance(other,Moveable):
@@ -142,9 +142,14 @@ class Moveable(object):
 class Robot(Moveable):
     def __init__(self, p=None, name=None):
         super(Robot,self).__init__(p)
+        # the direction the robot is facing, as detected by the vision system
         self.currentRotation=0
+        # purely used for warning/error messages
         self.name=name
+        # the plan of the robot
         self.goals=[]
+        # the location or direction the robot is aiming to be at, if its lowest level goal is movement or rotation
+        self.target=None
 
     def updateRotation(self, rotation):
         """Update the rotation with a new value

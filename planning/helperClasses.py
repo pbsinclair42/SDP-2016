@@ -1,4 +1,4 @@
-from math import sqrt, atan, pi
+from math import sqrt, atan2, pi
 from enum import Enum
 
 class Point(object):
@@ -21,7 +21,7 @@ class Point(object):
             p (point): the point to find the distance to
 
         Returns:
-            float of the distance between the points in units
+            float of the distance between the points in cm
 
         """
         if not isinstance(p, self.__class__):
@@ -31,7 +31,7 @@ class Point(object):
 
     def bearing(self, p):
         """Finds the bearing from this to another point in radians
-        0 is taken to be positive in the y axis
+        0 is taken to be positive in the x axis
         3 decimal places of accuracy
         if both points are identical, returns pi/2
 
@@ -46,18 +46,7 @@ class Point(object):
             raise TypeError("Point expected, "+p.__class__.__name__+" found")
         xDisplacement = p.x-self.x
         yDisplacement = p.y-self.y
-        # ensure no division by zero occurs
-        if yDisplacement==0:
-            return round( pi/2 if xDisplacement>=0 else 3*pi/2 , 3)
-        interiorAngle = atan(abs(xDisplacement)/abs(yDisplacement))
-        if xDisplacement>=0 and yDisplacement>=0:
-            bearing = interiorAngle
-        elif xDisplacement>=0: # and implicitly, yDisplacement<0
-            bearing = pi - interiorAngle
-        elif yDisplacement<0: # and implicitly, xDisplacement<0
-            bearing = - pi + interiorAngle
-        else: # implicitly xDisplacement<0 and yDisplacement>=0
-            bearing = -interiorAngle
+        bearing = atan2(yDisplacement,xDisplacement)
         return round(bearing, 3)
    
 
@@ -91,11 +80,16 @@ class BallStatus(Enum):
 
 class Goals(Enum):
     """An enum listing the possible goals for a robot to have"""
+    # if you find yourself with nothing to do, you're probably doing something wrong, but oh well
     none = 0
+    # low level actions
     moveToPoint = 1
-    collectBall = 2
-    passBall = 3
-    shoot = 4
-    receivePass = 5
-    blockPass = 6
-    guardGoal = 7
+    rotateToAngle = 2
+    grab = 3
+    # high level actions
+    collectBall = 11
+    passBall = 12
+    shoot = 13
+    receivePass = 14
+    blockPass = 15
+    guardGoal = 16

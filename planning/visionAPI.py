@@ -2,7 +2,7 @@ from helperClasses import Point, BallStatus
 import sys
 import os
 from math import radians
-from constants import ROOT_DIR
+from constants import ROOT_DIR, X_RATIO, Y_RATIO
 from cv2 import error as cv2Error
 
 # enable access to the vision package
@@ -69,7 +69,7 @@ if camera!=None:
 
 
 def getBallCoords(frame=None):
-    """Returns the position of the ball relative to the pitch"""
+    """Returns the position of the ball relative to the pitch, in cm"""
     # if we have a connection to the camera...
     if camera!=None:
         # get the current frame if it's not been inputted
@@ -80,7 +80,7 @@ def getBallCoords(frame=None):
         # if you couldn't find it, return None
         if ball_center == None:
             return None
-        return Point(ball_center[0],ball_center[1])
+        return Point(ball_center[0]*X_RATIO,ball_center[1]*Y_RATIO)
     else:
         # if we have no connection to the camera, just return some dummy data
         return Point(15,20)
@@ -101,7 +101,7 @@ def getBallStatus(frame=None):
 
 
 def getMyCoords(frame=None):
-    """Returns the position of our robot relative to the pitch"""
+    """Returns the position of our robot relative to the pitch, in cm"""
     # if we have a connection to the camera...
     if camera!=None:
         # get the current frame if it's not been inputted
@@ -112,14 +112,14 @@ def getMyCoords(frame=None):
         # if you couldn't find us, return None
         if pixelCoordinates==None:
             return None
-        return Point(pixelCoordinates[0],pixelCoordinates[1])
+        return Point(pixelCoordinates[0]*X_RATIO,pixelCoordinates[1]*Y_RATIO)
     else:
         # if we have no connection to the camera, just return some dummy data
         return Point(40,35)
 
 
 def getAllyCoords(frame=None):
-    """Returns the position of our teammate relative to the pitch"""
+    """Returns the position of our teammate relative to the pitch, in cm"""
     # if we have a connection to the camera...
     if camera!=None:
         # get the current frame if it's not been inputted
@@ -130,14 +130,14 @@ def getAllyCoords(frame=None):
         # if you couldn't find the ally, return None
         if pixelCoordinates==None:
             return None
-        return Point(pixelCoordinates[0],pixelCoordinates[1])
+        return Point(pixelCoordinates[0]*X_RATIO,pixelCoordinates[1]*Y_RATIO)
     else:
         # if we have no connection to the camera, just return some dummy data
         return Point(100,155)
 
 
 def getEnemyCoords(frame=None):
-    """Returns the positions of the two enemy robots relative to the pitch
+    """Returns the positions of the two enemy robots relative to the pitch, in cm
 
     Note that the pink robot is enemy A and the green robot is enemy B
     """
@@ -148,17 +148,17 @@ def getEnemyCoords(frame=None):
             frame = camera.get_frame()
         # get the info from the frame
         pinkPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','pink_robot')
+        greenPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','green_robot')
         # if you couldn't find the pink enemy, return None for him
         if pinkPixelCoordinates==None:
             pinkPoint=None
         else:
-            pinkPoint = Point(pinkPixelCoordinates[0],pinkPixelCoordinates[1])
-        greenPixelCoordinates = robotTracker.getRobotCoordinates(frame,'opponent','green_robot')
+            pinkPoint = Point(pinkPixelCoordinates[0]*X_RATIO,pinkPixelCoordinates[1]*Y_RATIO)
         # if you couldn't find the green enemy, return None for him
         if greenPixelCoordinates==None:
             greenPoint=None
         else:
-            greenPoint = Point(greenPixelCoordinates[0],greenPixelCoordinates[1])
+            greenPoint = Point(greenPixelCoordinates[0]*X_RATIO,greenPixelCoordinates[1]*Y_RATIO)
         return[pinkPoint,greenPoint]
     else:
         # if we have no connection to the camera, just return some dummy data
