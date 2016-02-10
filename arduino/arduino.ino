@@ -186,6 +186,7 @@ time loop() runs.
 */
 
 void serialEvent() {
+	byte target_value; // for targetting buffer checks so as not to do buffer[0 - 1]
     serial_time = millis();
     while (Serial.available()) {
     	// note overflow to maintain circular buffer
@@ -197,16 +198,22 @@ void serialEvent() {
         
         if (buffer_index % 4 == 0){
             // acknowledge proper command
-            if (command_buffer[buffer_index - 1] == CMD_END){
+        	if (buffer_index == 0){
+        		target_value == 256;
+        	} else {
+        		target_value = buffer_index;
+        	}
+
+            if (command_buffer[target_value - 1] == CMD_END){
                 Serial.print(CMD_ACK);
                 Serial.print("-");
-                Serial.print(command_buffer[buffer_index - 4]);
+                Serial.print(command_buffer[target_value - 4]);
                 Serial.print("-");
-                Serial.print(command_buffer[buffer_index - 3]);
+                Serial.print(command_buffer[target_value - 3]);
                 Serial.print("-");
-                Serial.print(command_buffer[buffer_index - 2]);
+                Serial.print(command_buffer[target_value - 2]);
                 Serial.print("-");
-                Serial.print(command_buffer[buffer_index - 1]);
+                Serial.print(command_buffer[target_value - 1]);
                 Serial.print("-B");
                 Serial.print(buffer_index);
                 Serial.println();
@@ -216,11 +223,11 @@ void serialEvent() {
             else{
                 Serial.print(CMD_ERROR);
                 Serial.print("-");
-                Serial.print(command_buffer[buffer_index - 1]);
-                buffer_index = buffer_index - 4;
+                Serial.print(command_buffer[target_value - 1]);
+                buffer_index = target_value - 4;
             }
             
-            if (command_buffer[buffer_index - 4] == CMD_FLUSH){
+            if (command_buffer[target_value - 4] == CMD_FLUSH){
                 Serial.println("ERROR!");
                 buffer_index = 0;
                 command_index = 0;
