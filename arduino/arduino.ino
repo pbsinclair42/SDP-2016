@@ -186,7 +186,7 @@ time loop() runs.
 */
 
 void serialEvent() {
-	byte target_value; // for targetting buffer checks so as not to do buffer[0 - 1]
+	int target_value; // for targetting buffer checks so as not to do buffer[0 - 1]
     serial_time = millis();
     while (Serial.available()) {
     	// note overflow to maintain circular buffer
@@ -199,7 +199,7 @@ void serialEvent() {
         if (buffer_index % 4 == 0){
             // acknowledge proper command
         	if (buffer_index == 0){
-        		target_value == 256;
+        		target_value = 256;
         	} else {
         		target_value = buffer_index;
         	}
@@ -567,5 +567,6 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
 
 
