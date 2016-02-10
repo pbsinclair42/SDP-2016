@@ -5,7 +5,7 @@ ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
 # the number of seconds between updating the robot position
 TICK_TIME = 1
 # our robot's max speed (cm per tick)
-MAX_SPEED = 1
+MAX_SPEED = 50
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
 GRAB_DISTANCE = 10
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
@@ -29,6 +29,6 @@ POINT_ACCURACY = 1
 # how close to a target angle you need to be to count as equal, give or take normal vision inaccuracy (radians)
 ANGLE_ACCURACY = 0.3
 # how close to a target point you need to be to count as 'close enough' for the sake of doing stuff (centimeters)
-ITLL_DO_POINT = 5
+ITLL_DO_POINT = 10
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (radians)
 ITLL_DO_ANGLE = radians(10)

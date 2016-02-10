@@ -49,13 +49,12 @@ def executePlan():
     if currentAction==Goals.rotateToAngle:
         # calculate what angle we're aiming for
         targetAngle = me.plan[0]['targetFunction']()/2
-        print("Target angle:",degrees(targetAngle))
         # if we've yet to start it turning, start it now
         if not me.moving and not nearEnough(me.currentRotation, targetAngle):
             print("turning")
             turnToDirection(targetAngle)
         # if we're close enough, we're done
-        if not me.moving: # and implicitly, nearEnough(me.currentRotation, targetAngle)
+        elif not me.moving: # and implicitly, nearEnough(me.currentRotation, targetAngle)
             print("Done!")
             me.plan.pop(0)
         # if not, stop if we've arrived
@@ -92,7 +91,7 @@ def executePlan():
         if not me.moving and not nearEnough(me.currentPoint, targetPoint):
             moveToPoint(targetPoint)
         # if we're close enough, we're done
-        if not me.moving: # and implicitly, nearEnough(me.currentPoint, targetPoint)
+        elif not me.moving: # and implicitly, nearEnough(me.currentPoint, targetPoint)
             me.plan.pop(0)
         # if not, stop if we've arrived
         elif nearEnough(me.currentPoint, targetPoint):
@@ -104,11 +103,13 @@ def executePlan():
             try:
                 oldPoint = me.pointHistory[-2]
             except IndexError:
+                print("Not enough history yet")
                 # slightly hacky way of just skipping over this if otherwise
-                oldPoint = Point(-200,-200)
+                oldPoint = Point(-2000,-2000)
             # if it hasn't moved for two ticks
             if essentiallyEqual(me.currentPoint, oldPoint):
-                # we're assuming that we've stopped moving, but flush to make sure
+                # we're assuming that we've stopped moving, but stop to make sure
+                print("H")
                 stop()
                 # check if you're at the right position
                 if nearEnough(me.currentPoint, targetPoint):

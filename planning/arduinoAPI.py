@@ -57,10 +57,10 @@ def grab():
 
 
 def ungrab():
-    """Attempts to grab the ball"""
+    """Attempts to ungrab the ball"""
     if commsSystem:
         commsSystem.ungrab()
-    print("Grabbing ball")
+    print("Opening claw")
 
 
 def stop():
@@ -69,6 +69,7 @@ def stop():
         commsSystem.stop()
     me.moving=False
     me.rotationHistory=[]
+    me.pointHistory=[]
     print("Stopping all motors")
 
 
@@ -78,4 +79,5 @@ def flush():
         commsSystem.flush()
     me.moving=False
     me.rotationHistory=[]
+    me.pointHistory=[]
     print("Clearing all commands")
