@@ -41,11 +41,21 @@ def executePlan():
     except IndexError:
         print("No actions to execute")
         return
+
     if currentAction==Goals.rotateToAngle:
+        # calculate what angle we're aiming for
+        targetAngle = me.plan[0]['targetFunction']()
         # if we've yet to start it turning, start it now
-        if not me.moving:
-            turnToDirection(me.plan[0]['targetFunction']())
-        # otherwise check if it's stopped
+        if not me.moving and not nearEnough(me.currentRotation, targetAngle):
+            turnToDirection(targetAngle)
+        # if we're close enough, we're done
+        if not me.moving: # and implicitly, nearEnough(me.currentRotation, targetAngle)
+            me.plan.pop(0)
+        # if not, stop if we've arrived
+        elif nearEnough(me.currentRotation, targetAngle):
+            stop()
+        #TODO: go back if you overshoot
+        # otherwise check if it's stopped, and restart it if so, otherwise wait for it to do its stuff
         else:
             # check if it's not turned for the past two ticks
             try:
@@ -57,15 +67,10 @@ def executePlan():
             if essentiallyEqual(me.currentRotation, oldRotation):
                 # we're assuming that we've stopped turning, but flush to make sure
                 flush()
-                # calculate the target angle again
-                targetAngle = me.plan[0]['targetFunction']()
                 # check if you're at the right angle
                 if nearEnough(me.currentRotation, targetAngle):
                     # if we're close enough already, move on to the next step of the plan
                     me.plan.pop(0)
-                # if not, try turning the right amount again
-                else:
-                    turnToDirection(targetAngle)
 
     elif currentAction==Goals.moveToPoint:
         # calculate where we're headed
@@ -96,9 +101,6 @@ def executePlan():
                 if nearEnough(me.currentPoint, targetPoint):
                     # if we're close enough already, move on to the next step of the plan
                     me.plan.pop(0)
-                # if not, try moving the right amount again
-                else:
-                    moveToPoint(targetPoint)
 
     elif currentAction==Goals.kick:
         # TODO: add power function for kicking
