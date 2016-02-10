@@ -110,7 +110,6 @@ int holono_target;
 void setup() {
     SDPsetup();
     motorAllStop(); // for sanity
-    Serial.println("begin");
     // to get rid of potential bias
     updateMotorPositions(positions);
     restoreMotorPositions(positions);
@@ -155,7 +154,6 @@ void loop() {
             MasterState = IDLE_STATE;
             break;
         default:
-            Serial.print(MasterState);
             Serial.println(CMD_ERROR);
             MasterState = IDLE_STATE;
             state_end = 1;
@@ -168,12 +166,9 @@ void loop() {
             	commandOverflow++;
             }
             if (finishGrabbing == 1){
-                Serial.println("CORRECT");
             	MasterState = CMD_GRAB;
                 command_index -= 4; // restore command index to account for custom command
 	    }
-            Serial.print("-->>");
-            Serial.println(finishGrabbing);
             
         }
 
@@ -214,21 +209,15 @@ void serialEvent() {
                 Serial.print(command_buffer[target_value - 2]);
                 Serial.print("-");
                 Serial.print(command_buffer[target_value - 1]);
-                Serial.print("-B");
-                Serial.print(buffer_index);
-                Serial.println();
                 
             }
             // report bad command
             else{
                 Serial.print(CMD_ERROR);
-                Serial.print("-");
-                Serial.print(command_buffer[target_value - 1]);
                 buffer_index = target_value - 4;
             }
             
             if (command_buffer[target_value - 4] == CMD_FLUSH){
-                Serial.println("ERROR!");
                 buffer_index = 0;
                 command_index = 0;
                 motorAllStop();
@@ -264,7 +253,7 @@ int rotMoveStep(){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-            rotaryTarget = (int) calculateRotaryTarget(degrees);
+            rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);
 
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
@@ -275,7 +264,6 @@ int rotMoveStep(){
                 rotateRight();
 
             rotMoveGrabMode = 1;
-            printMotorPositions(positions);
             return 0;
         
         // chck whether to stop during rotation;
@@ -306,7 +294,6 @@ int rotMoveStep(){
             testForward();
 
             rotMoveGrabMode = 3;
-            printMotorPositions(positions);
             return 0;
 
         // perform movement
@@ -323,7 +310,6 @@ int rotMoveStep(){
                 motorAllStop();
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 0;
-                printMotorPositions(positions);
                 return 1;
             }
         default:
@@ -333,7 +319,6 @@ int rotMoveStep(){
 }
 int holoMoveStep(){
     Serial.print(CMD_ERROR);
-    Serial.println("Holonomic motion not yet implemented");
     return 1;
 }
 
@@ -424,7 +409,7 @@ int unGrabStep(){
     }
 }
 
-int calculateRotaryTarget(float x3){
+float calculateRotaryTarget(float x3){
 	// linear function approximation, e.g. finding y3 based on y1, y2, x1, x2, x3
 	// for fixed rotational value calibrations
 	byte x1, x2;
