@@ -257,7 +257,6 @@ int rotMoveStep(){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-            
             rotaryTarget = (int) calculateRotaryTarget(degrees);
 
             updateMotorPositions(positions);
