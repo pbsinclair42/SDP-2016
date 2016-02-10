@@ -5,7 +5,7 @@ from globalObjects import *
 from helperClasses import BallStatus, Goals, essentiallyEqual, nearEnough
 from actions import collectBall, shoot
 import visionAPI
-from arduinoAPI import grab, turn, kick
+from arduinoAPI import grab, turn, kick, flush
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
@@ -26,26 +26,31 @@ def makePlan():
     if me.goal == Goals.none:
         action = "0"
         while action!="1" and action!="2":
-            action = raw_input("What action should I do now?\n1. Collect ball\n2. Shoot ball\n? ")
+            print("What action should I do now?")
+            action = raw_input("1. Collect ball\n2. Shoot ball\n? ")
         if action=="1":
             collectBall()
         else:
             shoot()
 
 def executePlan():
+    """Check whether the action you're currently performing has finished and move to the next action if so"""
     try:
         currentAction = me.plan[0]
     except IndexError:
         print("No actions to execute")
         return
     if currentAction==Goals.rotateToAngle:
-        # if it hasn't turned for two ticks
+        # check if it's not turned for the past two ticks
         try:
             oldRotation = me.rotationHistory[-2]
         except IndexError:
             # slightly hacky way of just skipping over this if otherwise
             oldRotation = -200
+        # if it hasn't turned for two ticks
         if essentiallyEqual(me.currentRotation, oldRotation):
+            # we're assuming that we've stopped turning, but flush to make sure
+            flush()
             # check if you're at the right angle
             if nearEnough(me.currentRotation, me.target):
                 # if we're close enough already, move on to the next step of the plan
