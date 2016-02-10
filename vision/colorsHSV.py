@@ -56,3 +56,15 @@ color_range[('amble','maroon')] = ( np.array([176, 190, 190]), np.array([180, 25
 color_range[('amble','green')] = ( np.array([60, 110, 110]), np.array([75, 255, 255]) )
 color_range[('amble','bright_green')] = ( np.array([51, 200, 200]), np.array([53, 255, 255]) )
 color_range[('amble','yellow')] = ( np.array([20, 130, 130]), np.array([40, 255, 255]) )
+
+# TODO: calibrate
+# SDP main lab ghost.name = glenorchy
+color_range[('glenorchy','white')] = ( np.array([1, 0, 100]), np.array([36, 255, 255]) )
+color_range[('glenorchy','blue')] = ( np.array([105, 140, 140]), np.array([120, 255, 255]) )
+color_range[('glenorchy','bright_blue')] = ( np.array([80, 100, 100]), np.array([100, 255, 255]) )
+color_range[('glenorchy','pink')] = ( np.array([150, 120, 120]), np.array([170, 255, 255]) )
+color_range[('glenorchy','red')] = ( np.array([0, 190, 190]), np.array([4, 255, 255]) )
+color_range[('glenorchy','maroon')] = ( np.array([176, 190, 190]), np.array([180, 255, 255]) )
+color_range[('glenorchy','green')] = ( np.array([60, 110, 110]), np.array([75, 255, 255]) )
+color_range[('glenorchy','bright_green')] = ( np.array([51, 200, 200]), np.array([53, 255, 255]) )
+color_range[('glenorchy','yellow')] = ( np.array([20, 130, 130]), np.array([40, 255, 255]) )
