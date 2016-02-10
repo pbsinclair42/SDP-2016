@@ -1,0 +1,10 @@
+from RobotCommunications import RobotCommunications
+
+r = RobotCommunications()
+
+
+def rot_mult_until_180(n):
+    if n % 180 == 0:
+        r.rotate(0, n)
+    else:
+        print("error")
