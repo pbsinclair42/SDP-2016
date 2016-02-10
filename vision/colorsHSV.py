@@ -16,12 +16,12 @@ color_range[('aharacle','yellow')] = ( np.array([25, 145, 145]), np.array([40, 2
 # pitch0 (D.304) kilmore/PC3
 color_range[('kilmore','white')] = ( np.array([1, 0, 100]), np.array([36, 255, 255]) )
 color_range[('kilmore','blue')] = ( np.array([105, 110, 110]), np.array([125, 255, 255]) )
-color_range[('kilmore','bright_blue')] = ( np.array([65, 120, 120]), np.array([100, 255, 255]) )
+color_range[('kilmore','bright_blue')] = ( np.array([70, 100, 90]), np.array([150, 255, 255]) )
 color_range[('kilmore','pink')] = ( np.array([140, 110, 110]), np.array([175, 255, 255]) )
 color_range[('kilmore','red')] = ( np.array([0, 175, 175]), np.array([4, 255, 255]) )
 color_range[('kilmore','maroon')] = ( np.array([176, 175, 175]), np.array([180, 255, 255]) )
 color_range[('kilmore','green')] = ( np.array([50, 190, 190]), np.array([55, 255, 255]) )
-color_range[('kilmore','bright_green')] = ( np.array([52, 190, 190]), np.array([60, 255, 255]) )
+color_range[('kilmore','bright_green')] = ( np.array([45, 185, 185]), np.array([65, 255, 255]) )
 color_range[('kilmore','yellow')] = ( np.array([25, 145, 145]), np.array([40, 255, 255]) )
 
 # pitch0 (D.304) kilmore/PC2
