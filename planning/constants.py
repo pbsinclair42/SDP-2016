@@ -6,8 +6,10 @@ ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
 TICK_TIME = 0.1
 # our robot's max speed (cm per tick)
 MAX_SPEED = 1
-# the maximum distance from the centre of our robot that we can grab the ball from (centimeters)
-GRAB_DISTANCE = 3
+# the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
+GRAB_DISTANCE = 10
+# the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
+UNGRAB_DISTANCE = 20
 # the number of centimeters per pixel in the x (length) direction
 X_RATIO = 300.0/640
 # the number of centimeters per pixel in the y (width) direction

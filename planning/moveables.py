@@ -151,8 +151,8 @@ class Robot(Moveable):
         self.goal = Goals.none
         # the plan of the robot
         self.plan=[]
-        # the location or direction the robot is aiming to be at, if its lowest level goal is movement or rotation
-        self.target=None
+        # if we've told the robot to move or rotate and haven't noticed it stop doing so
+        self.moving = False
 
     def updateRotation(self, rotation):
         """Update the rotation with a new value

@@ -55,10 +55,18 @@ def grab():
     print("Grabbing ball")
 
 
+def ungrab():
+    """Attempts to grab the ball"""
+    if commsSystem:
+        commsSystem.ungrab()
+    print("Grabbing ball")
+
+
 def stop():
     """Stops all motors"""
     if commsSystem:
         commsSystem.stop()
+    me.moving=False
     print("Stopping all motors")
 
 
@@ -66,4 +74,5 @@ def flush():
     """Clears all commands and stops all motors"""
     if commsSystem:
         commsSystem.flush()
+    me.moving=False
     print("Clearing all commands")

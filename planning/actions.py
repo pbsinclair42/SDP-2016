@@ -2,20 +2,75 @@ from constants import *
 from globalObjects import *
 from moveables import Moveable
 from helperClasses import Point, BallStatus, Goals
-from arduinoAPI import turn
+from arduinoAPI import turn, move
+from math import sin, cos
 
 def collectBall():
-    #TODO
-    pass
+    """Make `collectBall` the goal of our robot, and implement the plan for achieving this"""
+    # save the plan to the robot
+    me.goal = Goals.collectBall
+
+    # function to calculate where to move to before ungrabbing
+    def ungrabHere():
+        # work out where we expect to find the ball
+        expectedBallPosition = interceptObject(ball)
+        # our target is just before that
+        bearingAway = expectedBallPosition.bearing(me.currentPoint)
+        distanceAway = ROBOT_WIDTH + UNGRAB_DISTANCE
+        xDisplacement = round(sin(bearingAway)*distanceAway, 2)
+        yDisplacement = round(cos(bearingAway)*distanceAway, 2)
+        return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
+        # Note, if we're already closer than we should be, we'll end up moving back a bit first to avoid knocking it
+
+    # function to calculate where to move to before grabbing
+    def grabHere():
+        # work out where we expect to find the ball
+        expectedBallPosition = interceptObject(ball)
+        # our target is just before that
+        bearingAway = expectedBallPosition.bearing(me.currentPoint)
+        distanceAway = ROBOT_WIDTH + GRAB_DISTANCE
+        xDisplacement = round(sin(bearingAway)*distanceAway, 2)
+        yDisplacement = round(cos(bearingAway)*distanceAway, 2)
+        return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
+
+    me.plan = [ {'action':Goals.moveToPoint,'targetFunction':ungrabHere},
+                {'action':Goals.ungrab},
+                {'action':Goals.moveToPoint,'targetFunction':grabHere},
+                {'action':Goals.grab}]
+
 
 def shoot():
+    """Make `shoot` the goal of our robot, and implement the plan for achieving this"""
+    # save the plan to the robot
     me.goal = Goals.shoot
-    me.plan = [Goals.rotateToAngle,Goals.kick]
-    print(goalCenter)
-    me.target = me.bearing(goalCenter)
-    turn(me.currentRotation-me.target)
+    # function to aim at the goal
+    def aim():
+        me.bearing(goalCenter)
+    me.plan = [ {'action':Goals.rotateToAngle,'targetFunction': aim},
+                {'action':Goals.kick}]
 
-def moveToObject(target):
+
+def moveToPoint(point):
+    me.moving=True
+    if not isinstance(point,Point):
+        raise TypeError("Point expected, " + point.__class__.__name__ + " found")
+    distance = point.distance(me.currentPoint)
+    angle = me.bearing(point) - me.currentRotation
+    # ensure the angle is between -pi and pi
+    if angle < -pi:
+        angle+=2*pi
+    elif angle > pi:
+        angle-=2*pi
+    # make that movement
+    move(distance, angle)
+
+
+def turnToDirection(angle):
+    me.moving=True
+    turn(me.currentRotation-angle)
+
+
+def interceptObject(target):
     if not isinstance(target,Moveable):
         raise TypeError("Moveable expected, " + point.__class__.__name__ + " found")
     # iteratively work out how long it would take to catch up to the object
@@ -28,23 +83,7 @@ def moveToObject(target):
         distanceTravellable = MAX_SPEED*t
         # if you could theoretically travel to that point in t seconds,
         if ( distanceTravellable > distanceFromMe ):
-            # go there
-            moveToPoint(expectedPosition)
-            return True
+            return expectedPosition
     # if it would take more than 10 seconds to catch up, don't bother trying
     print("Can't catch up")
-    return False
-
-
-def moveToPoint(point):
-    if not isinstance(point,Point):
-        raise TypeError("Point expected, " + point.__class__.__name__ + " found")
-    distance = point.distance(me.currentPoint)
-    angle = me.bearing(point) - me.currentRotation
-    # ensure the angle is between -pi and pi
-    if angle < -pi:
-        angle+=2*pi
-    elif angle > pi:
-        angle-=2*pi
-    # make that movement
-    arduinoAPI.move(distance, angle)
+    return None

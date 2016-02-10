@@ -87,7 +87,8 @@ class Goals(Enum):
     moveToPoint = 1
     rotateToAngle = 2
     grab = 3
-    kick = 4
+    ungrab = 4
+    kick = 5
     # high level actions
     collectBall = 11
     passBall = 12
