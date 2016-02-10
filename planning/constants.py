@@ -7,7 +7,7 @@ TICK_TIME = 1
 # our robot's max speed (cm per tick)
 MAX_SPEED = 50
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
-GRAB_DISTANCE = 10
+GRAB_DISTANCE = 5
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
 UNGRAB_DISTANCE = 20
 # the number of centimeters per pixel in the x (length) direction

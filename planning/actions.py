@@ -16,7 +16,7 @@ def collectBall():
         expectedBallPosition = interceptObject(ball)
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
-        distanceAway = ROBOT_WIDTH + UNGRAB_DISTANCE
+        distanceAway = ROBOT_WIDTH/2 + UNGRAB_DISTANCE
         xDisplacement = round(sin(bearingAway)*distanceAway, 2)
         yDisplacement = round(cos(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
@@ -28,7 +28,7 @@ def collectBall():
         expectedBallPosition = interceptObject(ball)
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
-        distanceAway = ROBOT_WIDTH + GRAB_DISTANCE
+        distanceAway = ROBOT_WIDTH/2 + GRAB_DISTANCE
         xDisplacement = round(sin(bearingAway)*distanceAway, 2)
         yDisplacement = round(cos(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)

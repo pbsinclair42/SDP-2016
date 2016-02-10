@@ -26,11 +26,14 @@ def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
         action = "0"
-        while action not in ['1','2','3']:
+        while action not in ['1','1b','2','3']:
             print("What action should I do now?")
-            action = raw_input("1. Collect ball\n2. Shoot ball\n3. Stop\n? ")
+            action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Stop\n? ")
         if action=="1":
             collectBall()
+        elif action=="1b":
+            collectBall()
+            me.plan = [me.plan[2]]
         elif action=="2":
             shoot()
         else:
