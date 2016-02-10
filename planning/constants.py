@@ -1,4 +1,4 @@
-from math import pi
+from math import pi, radians
 from os.path import abspath
 # root directory:
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
@@ -22,3 +22,11 @@ BOX_LENGTH = 75
 BALL_DIAMETER = 4.9
 BALL_RADIUS = BALL_DIAMETER/2.0
 ROBOT_WIDTH = 20
+# how close to a target point you need to be to count as equal, give or take normal vision inaccuracy (centimeters)
+POINT_ACCURACY = 1
+# how close to a target angle you need to be to count as equal, give or take normal vision inaccuracy (radians)
+ANGLE_ACCURACY = 0.15
+# how close to a target point you need to be to count as 'close enough' for the sake of doing stuff (centimeters)
+ITLL_DO_POINT = 5
+# how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (radians)
+ITLL_DO_ANGLE = radians(5)

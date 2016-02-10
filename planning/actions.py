@@ -2,17 +2,18 @@ from constants import *
 from globalObjects import *
 from moveables import Moveable
 from helperClasses import Point, BallStatus, Goals
-import arduinoAPI
+from arduinoAPI import turn
 
 def collectBall():
     #TODO
     pass
 
 def shoot():
-    me.goals.append(Goals.rotateToAngle)
+    me.goal = Goals.shoot
+    me.plan = [Goals.rotateToAngle,Goals.kick]
+    print(goalCenter)
     me.target = me.bearing(goalCenter)
-    print(me.target)
-
+    turn(me.currentRotation-me.target)
 
 def moveToObject(target):
     if not isinstance(target,Moveable):

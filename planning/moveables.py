@@ -1,7 +1,7 @@
 from math import sin, cos
 
 from constants import *
-from helperClasses import Point, BallStatus
+from helperClasses import Point, BallStatus, Goals
 
 
 class Moveable(object):
@@ -144,10 +144,13 @@ class Robot(Moveable):
         super(Robot,self).__init__(p)
         # the direction the robot is facing, as detected by the vision system
         self.currentRotation=0
+        self.rotationHistory=[]
         # purely used for warning/error messages
         self.name=name
+        # the high level goal of the robot
+        self.goal = Goals.none
         # the plan of the robot
-        self.goals=[]
+        self.plan=[]
         # the location or direction the robot is aiming to be at, if its lowest level goal is movement or rotation
         self.target=None
 
@@ -159,8 +162,12 @@ class Robot(Moveable):
 
         Args:
             rotation (float): the direction the robot is facing in radians"""
+        # only store a max of _HISTORY_SIZE points in the history
+        if len(self.rotationHistory)>self._HISTORY_SIZE:
+            self.rotationHistory.pop(0)
+        self.rotationHistory.append(self.currentRotation)
         if rotation!=None:
-            self.currentRotation==rotation
+            self.currentRotation=rotation
 
 
 class Ball(Moveable):

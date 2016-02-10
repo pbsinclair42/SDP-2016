@@ -22,7 +22,7 @@ def turn(x):
     """Rotates the robot x radians clockwise.  Use negative numbers to rotate anticlockwise.  """
     if commsSystem:
         commsSystem.rotate(0, 360*x/(2*pi))
-    print("Turning "+str(abs(x))+"radians "+"clockwise" if x>=0 else "anticlockwise")
+    print("Turning "+str(abs(x))+"radians "+("clockwise" if x>=0 else "anticlockwise"))
 
 
 def move(distance, angle):
