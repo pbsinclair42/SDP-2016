@@ -230,10 +230,7 @@ int rotMoveStep(){
                 return 0;
             }
 
-            if (degrees <= 180) 
-                rotaryTarget = (int) ((1 / 120.0) * degrees * degrees + 3 * degrees);
-            else
-                rotaryTarget == ROTATION_CONST;
+                rotaryTarget = ROTATION_CONST * degrees;
 
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
