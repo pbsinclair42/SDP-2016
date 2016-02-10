@@ -144,6 +144,7 @@ class Robot(Moveable):
         super(Robot,self).__init__(p)
         self.currentRotation=0
         self.name=name
+        self.goals=[]
 
     def updateRotation(self, rotation):
         """Update the rotation with a new value

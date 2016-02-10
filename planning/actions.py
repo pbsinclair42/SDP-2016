@@ -4,6 +4,13 @@ from moveables import Moveable
 from helperClasses import Point, BallStatus
 import arduinoAPI
 
+def collectBall():
+    #TODO
+    pass
+
+def shoot():
+    #TODO
+    pass
 
 def moveToObject(target):
     if not isinstance(target,Moveable):

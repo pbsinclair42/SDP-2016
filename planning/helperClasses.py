@@ -88,3 +88,14 @@ class BallStatus(Enum):
     enemyA = 2
     enemyB = 3
 
+
+class Goals(Enum):
+    """An enum listing the possible goals for a robot to have"""
+    none = 0
+    moveToPoint = 1
+    collectBall = 2
+    passBall = 3
+    shoot = 4
+    receivePass = 5
+    blockPass = 6
+    guardGoal = 7
