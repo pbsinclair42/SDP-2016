@@ -51,8 +51,8 @@ t: sanity-test;
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 0.4   // A linear function is also in effect
-#define KICKER_CONST 10.0        // TODO: Calibrate
+#define ROTATION_CONST 0.4
+#define KICKER_CONST 10.0  
 
 // COMMS API Byte Definitions
 #define CMD_ROTMOVE    B00000001 // Buffered: MSB 1 performs CCW rotation
@@ -174,13 +174,18 @@ void loop() {
         if (state_end){
             MasterState = IDLE_STATE;
             command_index += 4;
+            
+            // check for circular buffer end
             if (command_index == 0){
             	commandOverflow++;
             }
+            
+            // check for extra actions to perform
             if (finishGrabbing == 1){
             	MasterState = CMD_GRAB;
                 command_index -= 4; // restore command index to account for custom command
-	    } else {
+	        } else {
+                // report success/end
                 Serial.print(CMD_DONE);
             }
             
