@@ -1,5 +1,6 @@
 from constants import *
-from helperClasses import Point, BallStatus, Goals, sin, cos
+from helperClasses import Point, BallStatus, Goals
+from helperFunctions import sin, cos
 
 
 class Moveable(object):

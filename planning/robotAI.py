@@ -2,7 +2,8 @@ import threading
 
 from constants import *
 from globalObjects import *
-from helperClasses import BallStatus, Goals, essentiallyEqual, nearEnough
+from helperClasses import BallStatus, Goals
+from helperFunctions import essentiallyEqual, nearEnough
 from actions import collectBall, shoot, moveToPoint, turnToDirection
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop

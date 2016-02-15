@@ -1,7 +1,8 @@
 from constants import *
 from globalObjects import *
 from moveables import Moveable
-from helperClasses import Point, BallStatus, Goals, sin, cos
+from helperClasses import Point, BallStatus, Goals
+from helperFunctions import sin, cos
 from arduinoAPI import turn, move
 
 
