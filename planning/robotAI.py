@@ -2,7 +2,7 @@ import threading
 
 from constants import *
 from globalObjects import *
-from helperClasses import BallStatus, Goals
+from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
 from actions import collectBall, shoot, moveToPoint, turnToDirection
 import visionAPI
@@ -50,7 +50,7 @@ def executePlan():
         print("No actions to execute")
         return
 
-    if currentAction==Goals.rotateToAngle:
+    if currentAction==Actions.rotateToAngle:
         # calculate what angle we're aiming for
         targetAngle = me.plan[0]['targetFunction']()/2
         # if we've yet to start it turning, start it now
@@ -87,7 +87,7 @@ def executePlan():
             else:
                 print("Still going")
 
-    elif currentAction==Goals.moveToPoint:
+    elif currentAction==Actions.moveToPoint:
         # calculate where we're headed
         targetPoint = me.plan[0]['targetFunction']()
         # if we've yet to start it moving, start it now
@@ -118,21 +118,20 @@ def executePlan():
                     # if we're close enough already, move on to the next step of the plan
                     me.plan.pop(0)
 
-    elif currentAction==Goals.kick:
+    elif currentAction==Actions.kick:
         # TODO: add power function for kicking
         kick(200)
         # TODO include me.plan.pop(0)
-    elif currentAction==Goals.ungrab:
+    elif currentAction==Actions.ungrab:
         ungrab()
         me.plan.pop(0)
-    elif currentAction==Goals.grab:
+    elif currentAction==Actions.grab:
         grab()
         me.plan.pop(0)
 
     # if our plan is over, we've achievd our goal
     if len(me.plan)==0:
         me.goal = Goals.none
-
 
 
 def tick():

@@ -1,7 +1,7 @@
 from constants import *
 from globalObjects import *
 from moveables import Moveable
-from helperClasses import Point, BallStatus, Goals
+from helperClasses import Point, BallStatus, Goals, Actions
 from helperFunctions import sin, cos
 from arduinoAPI import turn, move
 
@@ -34,10 +34,10 @@ def collectBall():
         yDisplacement = round(cos(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
 
-    me.plan = [ {'action':Goals.moveToPoint,'targetFunction':ungrabHere},
-                {'action':Goals.ungrab},
-                {'action':Goals.moveToPoint,'targetFunction':grabHere},
-                {'action':Goals.grab}]
+    me.plan = [ {'action':Actions.moveToPoint,'targetFunction':ungrabHere},
+                {'action':Actions.ungrab},
+                {'action':Actions.moveToPoint,'targetFunction':grabHere},
+                {'action':Actions.grab}]
 
 
 def shoot():
@@ -47,8 +47,8 @@ def shoot():
     # function to aim at the goal
     def aim():
         return -me.bearing(goalCenter)
-    me.plan = [ {'action':Goals.rotateToAngle,'targetFunction': aim},
-                {'action':Goals.kick}]
+    me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
+                {'action':Actions.kick}]
 
 
 def moveToPoint(point):

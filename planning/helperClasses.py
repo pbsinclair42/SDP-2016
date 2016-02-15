@@ -82,16 +82,19 @@ class Goals(Enum):
     """An enum listing the possible goals for a robot to have"""
     # if you find yourself with nothing to do, you're probably doing something wrong, but oh well
     none = 0
-    # low level actions
+    collectBall = 1
+    passBall = 2
+    shoot = 3
+    receivePass = 4
+    blockPass = 5
+    guardGoal = 6
+
+
+class Actions(Enum):
+    """An enum listing the possible actions our robot can take"""
+    none = 0
     moveToPoint = 1
     rotateToAngle = 2
     grab = 3
     ungrab = 4
     kick = 5
-    # high level actions
-    collectBall = 11
-    passBall = 12
-    shoot = 13
-    receivePass = 14
-    blockPass = 15
-    guardGoal = 16
