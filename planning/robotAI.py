@@ -4,7 +4,8 @@ from constants import *
 from globalObjects import *
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
-from actions import collectBall, shoot, moveToPoint, turnToDirection
+from actions import moveToPoint, turnToDirection
+from goals import collectBall, shoot
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop
 
