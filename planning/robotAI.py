@@ -6,7 +6,7 @@ from helperClasses import BallStatus, Goals, essentiallyEqual, nearEnough
 from actions import collectBall, shoot, moveToPoint, turnToDirection
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop
-from math import degrees
+
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
@@ -64,7 +64,6 @@ def executePlan():
         elif nearEnough(me.currentRotation, targetAngle):
             print("Stopped!")
             stop()
-        #TODO: go back if you overshoot
 
         # otherwise check if it's stopped, and restart it if so, otherwise wait for it to do its stuff
         else:
@@ -112,7 +111,6 @@ def executePlan():
             # if it hasn't moved for two ticks
             if essentiallyEqual(me.currentPoint, oldPoint):
                 # we're assuming that we've stopped moving, but stop to make sure
-                print("H")
                 stop()
                 # check if you're at the right position
                 if nearEnough(me.currentPoint, targetPoint):

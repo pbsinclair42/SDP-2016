@@ -1,7 +1,6 @@
 from helperClasses import Point, BallStatus
 import sys
 import os
-from math import radians
 from constants import ROOT_DIR, X_RATIO, Y_RATIO
 from cv2 import error as cv2Error
 
@@ -12,7 +11,7 @@ from camera import Camera
 
 camera = Camera()
 
-# NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!
+# NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!  
 
 # check if the camera is connected
 try:
@@ -166,7 +165,7 @@ def getEnemyCoords(frame=None):
 
 
 def getMyRotation(frame=None):
-    """Returns the rotation of our robot in radians between -pi and pi"""
+    """Returns the rotation of our robot in degrees between -180 and 180"""
     # if we have a connection to the camera...
     if camera!=None:
         # get the current frame if it's not been inputted
@@ -177,14 +176,14 @@ def getMyRotation(frame=None):
         # if you couldn't find the rotation, return None
         if rotation==None:
             return None
-        return radians(rotation[0])
+        return rotation[0]
     else:
         # if we have no connection to the camera, just return some dummy data
-        return 1.2
+        return 18
 
 
 def getAllyRotation(frame=None):
-    """Returns the rotation of our teammate in radians between -pi and pi"""
+    """Returns the rotation of our teammate in degrees between -180 and 180"""
     # if we have a connection to the camera...
     if camera!=None:
         # get the current frame if it's not been inputted
@@ -195,14 +194,14 @@ def getAllyRotation(frame=None):
         # if you couldn't find the rotation, return None
         if rotation==None:
             return None
-        return radians(rotation[0])
+        return rotation[0]
     else:
         # if we have no connection to the camera, just return some dummy data
-        return 1.63
+        return 163
 
 
 def getEnemyRotation(frame=None):
-    """Returns the rotation of the two enemy robots in radians between -pi and pi
+    """Returns the rotation of the two enemy robots in degrees between -180 and 180
 
     Note that the pink robot is enemy A and the green robot is enemy B
     """
@@ -215,13 +214,13 @@ def getEnemyRotation(frame=None):
         pinkRotation = robotTracker.getRobotOrientation(frame, 'opponent', 'pink_robot')[0]
         greenRotation = robotTracker.getRobotOrientation(frame, 'opponent', 'green_robot')[0]
         if pinkRotation!=None:
-            pinkRotation = radians(pinkRotation[0])
+            pinkRotation = pinkRotation[0]
         if greenRotation!=None:
-            greenRotation = radians(greenRotation[0])
+            greenRotation = greenRotation[0]
         return [pinkRotation,greenRotation]
     else:
         # if we have no connection to the camera, just return some dummy data
-        return [2.1, -0.67]
+        return [-66, 110]
 
 
 def getAllRobotCoords(frame=None):
@@ -231,6 +230,8 @@ def getAllRobotCoords(frame=None):
         # get the current frame if it's not been inputted
         if frame is None:
             frame = camera.get_frame_hack()
+        # TODO
+    # if we have no connection to the camera, just return some dummy data
     return [getMyCoords(frame), getAllyCoords(frame)]+getEnemyCoords(frame)
 
 
@@ -241,6 +242,8 @@ def getAllRobotRotations(frame=None):
         # get the current frame if it's not been inputted
         if frame is None:
             frame = camera.get_frame_hack()
+        # TODO
+    # if we have no connection to the camera, just return some dummy data
     return [getMyRotation(frame), getAllyRotation(frame)]+getEnemyRotation(frame)
 
 
@@ -258,13 +261,13 @@ def getAllRobotDetails(frame=None):
         greenRotation , greenCoords = robotTracker.getRobotOrientation(frame, 'opponent', 'green_robot')
         
         if ourRotation!=None:
-            ourRotation = radians(ourRotation[0])
+            ourRotation = ourRotation[0]
         if allyRotation!=None:
-            allyRotation = radians(allyRotation[0])
+            allyRotation = allyRotation[0]
         if pinkRotation!=None:
-            pinkRotation = radians(pinkRotation[0])
+            pinkRotation = pinkRotation[0]
         if greenRotation!=None:
-            greenRotation = radians(greenRotation[0])
+            greenRotation = greenRotation[0]
 
         if ourCoords==None:
             ourPoint=None
@@ -287,4 +290,5 @@ def getAllRobotDetails(frame=None):
             greenCoords = robotTracker.transformCoordstoCV(greenCoords)
             greenPoint = Point(greenCoords[0]*X_RATIO,greenCoords[1]*Y_RATIO)
         return [(ourPoint,ourRotation),(allyPoint,allyRotation),(pinkPoint,pinkRotation),(greenPoint,greenRotation)]
+    # if we have no connection to the camera, just return some dummy data
     return zip(getAllRobotCoords(frame), getAllRobotRotations(frame))

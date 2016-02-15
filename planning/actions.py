@@ -1,9 +1,9 @@
 from constants import *
 from globalObjects import *
 from moveables import Moveable
-from helperClasses import Point, BallStatus, Goals
+from helperClasses import Point, BallStatus, Goals, sin, cos
 from arduinoAPI import turn, move
-from math import sin, cos, degrees
+
 
 def collectBall():
     """Make `collectBall` the goal of our robot, and implement the plan for achieving this"""
@@ -56,11 +56,11 @@ def moveToPoint(point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
     distance = point.distance(me.currentPoint)
     angle = me.bearing(point) - me.currentRotation
-    # ensure the angle is between -pi and pi
-    if angle < -pi:
-        angle+=2*pi
-    elif angle > pi:
-        angle-=2*pi
+    # ensure the angle is between -180 and 180
+    if angle < -180:
+        angle+=360
+    elif angle > 180:
+        angle-=360
     # make that movement
     move(distance, angle)
 
@@ -68,12 +68,12 @@ def moveToPoint(point):
 def turnToDirection(angle):
     me.moving=True
     angleToMove = me.currentRotation-angle
-    print("Angle to move:",degrees(angleToMove))
-    # ensure the angle is between -pi and pi
-    if angleToMove < -pi:
-        angleToMove+=2*pi
-    elif angleToMove > pi:
-        angleToMove-=2*pi
+    print("Angle to move:",angleToMove)
+    # ensure the angle is between -180 and 80
+    if angleToMove < -180:
+        angleToMove+=360
+    elif angleToMove > 180:
+        angleToMove-=360
     #remember, negative is clockwise
     turn(angleToMove)
 

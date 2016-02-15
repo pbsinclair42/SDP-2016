@@ -20,8 +20,8 @@ except BaseException:
     commsSystem = False
 
 def turn(x):
-    """Rotates the robot x radians anticlockwise.  Use negative numbers to rotate clockwise.  """
-    x = int(degrees(x))
+    """Rotates the robot x degrees anticlockwise.  Use negative numbers to rotate clockwise.  """
+    x = int(x)
     if commsSystem:
         if (x>255 or x< (-255)):
             print("Max turn is 255 degrees")
@@ -35,11 +35,11 @@ def turn(x):
 
 
 def move(distance, angle):
-    """Moves `distance` cm at a direction of `angle` radians"""
+    """Moves `distance` cm at a direction of `angle` degrees"""
     # TODO: update for holo movement
     if commsSystem:
         commsSystem.rotate(distance,angle)
-    print("Moving "+str(distance)+"cm at an angle of "+str(angle)+" radians")
+    print("Moving "+str(distance)+"cm at an angle of "+str(angle)+" degrees")
 
 
 def kick(distance):

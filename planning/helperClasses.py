@@ -1,4 +1,4 @@
-from math import sqrt, atan2, pi
+from math import sqrt, atan2, pi, sin as sinr, cos as cosr
 from enum import Enum
 from constants import POINT_ACCURACY, ANGLE_ACCURACY, ITLL_DO_POINT, ITLL_DO_ANGLE
 
@@ -31,16 +31,16 @@ class Point(object):
 
 
     def bearing(self, p):
-        """Finds the bearing from this to another point in radians
+        """Finds the bearing from this to another point in degrees
         0 is taken to be positive in the x axis
         3 decimal places of accuracy
-        if both points are identical, returns pi/2
+        if both points are identical, returns 90
 
         Args:
             p (point): the point to find the bearing to
 
         Returns:
-            float of the bearing between the points, between -pi and pi
+            float of the bearing between the points, between -180 and 180
 
         """
         if not isinstance(p, self.__class__):
@@ -48,8 +48,8 @@ class Point(object):
         xDisplacement = p.x-self.x
         yDisplacement = p.y-self.y
         bearing = atan2(yDisplacement,xDisplacement)
-        return round(bearing, 3)
-   
+        return round(degrees(bearing), 3)
+
 
     def __str__(self):
         return "<"+str(self.x)+","+str(self.y)+">"
@@ -129,3 +129,11 @@ def nearEnough(a,b):
         return abs(a.x-b.x)<=ITLL_DO_POINT and abs(a.y-b.y)<=ITLL_DO_POINT
     except AttributeError:
         return abs(a-b)<=ITLL_DO_ANGLE
+
+
+def sin(angle):
+    return sinr(radians(angle))
+
+
+def cos(angle):
+    return cosr(radians(angle))

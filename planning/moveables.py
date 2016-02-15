@@ -1,7 +1,5 @@
-from math import sin, cos
-
 from constants import *
-from helperClasses import Point, BallStatus, Goals
+from helperClasses import Point, BallStatus, Goals, sin, cos
 
 
 class Moveable(object):
@@ -115,13 +113,13 @@ class Moveable(object):
 
 
     def bearing(self, other):
-        """Finds the bearing from this object to another in radians
+        """Finds the bearing from this object to another in degrees
 
         Args:
             other (Moveable or Point): the moveable or point to find the bearing to
 
         Returns:
-            float of the bearing between the two, between -pi and pi
+            float of the bearing between the two, between -180 and 180
 
         """
         if isinstance(other,Moveable):
@@ -161,7 +159,7 @@ class Robot(Moveable):
         just assume the rotation hasn't changed
 
         Args:
-            rotation (float): the direction the robot is facing in radians"""
+            rotation (float): the direction the robot is facing in degrees"""
         # only store a max of _HISTORY_SIZE points in the history
         if len(self.rotationHistory)>self._HISTORY_SIZE:
             self.rotationHistory.pop(0)
@@ -175,11 +173,3 @@ class Ball(Moveable):
         super(Ball,self).__init__(p)
         self.status=BallStatus.free
         self.name=name
-
-'''
-#for testing
-#TODO: remove
-a=Moveable(Point(0,0))
-a.update(Point(1,0))
-a.update(Point(3,0))
-'''
