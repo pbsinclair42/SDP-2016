@@ -1,6 +1,5 @@
 import sys
 import os
-from math import *
 from constants import ROOT_DIR
 from globalObjects import me
 

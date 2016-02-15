@@ -1,4 +1,3 @@
-from math import pi
 from os.path import abspath
 # root directory
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'

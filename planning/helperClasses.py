@@ -1,4 +1,4 @@
-from math import sqrt, atan2, pi, sin as sinr, cos as cosr
+from math import sqrt, atan2, degrees, radians, sin as sinr, cos as cosr
 from enum import Enum
 from constants import POINT_ACCURACY, ANGLE_ACCURACY, ITLL_DO_POINT, ITLL_DO_ANGLE
 
