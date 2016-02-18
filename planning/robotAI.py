@@ -7,7 +7,8 @@ from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
 from goals import collectBall, shoot
 import visionAPI
-from arduinoAPI import grab, ungrab, turn, kick, flush, stop
+from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
+from simulator import Simulator
 
 
 def updatePositions():
@@ -122,7 +123,7 @@ def executePlan():
     elif currentAction==Actions.kick:
         # TODO: add power function for kicking
         kick(200)
-        # TODO include me.plan.pop(0)
+        me.plan.pop(0)
     elif currentAction==Actions.ungrab:
         ungrab()
         me.plan.pop(0)
@@ -137,6 +138,9 @@ def executePlan():
 
 def tick():
     """Each tick, update your beliefs about the world then decide what action to take based on this"""
+    # if currently simulating, update the simulation
+    if isinstance(commsSystem,Simulator):
+        commsSystem.tick()
     updatePositions()
     makePlan()
     executePlan()
