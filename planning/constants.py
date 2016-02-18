@@ -2,11 +2,21 @@ from os.path import abspath
 # root directory
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
 # the number of seconds between updating the robot position
-TICK_TIME = 1
-# our robot's max speed (cm per tick)
-MAX_SPEED = 50
+TICK_TIME = 1.0
+# our robot's max speed (cm per second)
+MAX_SPEED = 25.0
+# our robot's rotational speed (degrees per second)
+MAX_ROT_SPEED = 170.0
+# the time taken for the robot to grab (seconds)
+GRAB_TIME = 0.7
+# the time taken for the robot to ungrab (seconds)
+UNGRAB_TIME = 0.7
+# the time taken from starting kicking to the ball moving (seconds)
+BALL_KICK_TIME = 1.0
+# the time taken for the robot to ungrab, kick, unkick, and grab (seconds)
+KICK_TIME = 2.4
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
-GRAB_DISTANCE = 5
+GRAB_DISTANCE = 5.0
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
 UNGRAB_DISTANCE = 20
 # the number of centimeters per pixel in the x (length) direction
