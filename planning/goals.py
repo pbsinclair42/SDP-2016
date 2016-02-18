@@ -96,7 +96,7 @@ def blockPass():
                 #wait till we have the ball
                {'action':Actions.ungrab}]
 
-def guardGoal()
+def guardGoal():
     """Stop bad people from scoring"""
     me.goal = Goals.guardGoal
 
@@ -112,4 +112,5 @@ def guardGoal()
 
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':gotoGoal},
                {'action':Actions.rotateToAngle,'targetFunction':rotate}
-               """run the guard function"""]
+               #run the guard function
+               ]
