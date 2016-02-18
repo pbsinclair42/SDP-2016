@@ -1,6 +1,6 @@
 from enum import Enum
 from constants import *
-from helperClasses import Point
+from helperClasses import Point, BallStatus
 from helperFunctions import sin, cos
 from moveables import Robot, Ball
 
@@ -15,12 +15,14 @@ simulatedRobots = [simulatedMe, simulatedAlly]+simulatedEnemies
 # guess what this could possibly be
 simulatedBall = Ball(name="simulatedBall")
 
+
 class Simulator(object):
 
     def __init__(self, debug=False):
         self.currentActionQueue=[]
         self.grabbed=True
         self.holdingBall=False
+        simulatedStart(Point(50,50), Point(200,25), Point(166,211), Point(52,102), 15, 38, 150, -62, Point(60,60), BallStatus.free)
 
     # move holonomically at an angle of `degrees` anticlockwise and a distance of `distance` cm
     def holo(self,degrees,distance):
@@ -181,6 +183,27 @@ class Simulator(object):
                 return
 
 
+def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot, enemyARot, enemyBRot, ballPoint, ballStat):
+    '''Reset the status of all robots and the ball'''
+    # reset all robots/balls
+    simulatedMe.__init__()
+    simulatedAlly.__init__()
+    simulatedEnemies[0].__init__()
+    simulatedEnemies[1].__init__()
+    simulatedBall.__init__()
+    # update them with the inputted points
+    simulatedMe.update(myPoint)
+    simulatedMe.updateRotation(myRot)
+    simulatedAlly.update(allyPoint)
+    simulatedAlly.updateRotation(allyRot)
+    simulatedEnemies[0].update(enemyAPoint)
+    simulatedEnemies[0].updateRotation(enemyARot)
+    simulatedEnemies[1].update(enemyBPoint)
+    simulatedEnemies[1].updateRotation(enemyBRot)
+    simulatedBall.update(ballPoint)
+    simulatedBall.status = ballStat
+
+
 def checkValid(*toCheck):
     for x in toCheck:
         if x>255 or x<0 or x!=int(x):
@@ -194,4 +217,3 @@ class SimulatorActions(Enum):
     kick = 3
     ungrab = 4
     grab = 5
-
