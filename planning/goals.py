@@ -45,6 +45,6 @@ def shoot():
     me.goal = Goals.shoot
     # function to aim at the goal
     def aim():
-        return -me.bearing(goalCenter)
+        return -me.bearing(rightGoalCenter)
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
                 {'action':Actions.kick}]

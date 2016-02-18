@@ -14,4 +14,5 @@ robots = [me, ally]+enemies
 ball = Ball(name="ball")
 # the point at the center of the goal
 # TODO: add both goals and ability to differentiate between them and whatnot
-goalCenter=Point(PITCH_LENGTH,PITCH_WIDTH/2)
+leftGoalCenter = Point(0,PITCH_WIDTH/2)
+rightGoalCenter=Point(PITCH_LENGTH,PITCH_WIDTH/2)
