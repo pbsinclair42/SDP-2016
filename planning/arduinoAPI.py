@@ -22,13 +22,13 @@ except BaseException:
 def turn(x):
     """Rotates the robot x degrees anticlockwise.  Use negative numbers to rotate clockwise.  """
     x = int(x)
-    if (x>255 or x< (-255)):
+    if x>255 or x< (-255):
         print("Max turn is 255 degrees")
         # set x to 255 times the sign of x
         x=255*x/abs(x)
-    if (x>=0):
+    if x>=0:
         commsSystem.rotateneg(0, abs(x))
-    elif (x<=0):
+    else:
         commsSystem.rotate(0, abs(x))
     print("Turning "+str(abs(x))+"degrees "+("clockwise" if x<=0 else "anticlockwise"))
 
@@ -36,12 +36,31 @@ def turn(x):
 def move(distance, angle):
     """Moves `distance` cm at a direction of `angle` degrees"""
     # TODO: update for holo movement
-    commsSystem.rotate(distance,angle)
+    # ensure the distance is an appropriate size
+    distance = int(distance)
+    if distance>255 or distance<0:
+        print("Max distance is 255cm")
+        distance=0 if distance<0 else 255
+    # ensure the angle is an appropriate size
+    angle = int(angle)
+    if angle>255 or angle< (-255):
+        print("Max turn is 255 degrees")
+        # set angle to 255 times the sign of angle
+        angle=255*angle/abs(angle)
+    if angle>=0:
+        commsSystem.rotateneg(distance, abs(angle))
+    elif angle<=0:
+        commsSystem.rotate(distance, abs(angle))
     print("Moving "+str(distance)+"cm at an angle of "+str(angle)+" degrees")
 
 
 def kick(distance):
     """Kicks the ball `distance` cm"""
+    # ensure the distance is an appropriate size
+    distance = int(distance)
+    if distance>255 or distance<0:
+        print("Max distance is 255cm")
+        distance=0 if distance<0 else 255
     commsSystem.kick(distance)
     print("Kicking ball "+str(distance)+"cm")
 
