@@ -3,8 +3,11 @@ from globalObjects import *
 from helperClasses import Point, Goals, Actions
 from helperFunctions import sin, cos
 from actions import interceptObject
-
-
+"""TODO
+Position to receive pass - Speak to Other Team About that
+Guard goal
+Tell teammate plans (?)
+"""
 def collectBall():
     """Make `collectBall` the goal of our robot, and implement the plan for achieving this"""
     # save the plan to the robot
@@ -71,4 +74,26 @@ def recievePass():
                {'action':Actions.ungrab},
                #wait until we have the ball
                {'action':Actions.grab}]
+
+def blockPass():
+    me.goal = Goals.blockPass
+
+    def blockHere():
+        """move to inbetween two oponents"""
+        e0 =enemy0.currentPoint
+        e1 = enemy1.currentPoint
+        x = sum(e0.x + e1.x)/2
+        y = sum(e0.y + e1.y)/2
+        return Point(x,y)
+
+    def rotate():
+        """rotate to face oponent with ball"""
+        me.bearing(ball)
+        return me.bearing()
+    me.plan = [{'action':Actions.moveToPoint,'targetFunction':blockHere},
+               {'action':Actions.rotateToAngle, 'targetFunction':rotate},
+               {'action':Actions.ungrab},
+                #wait till we have the ball
+               {'action':Actions.ungrab}]
+
 
