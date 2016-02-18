@@ -96,4 +96,20 @@ def blockPass():
                 #wait till we have the ball
                {'action':Actions.ungrab}]
 
+def guardGoal()
+    """Stop bad people from scoring"""
+    me.goal = Goals.guardGoal
 
+    def gotoGoal():
+        """Move into position"""
+        return leftGoalCenter
+    def rotate():
+        """rotate into position"""
+        return me.bearing(ball)
+    def guard():
+        """guard until ball moves"""
+
+
+    me.plan = [{'action':Actions.moveToPoint,'targetFunction':gotoGoal},
+               {'action':Actions.rotateToAngle,'targetFunction':rotate}
+               """run the guard function"""]
