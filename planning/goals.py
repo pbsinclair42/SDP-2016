@@ -48,3 +48,27 @@ def shoot():
         return -me.bearing(goalCenter)
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
                 {'action':Actions.kick}]
+
+
+def passBall():
+
+    me.goal = Goals.passBall
+
+    def rotate():
+        return me.bearing(ally)
+
+    def kickToAlly():
+        return me.distance(ally)
+    me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': rotate},
+            {'action':Actions.kick,'targetFunction': kickToAlly}]
+
+def recievePass():
+    me.goal = Goals.recievePass
+
+    def rotate():
+        return me.bearing(ally)
+    me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate},
+               {'action':Actions.ungrab},
+               #wait until we have the ball
+               {'action':Actions.grab}]
+
