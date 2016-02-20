@@ -5,7 +5,7 @@ from globalObjects import *
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
-from goals import collectBall, shoot
+from goals import *
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
 from simulator import Simulator
@@ -29,7 +29,7 @@ def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
         action = "0"
-        while action not in ['1','1b','2','3']:
+        while action not in ['1','1b','2','3','4','5','6']:
             print("What action should I do now?")
             action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Stop\n? ")
         if action=="1":
@@ -39,6 +39,14 @@ def makePlan():
             me.plan = [me.plan[2]]
         elif action=="2":
             shoot()
+        elif action=="3":
+            passBall()
+        elif action=="4":
+            recievePass()
+        elif action=="5":
+            blockPass()
+        elif action =="6":
+            guardGoal()
         else:
             import sys
             sys.exit()
@@ -147,4 +155,4 @@ def tick():
     threading.Timer(TICK_TIME, tick).start()
 
 # start it off
-#tick()
+tick()
