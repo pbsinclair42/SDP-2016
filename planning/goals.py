@@ -58,7 +58,7 @@ def passBall():
     me.goal = Goals.passBall
 
     def rotate():
-        return me.bearing(ally)
+        return -me.bearing(ally)
 
     def kickToAlly():
         return me.distance(ally)
@@ -80,10 +80,10 @@ def blockPass():
 
     def blockHere():
         """move to inbetween two oponents"""
-        e0 =enemy0.currentPoint
-        e1 = enemy1.currentPoint
-        x = sum(e0.x + e1.x)/2
-        y = sum(e0.y + e1.y)/2
+        e0 =enemies[0].currentPoint
+        e1 = enemies[1].currentPoint
+        x = (e0.x + e1.x)/2
+        y = (e0.y + e1.y)/2
         return Point(x,y)
 
     def rotate():
