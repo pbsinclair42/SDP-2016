@@ -46,11 +46,12 @@ def shoot():
     """Make `shoot` the goal of our robot, and implement the plan for achieving this"""
     # save the plan to the robot
     me.goal = Goals.shoot
+    kickDistance = me.distance(rightGoalCenter)
     # function to aim at the goal
     def aim():
         return -me.bearing(rightGoalCenter)
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
-                {'action':Actions.kick}]
+                {'action':Actions.kick()}]
 
 
 def passBall():

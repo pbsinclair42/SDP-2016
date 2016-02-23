@@ -12,7 +12,7 @@ from camera import Camera
 
 camera = Camera()
 
-# NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!  
+# NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!
 
 # check if the camera is connected
 try:
@@ -28,10 +28,17 @@ except cv2Error:
 
 # if we managed to connect to the camera, set up the robot variables
 if camera!=None:
-    print "\nPossible team colors: yellow/light_blue\n"
-    our_team_color = raw_input("Please specify your team colour: ")
-    num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
-    ball_color = raw_input("Specify ball color (red/blue): ")
+    if os.path.config.txt == True:
+        with open(config.txt) as f:
+            content = f.readlines()
+            our_team_color = context[0]
+            num_of_pink = context[2]
+            ball_color = context[3]
+    else:
+        print "\nPossible team colors: yellow/light_blue\n"
+        our_team_color = raw_input("Please specify your team colour: ")
+        num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
+        ball_color = raw_input("Specify ball color (red/blue): ")
     # create our trackers:
     robotTracker = RobotTracker(our_team_color, int(num_of_pink))
     ball = BallTracker(ball_color)
@@ -58,14 +65,14 @@ if camera!=None:
         our_robot_color = 'green_robot'
         mate_letters = 'PINK'
         mate_col = colors['pink']
-        our_mate_color = 'pink_robot' 
+        our_mate_color = 'pink_robot'
     else:
         our_letters = 'PINK'
         our_col = colors['pink']
-        our_robot_color = 'pink_robot' 
-        mate_letters = 'GREEN' 
+        our_robot_color = 'pink_robot'
+        mate_letters = 'GREEN'
         mate_col = colors['green']
-        our_mate_color = 'green_robot' 
+        our_mate_color = 'green_robot'
 
 
 def getBallCoords(frame=None):
@@ -257,7 +264,7 @@ def getAllRobotDetails(frame=None):
         allyRotation , allyCoords = robotTracker.getRobotOrientation(frame, 'us', our_mate_color)
         pinkRotation , pinkCoords = robotTracker.getRobotOrientation(frame, 'opponent', 'pink_robot')
         greenRotation , greenCoords = robotTracker.getRobotOrientation(frame, 'opponent', 'green_robot')
-        
+
         if ourRotation!=None:
             ourRotation = ourRotation[0]
         if allyRotation!=None:

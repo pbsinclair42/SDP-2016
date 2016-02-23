@@ -31,7 +31,7 @@ def makePlan():
         action = "0"
         while action not in ['1','1b','2','3','4','5','6']:
             print("What action should I do now?")
-            action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Stop\n? ")
+            action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Stop\n? ")
         if action=="1":
             collectBall()
         elif action=="1b":
@@ -62,7 +62,7 @@ def executePlan():
 
     if currentAction==Actions.rotateToAngle:
         # calculate what angle we're aiming for
-        targetAngle = me.plan[0]['targetFunction']()/2
+        targetAngle = me.plan[0]['targetFunction']()/3.5
         # if we've yet to start it turning, start it now
         if not me.moving and not nearEnough(me.currentRotation, targetAngle):
             print("turning")
@@ -109,7 +109,9 @@ def executePlan():
         # if not, stop if we've arrived
         elif nearEnough(me.currentPoint, targetPoint):
             stop()
-        #TODO: go back if you overshoot
+        #if you overshoot, move back to where you were suppsed to be
+        elif targetPoint != me.currentPoint:
+            moveToPoint(targetPoint)
         # otherwise check if it's stopped, and restart it if so, otherwise wait for it to do its stuff
         else:
             # check if it's not moved for the past two ticks
@@ -128,9 +130,10 @@ def executePlan():
                     # if we're close enough already, move on to the next step of the plan
                     me.plan.pop(0)
 
-    elif currentAction==Actions.kick:
-        # TODO: add power function for kicking
-        kick(200)
+    elif currentAction==Actions.kick():
+        ungrab()
+        kick(kickDistance)
+        grab()
         me.plan.pop(0)
     elif currentAction==Actions.ungrab:
         ungrab()
@@ -139,7 +142,7 @@ def executePlan():
         grab()
         me.plan.pop(0)
 
-    # if our plan is over, we've achievd our goal
+    # if our plan is over, we've achieved our goal
     if len(me.plan)==0:
         me.goal = Goals.none
 
