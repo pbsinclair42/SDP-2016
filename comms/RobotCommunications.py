@@ -31,10 +31,10 @@ class RobotCommunications(Communications):
     # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
         print("rotateneg")
-        x = self.write(chr(129) +chr(254)+chr(int(0)) + chr(255))
-        import time
-        time.sleep(degrees/180)
-        self.stop()
+        x = self.write(chr(129) +chr(int(degrees))+chr(int(distance)) + chr(255))
+        #import time
+        #time.sleep(degrees/180)
+        #self.stop()
         #x = self.write(chr(1) +chr(180-int(degrees))+chr(int(distance)) + chr(255))
         #x = self.write(chr(129) +chr(int(degrees))+chr(int(distance)) + chr(255))
         return x
