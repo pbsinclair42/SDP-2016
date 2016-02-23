@@ -51,13 +51,13 @@ def shoot():
     def aim():
         return -me.bearing(rightGoalCenter)
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
-                {'action':Actions.kick()}]
+                {'action':Actions.kick}]
 
 
 def passBall():
 
     me.goal = Goals.passBall
-
+    kickDistance = me.distance(ally)
     def rotate():
         return -me.bearing(ally)
 

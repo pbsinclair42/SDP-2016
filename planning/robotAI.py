@@ -130,7 +130,7 @@ def executePlan():
                     # if we're close enough already, move on to the next step of the plan
                     me.plan.pop(0)
 
-    elif currentAction==Actions.kick():
+    elif currentAction==Actions.kick:
         ungrab()
         kick(kickDistance)
         grab()

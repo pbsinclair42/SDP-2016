@@ -9,6 +9,7 @@ from simulator import simulatedMe, simulatedAlly, simulatedEnemies, simulatedBal
 sys.path.append(ROOT_DIR+'vision')
 from tracker import BallTracker, RobotTracker
 from camera import Camera
+from globalObjects import *
 
 camera = Camera()
 
@@ -32,8 +33,15 @@ if camera!=None:
         with open(config.txt) as f:
             content = f.readlines()
             our_team_color = context[0]
-            num_of_pink = context[2]
-            ball_color = context[3]
+            num_of_pink = context[1]
+            ball_color = context[2]
+            if context[3] == "right":
+                globalObjects.ourGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
+                globalObjects.opponentGoal =  Point(0,PITCH_WIDTH/2)
+
+            else:
+                globalObjects.ourGoal = Point(0,PITCH_WIDTH/2)
+                globalObjects.opponentGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
     else:
         print "\nPossible team colors: yellow/light_blue\n"
         our_team_color = raw_input("Please specify your team colour: ")
