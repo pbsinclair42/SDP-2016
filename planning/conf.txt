@@ -1,4 +1,4 @@
 yellow
-3
+1
 blue
 right
