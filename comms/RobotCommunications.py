@@ -31,6 +31,8 @@ class RobotCommunications(Communications):
     # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
         x = self.write(chr(129) +chr(int(degrees)) + chr(int(distance)) + chr(255))
+        print("rotateneg")
+
         return x
     # kick with power `distance`
     # TODO: calibrate to match distance
