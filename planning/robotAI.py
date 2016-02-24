@@ -1,11 +1,11 @@
 import threading
 
 from constants import *
-from globalObjects import *
+from globalObjects import me, ally, enemies, robots, ball 
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
-from goals import *
+from goals import collectBall, shoot, passBall, recievePass, blockPass, guardGoal
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
 from simulator import Simulator
@@ -13,7 +13,6 @@ from simulator import Simulator
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
-
     # get the info on the robots from the vision system
     details = visionAPI.getAllRobotDetails()
     # update the system's beliefs about the robots
@@ -29,7 +28,7 @@ def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
         action = "0"
-        while action not in ['1','1b','2','3','4','5','6']:
+        while action not in ['1','1b','2','3','4','5','6', '7']:
             print("What action should I do now?")
             action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Stop\n? ")
         if action=="1":
@@ -131,9 +130,8 @@ def executePlan():
                     me.plan.pop(0)
 
     elif currentAction==Actions.kick:
-        ungrab()
+        kickDistance = me.plan[0]['targetFunction']()
         kick(kickDistance)
-        grab()
         me.plan.pop(0)
     elif currentAction==Actions.ungrab:
         ungrab()

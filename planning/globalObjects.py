@@ -17,6 +17,5 @@ ball = Ball(name="ball")
 leftGoalCenter = Point(0,PITCH_WIDTH/2)
 rightGoalCenter=Point(PITCH_LENGTH,PITCH_WIDTH/2)
 
-kickDistance =0
 ourGoal = rightGoalCenter
 opponentGoal = leftGoalCenter
