@@ -22,7 +22,7 @@ class Communications(object):
 
     def write(self, command):
         self.port.write(command + '')
-        time.sleep(0.005)
+        #time.sleep(0.005)
         out = ''
         while self.port.inWaiting() >0:
             out += self.port.read(1)
