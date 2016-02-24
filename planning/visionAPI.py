@@ -35,23 +35,12 @@ if camera!=None:
             num_of_pink = context[1].strip('\n')
             ball_color = context[2].strip('\n')
             if context[3] == "right":
-                ourGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
-                opponentGoal =  Point(0,PITCH_WIDTH/2)
+                ourGoal = rightGoalCenter
+                opponentGoal = leftGoalCenter
             else:
-                ourGoal = Point(0,PITCH_WIDTH/2)
-                opponentGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
-    #else:
-    #print "\nPossible team colors: yellow/light_blue\n"
-    #our_team_color = raw_input("Please specify your team colour: ")
-    #num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
-    #ball_color = raw_input("Specify ball color (red/blue): ")
-    #if raw_input("Which goal is ours?:") == "right":
-    #    ourGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
-    #    opponentGoal = Point(0,PITCH_WIDTH/2)
-    #else:
-    #    opponentGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
-    #    ourGoal = Point(0,PITCH_WIDTH/2)
-
+                ourGoal = leftGoalCenter
+                opponentGoal = rightGoalCenter
+    
     #create our trackers:
     robotTracker = RobotTracker(our_team_color, int(num_of_pink))
     ball = BallTracker(ball_color)
