@@ -31,9 +31,9 @@ except cv2Error:
 if camera!=None:
     with open('conf.txt','r') as f:
             context = f.readlines()
-            our_team_color = context[0]
-            num_of_pink = context[1]
-            ball_color = context[2]
+            our_team_color = context[0].strip('\n')
+            num_of_pink = context[1].strip('\n')
+            ball_color = context[2].strip('\n')
             if context[3] == "right":
                 ourGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
                 opponentGoal =  Point(0,PITCH_WIDTH/2)
