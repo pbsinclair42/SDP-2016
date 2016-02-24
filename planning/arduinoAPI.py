@@ -48,9 +48,9 @@ def move(distance, angle):
         # set angle to 255 times the sign of angle
         angle=255*angle/abs(angle)
     if angle>=0:
-        commsSystem.rotateneg(distance, abs(angle))
-    elif angle<=0:
         commsSystem.rotate(distance, abs(angle))
+    elif angle<=0:
+        commsSystem.rotateneg(distance, abs(angle))
     print("Moving "+str(distance)+"cm at an angle of "+str(angle)+" degrees")
 
 

@@ -7,7 +7,7 @@ from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
 from goals import collectBall, shoot, passBall, recievePass, blockPass, guardGoal
 import visionAPI
-from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
+from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem as ourSimulator
 from simulator import Simulator
 
 
@@ -60,9 +60,15 @@ def executePlan():
         return
 
     if currentAction==Actions.rotateToAngle:
+        #TODO replace with info from 'done' command from robot:
+        try:
+            me.moving = currentRotation!=rotationHistory[-2]
+        except:
+            print("oops")
         # calculate what angle we're aiming for
-        targetAngle = me.plan[0]['targetFunction']()/3.5
-        # if we've yet to start it turning, start it now
+        targetAngle = me.plan[0]['targetFunction']()
+        # if we've yet to start it turning or we've stopped turning too soon/too late,
+        # turn to the angle we actually should be at
         if not me.moving and not nearEnough(me.currentRotation, targetAngle):
             print("turning")
             turnToDirection(targetAngle)
@@ -70,64 +76,24 @@ def executePlan():
         elif not me.moving: # and implicitly, nearEnough(me.currentRotation, targetAngle)
             print("Done!")
             me.plan.pop(0)
-        # if not, stop if we've arrived
-        elif nearEnough(me.currentRotation, targetAngle):
-            print("Stopped!")
-            stop()
-
-        # otherwise check if it's stopped, and restart it if so, otherwise wait for it to do its stuff
+        # otherwise wait for it to do its stuff
         else:
-            # check if it's not turned for the past two ticks
-            try:
-                oldRotation = me.rotationHistory[-2]
-            except IndexError:
-                print("Not enough history yet")
-                # slightly hacky way of just skipping over this if otherwise
-                oldRotation = -200
-            # if it hasn't turned for two ticks
-            if essentiallyEqual(me.currentRotation, oldRotation):
-                print("It's stopped itself!")
-                # we're assuming that we've stopped turning, but stop to make sure
-                stop()
-                # check if you're at the right angle
-                if nearEnough(me.currentRotation, targetAngle):
-                    # if we're close enough already, move on to the next step of the plan
-                    me.plan.pop(0)
-            else:
-                print("Still going")
+            print("Still going")
 
     elif currentAction==Actions.moveToPoint:
         # calculate where we're headed
         targetPoint = me.plan[0]['targetFunction']()
-        # if we've yet to start it moving, start it now
+        # if we've yet to start it moving or we've stopped moving too soon/too late,
+        # move to the position we actually should be at
         if not me.moving and not nearEnough(me.currentPoint, targetPoint):
             moveToPoint(targetPoint)
         # if we're close enough, we're done
         elif not me.moving: # and implicitly, nearEnough(me.currentPoint, targetPoint)
             me.plan.pop(0)
-        # if not, stop if we've arrived
-        elif nearEnough(me.currentPoint, targetPoint):
-            stop()
-        #if you overshoot, move back to where you were suppsed to be
-        elif targetPoint != me.currentPoint:
-            moveToPoint(targetPoint)
-        # otherwise check if it's stopped, and restart it if so, otherwise wait for it to do its stuff
+        # otherwise wait for it to do its stuff
         else:
-            # check if it's not moved for the past two ticks
-            try:
-                oldPoint = me.pointHistory[-2]
-            except IndexError:
-                print("Not enough history yet")
-                # slightly hacky way of just skipping over this if otherwise
-                oldPoint = Point(-2000,-2000)
-            # if it hasn't moved for two ticks
-            if essentiallyEqual(me.currentPoint, oldPoint):
-                # we're assuming that we've stopped moving, but stop to make sure
-                stop()
-                # check if you're at the right position
-                if nearEnough(me.currentPoint, targetPoint):
-                    # if we're close enough already, move on to the next step of the plan
-                    me.plan.pop(0)
+            # TODO: add in some kind of checker/corrector
+            print("Still going")
 
     elif currentAction==Actions.kick:
         kickDistance = me.plan[0]['targetFunction']()
@@ -148,12 +114,12 @@ def executePlan():
 def tick():
     """Each tick, update your beliefs about the world then decide what action to take based on this"""
     # if currently simulating, update the simulation
-    if isinstance(commsSystem,Simulator):
-        commsSystem.tick()
+    if isinstance(ourSimulator,Simulator):
+        ourSimulator.tick()
     updatePositions()
     makePlan()
     executePlan()
     threading.Timer(TICK_TIME, tick).start()
 
 # start it off
-tick()
+#tick()

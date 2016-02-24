@@ -142,7 +142,7 @@ class Robot(Moveable):
     def __init__(self, p=None, name=None):
         super(Robot,self).__init__(p)
         # the direction the robot is facing, as detected by the vision system
-        self.currentRotation=0
+        self.currentRotation=None
         self.rotationHistory=[]
         # purely used for warning/error messages
         self.name=name
@@ -161,10 +161,11 @@ class Robot(Moveable):
 
         Args:
             rotation (float): the direction the robot is facing in degrees"""
-        # only store a max of _HISTORY_SIZE points in the history
-        if len(self.rotationHistory)>self._HISTORY_SIZE:
-            self.rotationHistory.pop(0)
-        self.rotationHistory.append(self.currentRotation)
+        if self.currentRotation!=None:
+            # only store a max of _HISTORY_SIZE points in the history
+            if len(self.rotationHistory)>self._HISTORY_SIZE:
+                self.rotationHistory.pop(0)
+            self.rotationHistory.append(self.currentRotation)
         if rotation!=None:
             self.currentRotation= rotation
 

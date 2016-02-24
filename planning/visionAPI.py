@@ -18,6 +18,7 @@ camera = Camera()
 # check if the camera is connected
 try:
     frame = camera.get_frame_hack()
+    #raise cv2Error()
 except cv2Error:
     # if you can't get a frame from the camera, warn the user, but continue
     print
