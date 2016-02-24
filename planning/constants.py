@@ -38,8 +38,8 @@ ROBOT_WIDTH = 20
 # how close to a target point you need to be to count as equal, give or take normal vision inaccuracy (centimeters)
 POINT_ACCURACY = 10
 # how close to a target angle you need to be to count as equal, give or take normal vision inaccuracy (degrees)
-ANGLE_ACCURACY = 10
+ANGLE_ACCURACY = 5
 # how close to a target point you need to be to count as 'close enough' for the sake of doing stuff (centimeters)
 ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (degrees)
-ITLL_DO_ANGLE = 10
+ITLL_DO_ANGLE = 5

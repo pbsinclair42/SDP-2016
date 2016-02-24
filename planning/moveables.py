@@ -31,7 +31,7 @@ class Moveable(object):
 
 
     def update(self, newPoint):
-        """Update the object with the position it's in this new tick.  To be called every tick.  
+        """Update the object with the position it's in this new tick.  To be called every tick.
 
         Args:
             newPoint (Point): the new coordinates of this object
@@ -128,7 +128,7 @@ class Moveable(object):
         elif isinstance(other,Point):
             return self.currentPoint.bearing(other)
         else:
-            raise TypeError("Moveable or Point expected, " + point.__class__.__name__ + " found")
+            raise TypeError("Moveable or Point expected, " + other.__class__.__name__ + " found")
 
 
     def __str__(self):
@@ -156,7 +156,7 @@ class Robot(Moveable):
     def updateRotation(self, rotation):
         """Update the rotation with a new value
 
-        If the vision system failed to find the rotation of the robot this frame, 
+        If the vision system failed to find the rotation of the robot this frame,
         just assume the rotation hasn't changed
 
         Args:
