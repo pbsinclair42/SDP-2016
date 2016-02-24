@@ -29,25 +29,30 @@ except cv2Error:
 
 # if we managed to connect to the camera, set up the robot variables
 if camera!=None:
-    if os.path.config.txt == True:
-        with open(config.txt) as f:
-            content = f.readlines()
+    with open('conf.txt','r') as f:
+            context = f.readlines()
             our_team_color = context[0]
             num_of_pink = context[1]
             ball_color = context[2]
             if context[3] == "right":
-                globalObjects.ourGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
-                globalObjects.opponentGoal =  Point(0,PITCH_WIDTH/2)
-
+                ourGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
+                opponentGoal =  Point(0,PITCH_WIDTH/2)
             else:
-                globalObjects.ourGoal = Point(0,PITCH_WIDTH/2)
-                globalObjects.opponentGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
-    else:
-        print "\nPossible team colors: yellow/light_blue\n"
-        our_team_color = raw_input("Please specify your team colour: ")
-        num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
-        ball_color = raw_input("Specify ball color (red/blue): ")
-    # create our trackers:
+                ourGoal = Point(0,PITCH_WIDTH/2)
+                opponentGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
+    #else:
+    #print "\nPossible team colors: yellow/light_blue\n"
+    #our_team_color = raw_input("Please specify your team colour: ")
+    #num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
+    #ball_color = raw_input("Specify ball color (red/blue): ")
+    #if raw_input("Which goal is ours?:") == "right":
+    #    ourGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
+    #    opponentGoal = Point(0,PITCH_WIDTH/2)
+    #else:
+    #    opponentGoal = Point(PITCH_LENGTH,PITCH_WIDTH/2)
+    #    ourGoal = Point(0,PITCH_WIDTH/2)
+
+    #create our trackers:
     robotTracker = RobotTracker(our_team_color, int(num_of_pink))
     ball = BallTracker(ball_color)
 
