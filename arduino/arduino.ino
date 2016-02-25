@@ -1,5 +1,6 @@
 #include "B4SDP.h"
 #include "Arduino.h"
+#include <Math.h>
 #include <Wire.h>
 
 /***
@@ -355,7 +356,35 @@ int rotMoveStep(){
     }
 }
 int holoMoveStep(){
-    Serial.print(CMD_ERROR);
+    byte value1 = command_buffer[command_index + 1];
+    byte value2 = command_buffer[command_index + 2];
+    int rot_degrees = value1 + value2;
+    float rot_radians = (rot_degrees * 71) / 4068;
+    float vx = sin(rot_radians);
+    float vy = cos(rot_radians);
+    
+    float m1_val = (-sin(30)  * vx + cos(30)  * vy) * 255;
+    float m2_val = (-sin(150) * vx + cos(150) * vy) * 255;
+    float m3_val = (-sin(270) * vx + cos(270) * vy) * 255;
+    
+    if (m1_val > 0)
+        motorForward(0, byte(m1_val));
+    else
+        motorBackward(0, byte(fabs(m1_val)));
+    
+    if (m2_val > 0)
+        motorForward(1, byte(m2_val));
+    else
+        motorBackward(1, byte(fabs(m2_val)));
+    
+    if (m3_val > 0)
+        motorForward(2, byte(m3_val));
+    else
+        motorBackward(2, byte(fabs(m3_val)));    
+    delay(1500);
+    
+    motorAllStop();
+    
     return 1;
 }
 
