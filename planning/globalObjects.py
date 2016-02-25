@@ -16,3 +16,6 @@ ball = Ball(name="ball")
 # TODO: add both goals and ability to differentiate between them and whatnot
 leftGoalCenter = Point(0,PITCH_WIDTH/2)
 rightGoalCenter=Point(PITCH_LENGTH,PITCH_WIDTH/2)
+
+ourGoal = rightGoalCenter
+opponentGoal = leftGoalCenter

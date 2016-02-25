@@ -32,7 +32,6 @@ class RobotCommunications(Communications):
     def rotateneg(self,distance,degrees):
         x = self.write(chr(129) +chr(int(degrees)) + chr(int(distance)) + chr(255))
         print("rotateneg")
-
         return x
     # kick with power `distance`
     # TODO: calibrate to match distance
@@ -41,7 +40,7 @@ class RobotCommunications(Communications):
         return x
     # cancel previous command and any queued commands
     def flush(self):
-        x = self.write(chr(128)+chr(255)+chr(255)+chr(255))
+        x = self.write(chr(64)+chr(255)+chr(255)+chr(255))
         return x
     # grab the ball
     # ensure the grabber is opened before calling!

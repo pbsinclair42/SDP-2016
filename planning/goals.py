@@ -20,8 +20,8 @@ def collectBall():
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
         distanceAway = ROBOT_WIDTH/2 + UNGRAB_DISTANCE
-        xDisplacement = round(sin(bearingAway)*distanceAway, 2)
-        yDisplacement = round(cos(bearingAway)*distanceAway, 2)
+        xDisplacement = round(cos(bearingAway)*distanceAway, 2)
+        yDisplacement = round(sin(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
         # Note, if we're already closer than we should be, we'll end up moving back a bit first to avoid knocking it
 
@@ -32,8 +32,8 @@ def collectBall():
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
         distanceAway = ROBOT_WIDTH/2 + GRAB_DISTANCE
-        xDisplacement = round(sin(bearingAway)*distanceAway, 2)
-        yDisplacement = round(cos(bearingAway)*distanceAway, 2)
+        xDisplacement = round(cos(bearingAway)*distanceAway, 2)
+        yDisplacement = round(sin(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
 
     me.plan = [ {'action':Actions.moveToPoint,'targetFunction':ungrabHere},
@@ -46,17 +46,19 @@ def shoot():
     """Make `shoot` the goal of our robot, and implement the plan for achieving this"""
     # save the plan to the robot
     me.goal = Goals.shoot
+    # work out how far to kick the ball
+    def distanceToKick():
+        return me.distance(opponentGoal) # maybe change to always belt it?
     # function to aim at the goal
     def aim():
-        return -me.bearing(rightGoalCenter)
+        return me.bearing(opponentGoal)
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
-                {'action':Actions.kick}]
+                {'action':Actions.kick, 'targetFunction':distanceToKick}]
 
 
 def passBall():
 
     me.goal = Goals.passBall
-
     def rotate():
         return me.bearing(ally)
 
@@ -80,16 +82,15 @@ def blockPass():
 
     def blockHere():
         """move to inbetween two oponents"""
-        e0 =enemy0.currentPoint
-        e1 = enemy1.currentPoint
-        x = sum(e0.x + e1.x)/2
-        y = sum(e0.y + e1.y)/2
+        e0 =enemies[0].currentPoint
+        e1 = enemies[1].currentPoint
+        x = (e0.x + e1.x)/2
+        y = (e0.y + e1.y)/2
         return Point(x,y)
 
     def rotate():
         """rotate to face oponent with ball"""
-        me.bearing(ball)
-        return me.bearing()
+        return me.bearing(ball)
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':blockHere},
                {'action':Actions.rotateToAngle, 'targetFunction':rotate},
                {'action':Actions.ungrab},

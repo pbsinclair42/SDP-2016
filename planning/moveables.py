@@ -31,7 +31,7 @@ class Moveable(object):
 
 
     def update(self, newPoint):
-        """Update the object with the position it's in this new tick.  To be called every tick.  
+        """Update the object with the position it's in this new tick.  To be called every tick.
 
         Args:
             newPoint (Point): the new coordinates of this object
@@ -128,7 +128,7 @@ class Moveable(object):
         elif isinstance(other,Point):
             return self.currentPoint.bearing(other)
         else:
-            raise TypeError("Moveable or Point expected, " + point.__class__.__name__ + " found")
+            raise TypeError("Moveable or Point expected, " + other.__class__.__name__ + " found")
 
 
     def __str__(self):
@@ -142,7 +142,7 @@ class Robot(Moveable):
     def __init__(self, p=None, name=None):
         super(Robot,self).__init__(p)
         # the direction the robot is facing, as detected by the vision system
-        self.currentRotation=0
+        self.currentRotation=None
         self.rotationHistory=[]
         # purely used for warning/error messages
         self.name=name
@@ -156,15 +156,16 @@ class Robot(Moveable):
     def updateRotation(self, rotation):
         """Update the rotation with a new value
 
-        If the vision system failed to find the rotation of the robot this frame, 
+        If the vision system failed to find the rotation of the robot this frame,
         just assume the rotation hasn't changed
 
         Args:
             rotation (float): the direction the robot is facing in degrees"""
-        # only store a max of _HISTORY_SIZE points in the history
-        if len(self.rotationHistory)>self._HISTORY_SIZE:
-            self.rotationHistory.pop(0)
-        self.rotationHistory.append(self.currentRotation)
+        if self.currentRotation!=None:
+            # only store a max of _HISTORY_SIZE points in the history
+            if len(self.rotationHistory)>self._HISTORY_SIZE:
+                self.rotationHistory.pop(0)
+            self.rotationHistory.append(self.currentRotation)
         if rotation!=None:
             self.currentRotation= rotation
 

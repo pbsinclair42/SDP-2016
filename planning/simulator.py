@@ -77,7 +77,11 @@ class Simulator(object):
         self.currentActionQueue.append({'action': SimulatorActions.ungrab, 'timeLeft': UNGRAB_TIME})
 
     def tick(self, tickTimeLeft=TICK_TIME):
-        '''Update the status of our robot and the ball based on our recent actions'''
+        '''Update the status of our robot and the ball based on our recent actions
+
+        tickTimeLeft:   the time remaining before the next tick, TICK_TIME by default
+                        or slightly less than this if an action finishes halfway through a tick
+                        and this gets called again on the remaining time'''
         try:
             currentAction = self.currentActionQueue[0]
         except IndexError:
@@ -205,6 +209,7 @@ def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot,
 
 
 def checkValid(*toCheck):
+    '''Ensure all the parameters inputted are valid bytes'''
     for x in toCheck:
         if x>255 or x<0 or x!=int(x):
             raise ValueError("Input parameter not expressable as a byte, ie not in [0,255]")

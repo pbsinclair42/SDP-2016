@@ -11,7 +11,7 @@ COLS = 640
 ROWS = 480
 
 # enable access to the json file from any directory in SDP
-absPathToJson = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/vision/config/undistort_pitch0.json'
+absPathToJson = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP-2016/vision/config/undistort_pitch0.json'
 
 pitches = util.read_json(absPathToJson)
 

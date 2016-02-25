@@ -47,7 +47,7 @@ class Point(object):
         xDisplacement = p.x-self.x
         yDisplacement = p.y-self.y
         bearing = atan2(yDisplacement,xDisplacement)
-        return round(degrees(bearing), 3)
+        return -round(degrees(bearing), 3)
 
 
     def __str__(self):
