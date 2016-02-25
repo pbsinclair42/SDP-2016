@@ -364,27 +364,17 @@ int rotMoveStep(){
 int holoMoveStep(){
     int value1 = command_buffer[command_index + 1];
     int value2 = command_buffer[command_index + 2];
-    Serial.print("VALUE==>");
+
     int rot_degrees = (int) value1 + (int) value2;
-    Serial.println(rot_degrees);
     float rot_radians = rot_degrees * PI / 180;
+
     float vx = cos(rot_radians);
     float vy = sin(rot_radians);
-    Serial.print("Vx: ");
-    Serial.println(vx);
-    Serial.print("Vy: ");
-    Serial.println(vy);
     
     float m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy;
     float m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy;
     float m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy;
     
-    Serial.println();
-    Serial.println(m1_val);
-    Serial.println(m2_val);
-    Serial.println(m3_val);
-    Serial.println();
-
     m1_val *= 255;
     m2_val *= 255;
     m3_val *= 255;
