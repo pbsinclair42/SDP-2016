@@ -124,7 +124,7 @@ void setup() {
     bufferOverflow = 0;
     commandOverflow = 0;
   }
-int idebug = 0;
+
 void loop() {
   int state_end = 0;
   
@@ -134,14 +134,6 @@ void loop() {
             if ((command_index != buffer_index && command_index + 4 <= buffer_index && commandOverflow == bufferOverflow) || 
                  commandOverflow < bufferOverflow){
                 MasterState = command_buffer[command_index];
-                Serial.println();
-                Serial.print("Command Index: ");
-                Serial.println(command_index);
-                Serial.print("Buffer Index: ");
-                Serial.println(buffer_index);
-                Serial.print("Switching state to: ");
-                Serial.println(MasterState);
-                Serial.flush();
                 restoreMotorPositions(positions);
           }
             break;
@@ -187,36 +179,10 @@ void loop() {
         if (command_index == 0){
             commandOverflow++;
         }
-        
-        // check for extra actions to perform
-        //if (finishGrabbing == 1){
-        //  MasterState = CMD_GRAB;
-        //    command_index -= 4; // restore command index to account for custom command
-            //} else {
-            // report success/end
         Serial.print(CMD_DONE);
-        //}
+        
         
         }
-    idebug++;
-    if (idebug == 0){
-    Serial.println();
-    Serial.print("Command Index: ");
-    Serial.println(command_index);
-    Serial.print("Buffer Index: ");
-    Serial.println(buffer_index);
-    Serial.print("state is   : ");
-    Serial.println(MasterState);
-    Serial.print("mode is");
-    Serial.println(rotMoveGrabMode);
-    Serial.print("left motor");
-    Serial.println(positions[MOTOR_LFT]);
-    Serial.print("right motor");
-    Serial.println(positions[MOTOR_RGT]);
-    Serial.print("target");
-    Serial.println(rotaryTarget);
-    Serial.flush();
-    }
     }
 
 /* 
@@ -264,21 +230,13 @@ void serialEvent() {
             }
             
             if (command_buffer[target_value - 4] == CMD_FLUSH){
-                buffer_index = 0;
-                command_index = 0;
-                motorAllStop();
-                rotMoveGrabMode = 0;
-                MasterState = 0;
-                bufferOverflow = 0;
-                commandOverflow = 0;
-                Serial.println("FLUSHING");
+                restoreState();
             } else if (command_buffer[target_value - 4] == CMD_STOP){
                 motorAllStop();
                 rotMoveGrabMode = 0;
                 MasterState = 0;
                 bufferOverflow = 0;
                 commandOverflow = 0;
-                Serial.println("STOPPING");
             }
 
 
@@ -291,6 +249,17 @@ void serialEvent() {
         }
     }
 }
+
+void restoreState(){
+    buffer_index = 0;
+    command_index = 0;
+    bufferOverflow = 0;
+    commandOverflow = 0;
+    rotMoveGrabMode = 0;
+    MasterState = 0;
+    motorAllStop();
+}
+
 
 int rotMoveStep(){
     // values for target calculation
@@ -338,8 +307,10 @@ int rotMoveStep(){
                 rotMoveGrabMode = 1;
             }
             else{
+                // delay to make sure motor actions are not being performed too quckly
+                // to ensure data sent to motors is not corrupted
                 motorAllStop();
-                delay(50); // TODO DOC
+                delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
             }
@@ -373,7 +344,6 @@ int rotMoveStep(){
                 return 0;
             }
             else{
-                Serial.println("MOVE ENDING");
                 motorAllStop();
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 0;
