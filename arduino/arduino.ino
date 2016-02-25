@@ -124,6 +124,12 @@ void setup() {
     rotMoveGrabMode = 0;
     bufferOverflow = 0;
     commandOverflow = 0;
+    command_buffer[0] = 2;
+    command_buffer[1] = 45;
+    command_buffer[2] = 45;
+    command_buffer[3] = 255;
+    buffer_index = 4;
+    Serial.println("Begin");
   }
 
 void loop() {
@@ -356,26 +362,42 @@ int rotMoveStep(){
     }
 }
 int holoMoveStep(){
-    byte value1 = command_buffer[command_index + 1];
-    byte value2 = command_buffer[command_index + 2];
-    int rot_degrees = value1 + value2;
-    float rot_radians = (rot_degrees * 71) / 4068;
-    float vx = sin(rot_radians);
-    float vy = cos(rot_radians);
+    int value1 = command_buffer[command_index + 1];
+    int value2 = command_buffer[command_index + 2];
+    Serial.print("VALUE==>");
+    int rot_degrees = (int) value1 + (int) value2;
+    Serial.println(rot_degrees);
+    float rot_radians = rot_degrees * PI / 180;
+    float vx = cos(rot_radians);
+    float vy = sin(rot_radians);
+    Serial.print("Vx: ");
+    Serial.println(vx);
+    Serial.print("Vy: ");
+    Serial.println(vy);
     
-    float m1_val = (-sin(30)  * vx + cos(30)  * vy) * 255;
-    float m2_val = (-sin(150) * vx + cos(150) * vy) * 255;
-    float m3_val = (-sin(270) * vx + cos(270) * vy) * 255;
+    float m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy;
+    float m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy;
+    float m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy;
     
+    Serial.println();
+    Serial.println(m1_val);
+    Serial.println(m2_val);
+    Serial.println(m3_val);
+    Serial.println();
+
+    m1_val *= 255;
+    m2_val *= 255;
+    m3_val *= 255;
+
     if (m1_val > 0)
-        motorForward(0, byte(m1_val));
+        motorForward(1, byte(m1_val));
     else
-        motorBackward(0, byte(fabs(m1_val)));
+        motorBackward(1, byte(fabs(m1_val)));
     
     if (m2_val > 0)
-        motorForward(1, byte(m2_val));
+        motorForward(0, byte(m2_val));
     else
-        motorBackward(1, byte(fabs(m2_val)));
+        motorBackward(0, byte(fabs(m2_val)));
     
     if (m3_val > 0)
         motorForward(2, byte(m3_val));
