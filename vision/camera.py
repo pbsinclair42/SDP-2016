@@ -26,8 +26,8 @@ class Camera(object):
         self.capture = cv2.VideoCapture(port)
         if (computer_name == 'aharacle' or computer_name == 'kilmore'):
             # for pitch0 PC1/ aharacle:
-            self.capture.set(properties['BRIGHTNESS'], 0.5)
-            self.capture.set(properties['CONTRAST'], 0.45)
+            self.capture.set(properties['BRIGHTNESS'], 0.32)
+            self.capture.set(properties['CONTRAST'], 0.4)
             self.capture.set(properties['COLOR'], 0.5)
             self.capture.set(properties['HUE'], 0.5)
         elif (computer_name == 'knapdale'):    
@@ -43,7 +43,7 @@ class Camera(object):
             self.capture.set(properties['COLOR'], 0.5)
             self.capture.set(properties['HUE'], 0.5)
         else:
-            self.capture.set(properties['BRIGHTNESS'], 0.5)
+            self.capture.set(properties['BRIGHTNESS'], 0.35)
             self.capture.set(properties['CONTRAST'], 0.5)
             self.capture.set(properties['COLOR'], 0.5)
             self.capture.set(properties['HUE'], 0.5)
@@ -60,6 +60,23 @@ class Camera(object):
         frame = step(frame)
         return frame
 
+    def get_frame_hack(self, radial_dist=0):
+        """
+        Retrieve a frame from the camera.
+
+        Returns the frame if available, otherwise returns None.
+        """
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        frame = self.get_frame()
+        return frame
 
     def close(self):
         self.capture.release()

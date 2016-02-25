@@ -58,6 +58,7 @@ color_range[('amble','green')] = ( np.array([60, 110, 110]), np.array([75, 255, 
 color_range[('amble','bright_green')] = ( np.array([45, 200, 200]), np.array([60, 255, 255]) )
 color_range[('amble','yellow')] = ( np.array([20, 130, 130]), np.array([40, 255, 255]) )
 
+
 color_range[('glenorchy','white')] = ( np.array([1, 0, 100]), np.array([36, 255, 255]) )
 color_range[('glenorchy','blue')] = ( np.array([105, 140, 140]), np.array([120, 255, 255]) )
 color_range[('glenorchy','bright_blue')] = ( np.array([80, 100, 100]), np.array([100, 255, 255]) )
@@ -79,12 +80,3 @@ color_range[('mitford','green')] = ( np.array([60, 110, 110]), np.array([75, 255
 color_range[('mitford','bright_green')] = ( np.array([55, 120, 120]), np.array([65, 255, 255]) )
 color_range[('mitford','yellow')] = ( np.array([20, 110, 110]), np.array([40, 255, 255]) )
 
-hsv_range['white'] = ( np.array([1, 0, 100]), np.array([36, 255, 255]) )
-hsv_range['blue'] = ( np.array([105, 140, 140]), np.array([120, 255, 255]) )
-hsv_range['bright_blue'] = ( np.array([80, 110, 110]), np.array([100, 255, 255]) )
-hsv_range['pink'] = ( np.array([150, 120, 120]), np.array([170, 255, 255]) )
-hsv_range['red'] = ( np.array([0, 190, 190]), np.array([5, 255, 255]) )
-hsv_range['maroon'] = ( np.array([175, 190, 190]), np.array([180, 255, 255]) )
-hsv_range['green'] = ( np.array([60, 110, 110]), np.array([75, 255, 255]) )
-hsv_range['bright_green'] = ( np.array([55, 120, 120]), np.array([65, 255, 255]) )
-hsv_range['yellow'] = ( np.array([20, 110, 110]), np.array([40, 255, 255]) )
