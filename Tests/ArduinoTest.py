@@ -6,7 +6,7 @@ from math import *
 import unittest
 from os.path import abspath
 # enable access to the comms package
-OOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
+ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
 sys.path.append(ROOT_DIR+'comms')
 from RobotCommunications import RobotCommunications
 
@@ -24,22 +24,25 @@ except BaseException:
 
 
 class TestCommsMethods(unittest.TestCase):
-    def holo_test(self):
-        b = B00000010
-        s = commsSystem.holo(90, 0)
+    def test(self):
+        b = "B00000010"
+        try:
+            s = commsSystem.holo(90, 0)
+        except AttributeError:
+            return
         print(s)
         self.assertTrue(b in s)
 
-    def holoneg_test(self):
+    def test_holoneg(self):
         pass
 
-    def stop_test(self):
+    def test_stop(self):
         pass
 
-    def rotate_test(self):
+    def test_rotate(self):
         pass
 
-    def rotateneg_test(self):
+    def test_rotateneg(self):
         pass
         """Rotates the robot x radians clockwise.
         Use negative numbers to rotate anticlockwise.  """
@@ -50,7 +53,7 @@ class TestCommsMethods(unittest.TestCase):
         b = str(abs(x))
         print ("Turning %s radians %s" % (b, a))
 
-    def ungrab_test(self):
+    def test_ungrab(self):
         """Moves `distance` cm at a direction of `angle` radians"""
         angle = 90
         distance = 10
@@ -58,21 +61,24 @@ class TestCommsMethods(unittest.TestCase):
             commsSystem.holo(360*angle / (2*pi), distance)
         print("Moving %d cm at an angle of %d  radians" % (distance, angle))
 
-    def kick_test(self):
+    def test_kick(self):
         pass
+        distance = 0
         """Kicks the ball `distance` cm"""
         if commsSystem:
             commsSystem.kick(distance)
+        else:
+            return
         print("Kicking ball "+str(distance)+"cm")
 
-    def grab_test(self):
+    def test_grab(self):
         pass
         """Attempts to grab the ball"""
         if commsSystem:
             commsSystem.grab()
         print("Grabbing ball")
 
-    def flush_test(self):
+    def test_flush(self):
         pass
 
 
