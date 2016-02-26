@@ -1,5 +1,6 @@
 #include "B4SDP.h"
 #include "Arduino.h"
+#include <Math.h>
 #include <Wire.h>
 
 /***
@@ -51,8 +52,8 @@ t: sanity-test;
 
 // Movement Constants
 #define MOTION_CONST 11.891304
-#define ROTATION_CONST 3.675   // A linear function is also in effect
-#define KICKER_CONST 10.0        // TODO: Calibrate
+#define ROTATION_CONST 0.4
+#define KICKER_CONST 10.0  
 
 // COMMS API Byte Definitions
 #define CMD_ROTMOVE    B00000001 // Buffered: MSB 1 performs CCW rotation
@@ -64,6 +65,8 @@ t: sanity-test;
 #define CMD_UNGRAB     B00100000 // Buffered
 #define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
 #define CMD_END        B11111111 // Buffered
+
+#define CMD_DONE       B01101111 // Sent when command is finished
 
 #define CMD_ERROR      B11111111 // Sent for errors
 #define CMD_FULL       B11111110 // Sent if buffer is full
@@ -106,6 +109,7 @@ int rotary_target;
 int motion_target;
 int holono_target;
 
+
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
     SDPsetup();
@@ -113,14 +117,29 @@ void setup() {
     // to get rid of potential bias
     updateMotorPositions(positions);
     restoreMotorPositions(positions);
+    MasterState = 0;
+    finishGrabbing = 0;
+    buffer_index = 0;
+    command_index = 0;
+    rotMoveGrabMode = 0;
+    bufferOverflow = 0;
+    commandOverflow = 0;
+    command_buffer[0] = 2;
+    command_buffer[1] = 45;
+    command_buffer[2] = 45;
+    command_buffer[3] = 255;
+    buffer_index = 4;
+    Serial.println("Begin");
   }
 
 void loop() {
   int state_end = 0;
+  
+  // Switch statement for the FSM state
   switch(MasterState){
         case IDLE_STATE:
             if ((command_index != buffer_index && command_index + 4 <= buffer_index && commandOverflow == bufferOverflow) || 
-            	 commandOverflow < bufferOverflow){
+                 commandOverflow < bufferOverflow){
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
           }
@@ -159,19 +178,18 @@ void loop() {
             state_end = 1;
             break;
         }
-        if (state_end){
-            MasterState = IDLE_STATE;
-            command_index += 4;
-            if (command_index == 0){
-            	commandOverflow++;
-            }
-            if (finishGrabbing == 1){
-            	MasterState = CMD_GRAB;
-                command_index -= 4; // restore command index to account for custom command
-	    }
-            
+    if (state_end){
+        MasterState = IDLE_STATE;
+        command_index += 4;
+        
+        // check for circular buffer end
+        if (command_index == 0){
+            commandOverflow++;
         }
-
+        Serial.print(CMD_DONE);
+        
+        
+        }
     }
 
 /* 
@@ -181,24 +199,24 @@ time loop() runs.
 */
 
 void serialEvent() {
-	int target_value; // for targetting buffer checks so as not to do buffer[0 - 1]
+    int target_value; // for targetting buffer checks so as not to do buffer[0 - 1]
     serial_time = millis();
     while (Serial.available()) {
-    	// note overflow to maintain circular buffer
-    	if (buffer_index == 255){
-    		bufferOverflow++;
-    	}
-    	// read command
+        // note overflow to maintain circular buffer
+        if (buffer_index == 255){
+            bufferOverflow++;
+        }
+        // read command
         command_buffer[buffer_index++] = Serial.read();
         
         if (buffer_index % 4 == 0){
             // acknowledge proper command
-        	if (buffer_index == 0){
-        		target_value = 256;
-        	} else {
-        		target_value = buffer_index;
-        	}
-
+            if (buffer_index == 0){
+                target_value = 256;
+            } else {
+                target_value = buffer_index;
+            }
+         
             if (command_buffer[target_value - 1] == CMD_END){
                 Serial.print(CMD_ACK);
                 Serial.print("-");
@@ -213,21 +231,24 @@ void serialEvent() {
             }
             // report bad command
             else{
+                Serial.print("Bad Command");
                 Serial.print(CMD_ERROR);
                 buffer_index = target_value - 4;
             }
             
             if (command_buffer[target_value - 4] == CMD_FLUSH){
-                buffer_index = 0;
-                command_index = 0;
+                restoreState();
+            } else if (command_buffer[target_value - 4] == CMD_STOP){
                 motorAllStop();
                 rotMoveGrabMode = 0;
                 MasterState = 0;
                 bufferOverflow = 0;
                 commandOverflow = 0;
-                
             }
+
+
         } else if (millis() - serial_time > 500){ // TODO: Break this only here;
+            Serial.print("Time-Out");
             Serial.println(CMD_ERROR);
             while(buffer_index %4 != 0) {
                 buffer_index--;
@@ -236,9 +257,21 @@ void serialEvent() {
     }
 }
 
+void restoreState(){
+    buffer_index = 0;
+    command_index = 0;
+    bufferOverflow = 0;
+    commandOverflow = 0;
+    rotMoveGrabMode = 0;
+    MasterState = 0;
+    motorAllStop();
+}
+
+
 int rotMoveStep(){
     // values for target calculation
-    byte left, degrees, centimeters;
+    int left;
+    byte degrees, centimeters;
 
 
     switch(rotMoveGrabMode){
@@ -253,8 +286,14 @@ int rotMoveStep(){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-            rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);
-
+            
+            // calculate target based on piece-wise linear approximation for
+            // know values of 30, 45, 60, 90, 120, 180 degrees
+            rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);  
+            
+            // restore and update motor positions to account for initial bias
+            // based on wheels & rotary encoders;
+            restoreMotorPositions(positions);
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
 
@@ -262,7 +301,7 @@ int rotMoveStep(){
                 rotateLeft();
             else
                 rotateRight();
-
+            
             rotMoveGrabMode = 1;
             return 0;
         
@@ -270,12 +309,15 @@ int rotMoveStep(){
         case 1 :
             left = MasterState >> 7; // left becomes MSB of master state/current command
             left = left == 0 ? 1 : -1;
-
             if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
                 updateMotorPositions(positions);
+                rotMoveGrabMode = 1;
             }
             else{
+                // delay to make sure motor actions are not being performed too quckly
+                // to ensure data sent to motors is not corrupted
                 motorAllStop();
+                delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
             }
@@ -285,14 +327,16 @@ int rotMoveStep(){
         case 2 :
             centimeters = command_buffer[command_index + 2];
             
-            if (!centimeters){
+            if (centimeters == 0){
                 rotMoveGrabMode = 0;
                 return 1;
             }
-
+            // calculate rotary encoder target based on motion constant
             rotaryTarget = (int) (MOTION_CONST * centimeters);
+            
+            restoreMotorPositions(positions);
             testForward();
-
+             
             rotMoveGrabMode = 3;
             return 0;
 
@@ -300,10 +344,10 @@ int rotMoveStep(){
         case 3 :
             if (-1 * positions[MOTOR_LFT] < rotaryTarget && positions[MOTOR_RGT] < rotaryTarget){
                 updateMotorPositions(positions);
-                if (rotaryTarget - (-1 * positions[MOTOR_LFT] + positions[MOTOR_RGT]) / 2 < 40 * MOTION_CONST ){
-                	motorBackward(GRABBER, GRABBER_POWER);
-                	finishGrabbing = 1;
-                }
+                //if (rotaryTarget - (-1 * positions[MOTOR_LFT] + positions[MOTOR_RGT]) / 2 < 40 * MOTION_CONST ){
+                //  motorBackward(GRABBER, GRABBER_POWER);
+                //  finishGrabbing = 1;
+                //}
                 return 0;
             }
             else{
@@ -318,7 +362,41 @@ int rotMoveStep(){
     }
 }
 int holoMoveStep(){
-    Serial.print(CMD_ERROR);
+    int value1 = command_buffer[command_index + 1];
+    int value2 = command_buffer[command_index + 2];
+
+    int rot_degrees = (int) value1 + (int) value2;
+    float rot_radians = rot_degrees * PI / 180;
+
+    float vx = cos(rot_radians);
+    float vy = sin(rot_radians);
+    
+    float m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy;
+    float m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy;
+    float m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy;
+    
+    m1_val *= 255;
+    m2_val *= 255;
+    m3_val *= 255;
+
+    if (m1_val > 0)
+        motorForward(1, byte(m1_val));
+    else
+        motorBackward(1, byte(fabs(m1_val)));
+    
+    if (m2_val > 0)
+        motorForward(0, byte(m2_val));
+    else
+        motorBackward(0, byte(fabs(m2_val)));
+    
+    if (m3_val > 0)
+        motorForward(2, byte(m3_val));
+    else
+        motorBackward(2, byte(fabs(m3_val)));    
+    delay(1500);
+    
+    motorAllStop();
+    
     return 1;
 }
 
@@ -366,6 +444,7 @@ int kickStep(){
             }
             return 0;
         default:
+            Serial.println("BAD KICK");
             rotMoveGrabMode = 0;
             Serial.print(CMD_ERROR);
             return -1;
@@ -410,43 +489,45 @@ int unGrabStep(){
 }
 
 float calculateRotaryTarget(float x3){
-	// linear function approximation, e.g. finding y3 based on y1, y2, x1, x2, x3
-	// for fixed rotational value calibrations
-	byte x1, x2;
+    // linear function approximation, e.g. finding y3 based on y1, y2, x1, x2, x3
+    // for fixed rotational value calibrations
+    float x1, x2;
     float y1, y2;
-	
-	if (x3 < 30) {
-		x1 = 0;
-		x2 = 30;
-		y1 = 0;
-		y2 = 1.55;
-	} else if (x3 < 45){
-		x1 = 30;
-		x2 = 45;
-		y1 = 1.55;
-		y2 = 1.75;
-	} else if (x3 < 60){
-		x1 = 45;
-		x2 = 60;
-		y1 = 1.75;
-		y2 = 1.95;
-	} else if (x3 < 90){
-		x1 = 60;
-		x2 = 90;
-		y1 = 1.95;
-		y2 = 2.17;
-	} else if (x3 < 120){
-		x1 = 90;
-		x2 = 120;
-		y1 = 2.17;
-		y2 = 2.85;
-	} else if (x3 < 180){
-		x1 = 120;
-		x2 = 180;
-		y1 = 2.85;
-		y2 = 3.675;
-	}
-	return y1 + (y2 - y1) * ((x3 - x1) / (x2 - x1));
+    
+    if (x3 <= 30) {
+        x1 = 0;
+        x2 = 30;
+        y1 = 0;
+        y2 = 1.55;
+    } else if (x3 <= 45){
+        x1 = 30;
+        x2 = 45;
+        y1 = 1.55;
+        y2 = 1.75;
+    } else if (x3 <= 60){
+        x1 = 45;
+        x2 = 60;
+        y1 = 1.75;
+        y2 = 1.95;
+    } else if (x3 <= 90){
+        x1 = 60;
+        x2 = 90;
+        y1 = 1.95;
+        y2 = 2.17;
+    } else if (x3 <= 120){
+        x1 = 90;
+        x2 = 120;
+        y1 = 2.17;
+        y2 = 2.85;
+    } else if (x3 <= 180){
+        x1 = 120;
+        x2 = 180;
+        y1 = 2.85;
+        y2 = 3.675;
+    } else {
+        return 4;
+    }
+    return y1 + (y2 - y1) * ((x3 - x1) / (x2 - x1));
 }
 
 
@@ -552,6 +633,9 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
+
+
 
 
 

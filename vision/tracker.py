@@ -142,12 +142,16 @@ class Tracker():
         return [x_new, y_new]
     
     @staticmethod
-    def transformCoordstoDecartes( (x, y) ):
-        return ( x - 320, 240 - y )
+    def transformCoordstoDecartes( inputTuple ):
+        if inputTuple==None:
+            return None
+        return ( inputTuple[0] - 320, 240 - inputTuple[1] )
 
     @staticmethod
-    def transformCoordstoCV( (x, y) ) :
-        return ( x + 320, 240 - y )
+    def transformCoordstoCV( inputTuple ):
+        if inputTuple==None:
+            return None
+        return ( inputTuple[0] + 320, 240 - inputTuple[1] )
 
 
 class BallTracker(Tracker):
