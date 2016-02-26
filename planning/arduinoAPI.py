@@ -80,16 +80,10 @@ def ungrab():
 def stop():
     """Stops all motors"""
     commsSystem.stop()
-    me.moving=False
-    me.rotationHistory=[]
-    me.pointHistory=[]
     print("Stopping all motors")
 
 
 def flush():
     """Clears all commands and stops all motors"""
     commsSystem.flush()
-    me.moving=False
-    me.rotationHistory=[]
-    me.pointHistory=[]
     print("Clearing all commands")
