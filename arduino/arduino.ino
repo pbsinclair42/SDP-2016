@@ -362,6 +362,11 @@ int rotMoveStep(){
     }
 }
 int holoMoveStep(){
+    // TODO: Add rotational values and feedback
+    // TODO: Scale motor values by 1 / abs(value1, value2, value3)
+    // to make sure motors are running as fast as possible since
+    // maths functions may produce vectors not properly scaled to 1
+    
     int value1 = command_buffer[command_index + 1];
     int value2 = command_buffer[command_index + 2];
 
