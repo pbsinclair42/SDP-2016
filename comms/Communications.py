@@ -11,6 +11,7 @@ class Communications(object):
                  baudrate=9600,
                  #timeout=2
                  ):
+        self.current_cmd = 0;
         if setConnectionOff is False:
 
             try:
@@ -26,7 +27,10 @@ class Communications(object):
         out = ''
         while self.port.inWaiting() >0:
             out += self.port.read(1)
-        if out =="CMD_RESEND":#resend
+        if ord(out[-1]) == 111:
+            self.current_cmd += 1
+            print("CMD_DONE")
+        elif out =="CMD_RESEND":#resend
             print("RESEND")
             write(command)
         elif out =="CMD_FULL":#full
