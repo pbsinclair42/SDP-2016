@@ -62,9 +62,10 @@ def executePlan():
     if currentAction==Actions.rotateToAngle:
         #TODO replace with info from 'done' command from robot:
         try:
-            me.moving = me.currentRotation!=me.rotationHistory[-2]
+            me.moving = me.currentRotation!=me.rotationHistory[-1]
         except:
             print("oops")
+            return
         # calculate what angle we're aiming for
         targetAngle = me.plan[0]['targetFunction']()
         # if we've yet to start it turning or we've stopped turning too soon/too late,

@@ -26,7 +26,7 @@ def turn(x):
         print("Max turn is 255 degrees")
         # set x to 255 times the sign of x
         x=255*x/abs(x)
-    if x>=0:
+    if x<0:
         commsSystem.rotateneg(0, abs(x))
     else:
         commsSystem.rotate(0, abs(x))
