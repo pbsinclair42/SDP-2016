@@ -13,6 +13,9 @@ def collectBall():
     # save the plan to the robot
     me.goal = Goals.collectBall
 
+    def rotate():
+        return me.bearing(ball)
+
     # function to calculate where to move to before ungrabbing
     def ungrabHere():
         # work out where we expect to find the ball
@@ -36,7 +39,8 @@ def collectBall():
         yDisplacement = round(sin(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
 
-    me.plan = [ {'action':Actions.moveToPoint,'targetFunction':ungrabHere},
+    me.plan = [ {'action',Actions.rotateToAngle,'targetFunction',rotate},
+                {'action':Actions.moveToPoint,'targetFunction':ungrabHere},
                 {'action':Actions.ungrab},
                 {'action':Actions.moveToPoint,'targetFunction':grabHere},
                 {'action':Actions.grab}]
@@ -87,11 +91,18 @@ def blockPass():
         x = (e0.x + e1.x)/2
         y = (e0.y + e1.y)/2
         return Point(x,y)
+    def rotateToHere():
+         e0 =enemies[0].currentPoint
+        e1 = enemies[1].currentPoint
+        x = (e0.x + e1.x)/2
+        y = (e0.y + e1.y)/2
+        return me.bearing(Point(x,y))
 
     def rotate():
         """rotate to face oponent with ball"""
         return me.bearing(ball)
-    me.plan = [{'action':Actions.moveToPoint,'targetFunction':blockHere},
+    me.plan = [{'action':Actions.rotateToPoint,'targetfunction':rotateToHere},
+               {'action':Actions.moveToPoint,'targetFunction':blockHere},
                {'action':Actions.rotateToAngle, 'targetFunction':rotate},
                {'action':Actions.ungrab},
                 #wait till we have the ball
@@ -100,7 +111,8 @@ def blockPass():
 def guardGoal():
     """Stop bad people from scoring"""
     me.goal = Goals.guardGoal
-
+    def rotateToGoal():
+        return me.mearing(leftGoalCenter)
     def gotoGoal():
         """Move into position"""
         return leftGoalCenter
@@ -111,7 +123,8 @@ def guardGoal():
         """guard until ball moves"""
 
 
-    me.plan = [{'action':Actions.moveToPoint,'targetFunction':gotoGoal},
+    me.plan = [ {'action':Actions.rotateToAngle,'targetFunction':rotateToGoal},
+               {'action':Actions.moveToPoint,'targetFunction':gotoGoal},
                {'action':Actions.rotateToAngle,'targetFunction':rotate}
                #run the guard function
                ]
