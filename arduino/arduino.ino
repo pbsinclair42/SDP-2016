@@ -11,31 +11,14 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
         2. follow the standard reasonably;
         3. read the comments before-hand.
 
-
-TODO: 
-    - Split rotations at more than 180 deg to two or more steps with max deg 180
-
-COMMS API 
-
-1: Rotate & Move <CMD byte> <Degree to rotate> <Degree to move> <end byte>
-2: Holonomic Motion <CMD byte> <Degree to rotate> <Degree to move> <end byte>
-3: Kick <CMD byte> <Power/Cm> <end byte> <end byte>
-4: STOP <CMD byte> <end byte> <end byte> <end byte>
-5: FLUSH Buffer <CMD byte> <end byte> <end byte> <end byte>
-6. 
-t: sanity-test;
-
-
 ***/
 
 // Motor Definitions
-#define MOTOR_LFT 0
-#define MOTOR_RGT 1
-#define MOTOR_BCK 2
-#define KICKER_LFT 3
-#define KICKER_RGT 4
-#define GRABBER 4
-#define KICKER 5 // TODO: Remove once second kicker motor has been added
+#define MOTOR_LFT   0
+#define MOTOR_RGT   1
+#define MOTOR_BCK   2
+#define GRABBER     4
+#define KICKER      5 // TODO: Remove once second kicker motor has been added
 
 // Power calibrations
 #define POWER_LFT 255
@@ -124,12 +107,14 @@ void setup() {
     rotMoveGrabMode = 0;
     bufferOverflow = 0;
     commandOverflow = 0;
-    command_buffer[0] = 2;
-    command_buffer[1] = 45;
-    command_buffer[2] = 45;
-    command_buffer[3] = 255;
-    buffer_index = 4;
-    Serial.println("Begin");
+    /* Custom commands can be initialized below */
+    
+    //command_buffer[0] = 2;
+    //command_buffer[1] = 45;
+    //command_buffer[2] = 45;
+    //command_buffer[3] = 255;
+    //buffer_index = 4;
+    //Serial.println("Begin");
   }
 
 void loop() {
@@ -320,6 +305,7 @@ int rotMoveStep(){
                 delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
+                // TODO: Add dynamic calibration system feedback calculation here;
             }
             return 0;
         
@@ -500,7 +486,7 @@ float calculateRotaryTarget(float x3){
     // TODO: Add values for dynamic calibration in each state based
     // on overshoot/undershoot and compass/gyro feedback for each 
     // approximation case
-     
+
     float x1, x2;
     float y1, y2;
     
