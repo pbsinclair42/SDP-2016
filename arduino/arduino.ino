@@ -366,7 +366,7 @@ int holoMoveStep(){
     // TODO: Scale motor values by 1 / abs(value1, value2, value3)
     // to make sure motors are running as fast as possible since
     // maths functions may produce vectors not properly scaled to 1
-    
+
     int value1 = command_buffer[command_index + 1];
     int value2 = command_buffer[command_index + 2];
 
@@ -496,6 +496,11 @@ int unGrabStep(){
 float calculateRotaryTarget(float x3){
     // linear function approximation, e.g. finding y3 based on y1, y2, x1, x2, x3
     // for fixed rotational value calibrations
+    
+    // TODO: Add values for dynamic calibration in each state based
+    // on overshoot/undershoot and compass/gyro feedback for each 
+    // approximation case
+     
     float x1, x2;
     float y1, y2;
     
