@@ -1,16 +1,12 @@
 import sys
-#from camera import Camera
-#from calibrate import step
+from camera import Camera
+from calibrate import step
 import math
 
 import numpy as np
 import cv2
 
-'''
-c = Camera()
-img = c.get_frame()
-'''
-img = cv2.imread('Pitch.png')
+#img = cv2.imread('Pitch.png')
 
 hsv_range = {}
 bgr = {
@@ -73,27 +69,29 @@ and getting their pixel values and appending them to the list
 '''
 def getColorValues(event,x,y,flags,param):
     global color
+    global img
     if event == cv2.EVENT_LBUTTONDOWN:
         if color == 'blue':
             bgr['blue'].append(getPixelValue(img, y, x).tolist())
             cv2.circle(img,(x,y),5,(255,0,0),-1) 
-           
+               
         elif color == 'bright_blue':
             bgr['bright_blue'].append(getPixelValue(img, y, x).tolist()) 
             cv2.circle(img,(x,y),5,(255,255,0),-1) 
-                  
+                      
         elif color == 'pink':
             bgr['pink'].append(getPixelValue(img, y, x).tolist())
             cv2.circle(img,(x,y),5,(255,0,255),-1) 
-            
+                
         elif color == 'green':
             bgr['green'].append(getPixelValue(img, y, x).tolist())
             cv2.circle(img,(x,y),5,(0,255,0),-1) 
-            
+                
         elif color == 'yellow':
             bgr['yellow'].append(getPixelValue(img, y, x).tolist())
             cv2.circle(img,(x,y),5,(0,255,255),-1) 
-                  
+    
+
 '''
 getThresholds() automatically thresholds colors only by clicking on the current feed
 Function returns 'hsv_range' - dictionary that contains all needed thresholds
@@ -101,6 +99,7 @@ for these colors: red, maroon, green (aka bright_green), pink, yellow, blue and 
 '''
 def getThresholds():
     global color
+    global img
     hsv_range = {}
     hsv_range['red'] = ( np.array([0, 190, 190]), np.array([5, 255, 255]) )
     hsv_range['maroon'] = ( np.array([175, 190, 190]), np.array([180, 255, 255]) )
@@ -110,8 +109,9 @@ def getThresholds():
     print "If you want to redo, press 'r'"
     cv2.namedWindow('image')
     cv2.setMouseCallback('image',getColorValues)
-
+    c = Camera()
     while(1):
+        img = c.get_frame()
         cv2.imshow('image',img)
         # keys for colours: 
         k = cv2.waitKey(1) & 0xFF
@@ -140,6 +140,7 @@ def getThresholds():
 
     print "Destroying all windows"        
     cv2.destroyAllWindows()
+    c.close()
     #c.close()     
     print "Averaging BGR values..."
     for colors in bgr:
@@ -161,11 +162,8 @@ def calibrateRanges():
     calibrated_thresholds = {}
     print "obtained thresholds: "
     print thresholds
-
-    frame = cv2.imread('Pitch.png')
-    blur = cv2.GaussianBlur(frame,(11,11), 0)
-
-    hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+    c = Camera()
+    #frame = cv2.imread('Pitch.png')
 
     for colors in thresholds:
         if colors != 'red' and colors != 'maroon': 
@@ -187,7 +185,9 @@ def calibrateRanges():
             cv2.createTrackbar('V high',colors,v_high_init,255,nothing)  
 
             while(1):
-            
+                frame = c.get_frame()
+                blur = cv2.GaussianBlur(frame,(11,11), 0)
+                hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
                 # get current positions of four trackbars
                 h_low = cv2.getTrackbarPos('H low',colors)
                 h_high = cv2.getTrackbarPos('H high',colors)
@@ -200,7 +200,7 @@ def calibrateRanges():
                 # show mask anc actual picture
                 cv2.imshow(colors, denoiseMask(mask))
                 cv2.imshow('actual feed', frame)
-                
+                    
                 calibrated_thresholds[colors] = ( np.array([h_low, s_low, v_low]), np.array([h_high, s_high, v_high]) )
 
                 k = cv2.waitKey(1) & 0xFF
@@ -210,7 +210,7 @@ def calibrateRanges():
             print colors + " was calibrated"
 
     print "Now RED will be calibrated which takes two different color ranges"
-                      
+                          
     cv2.namedWindow('red')
     #cv2.namedWindow('maroon')
     h_low_red_init = thresholds['red'][0][0]
@@ -242,7 +242,7 @@ def calibrateRanges():
     cv2.createTrackbar('V high maroon','red',v_high_init,255,nothing) 
 
     while(1):
-            
+                
         # get current positions of six trackbars
         h_low_red = cv2.getTrackbarPos('H low red','red')
         h_high_red = cv2.getTrackbarPos('H high red','red')
@@ -257,25 +257,30 @@ def calibrateRanges():
         s_high_maroon = cv2.getTrackbarPos('S high maroon','red')
         v_low_maroon = cv2.getTrackbarPos('V low maroon','red')
         v_high_maroon = cv2.getTrackbarPos('V high maroon','red')
-        # create yellow mask
+
+        frame = c.get_frame()
+        blur = cv2.GaussianBlur(frame,(11,11), 0)
+        hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+        # create mask
         red_mask = cv2.inRange(hsv, (h_low_red, s_low_red, v_low_red), (h_high_red, s_high_red, v_high_red))
         maroon_mask = cv2.inRange(hsv, (h_low_maroon, s_low_maroon, v_low_maroon), (h_high_maroon, s_high_maroon, v_high_maroon))
         mask = cv2.bitwise_or(red_mask, maroon_mask)
-                # show mask anc actual picture
+                    # show mask anc actual picture
         cv2.imshow('red', denoiseMask(mask))
         cv2.imshow('actual feed', frame)
-                
+                    
         calibrated_thresholds['red'] = ( np.array([h_low_red, s_low_red, v_low_red]), np.array([h_high_red, s_high_red, v_high_red]) )
         calibrated_thresholds['maroon'] = ( np.array([h_low_maroon, s_low_maroon, v_low_maroon]), np.array([h_high_maroon, s_high_maroon, v_high_maroon]) )
 
         k = cv2.waitKey(1) & 0xFF
         if k == 27:
             break 
-
+       
 
     print "---CALIBRATION DONE------"
 
     cv2.destroyAllWindows()
+    c.close()
     return calibrated_thresholds
 
 
