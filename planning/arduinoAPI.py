@@ -30,7 +30,7 @@ def turn(x):
         commsSystem.rotateneg(0, abs(x))
     else:
         commsSystem.rotate(0, abs(x))
-    print("Turning "+str(abs(x))+"degrees "+("clockwise" if x<=0 else "anticlockwise"))
+    print("Turning "+str(abs(x))+" degrees "+("clockwise" if x<=0 else "anticlockwise"))
 
 
 def move(distance, angle):
