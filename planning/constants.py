@@ -1,6 +1,6 @@
 from os.path import abspath
 # root directory
-ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
+ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP-2016/'
 # the number of seconds between updating the robot position
 TICK_TIME = 0.1
 # our robot's max speed (cm per second)

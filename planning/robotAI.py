@@ -1,11 +1,11 @@
 import threading
 
 from constants import *
-from globalObjects import me, ally, enemies, robots, ball 
+from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
-from goals import collectBall, shoot, passBall, recievePass, blockPass, guardGoal
+from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem as ourSimulator
 from simulator import Simulator
@@ -41,7 +41,7 @@ def makePlan():
         elif action=="3":
             passBall()
         elif action=="4":
-            recievePass()
+            receivePass()
         elif action=="5":
             blockPass()
         elif action =="6":
