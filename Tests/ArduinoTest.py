@@ -8,7 +8,9 @@ from os.path import abspath
 # enable access to the comms package
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP/'
 sys.path.append(ROOT_DIR+'comms')
+sys.path.append(ROOT_DIR+'planning')
 from RobotCommunications import RobotCommunications
+import simulator
 
 # try to connect to the comms system.
 # If unsuccessful, continue simulation nonetheless
@@ -20,16 +22,13 @@ except BaseException:
     print("WARNING: Robot not connected")
     print("****************************")
     print
-    commsSystem = False
+    commsSystem = simulator.Simulator()
 
 
 class TestCommsMethods(unittest.TestCase):
     def test(self):
         b = "B00000010"
-        try:
-            s = commsSystem.holo(90, 0)
-        except AttributeError:
-            return
+        s = commsSystem.holo(90, 0)
         print(s)
         self.assertTrue(b in s)
 
