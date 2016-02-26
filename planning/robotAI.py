@@ -62,7 +62,7 @@ def executePlan():
     if currentAction==Actions.rotateToAngle:
         #TODO replace with info from 'done' command from robot:
         try:
-            me.moving = currentRotation!=rotationHistory[-2]
+            me.moving = me.currentRotation!=me.rotationHistory[-2]
         except:
             print("oops")
         # calculate what angle we're aiming for
