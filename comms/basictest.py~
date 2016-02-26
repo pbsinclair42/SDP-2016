@@ -1,0 +1,55 @@
+import time
+from RobotCommunications import RobotCommunications
+r = RobotCommunications()
+
+
+def kick10():
+    i = 0
+    while i < 10:
+        r.kick(255)
+        i += 1
+	time.sleep(0.01)
+
+
+def rot_i(i, m):
+    j = 0
+    while j < i:
+        r.rotate(0, m)
+        j += 1
+        time.sleep(2)
+
+# rot_i(3, 60)
+kick10()
+
+def test_func():
+    nums = range(1, 19)
+    for i in nums:
+        r.rotate(0, i * 10)
+        time.sleep(5)
+
+# test_func()
+"""
+r.rotate(0, 90)
+r.kick(255)
+r.rotate(0, 90)
+r.kick(255)
+r.rotate(0, 90)
+r.kick(255)
+r.rotate(0, 90)
+r.kick(255)
+"""
+"""
+holo(0,50)
+sleep(4)
+rotate(0,180)
+sleep(4)
+kick(50)
+sleep(1)
+grab()
+sleep(2)
+holo(0,150)
+sleep(3)
+flush()
+kick(100)
+sleep(2)
+"""
