@@ -63,6 +63,24 @@ class CommsThread(object):
     def exit(self):
         self.parent_pipe_in.send("exit")
         self.process.join()
+    
+    def kick(self, power):
+        command = self.command_dict["KICK"] + chr(power) + elf.command_dict["END"] + self.command_dict["END"]
+        self.queue_command(command)
+
+    def grab(self):
+        command = self.command_dict["GRAB"] + self.command_dict["END"] + elf.command_dict["END"] + self.command_dict["END"]
+        self.queue_command(command)
+
+    def ungrab(self):
+        command = self.command_dict["UNGRAB"] + self.command_dict["END"] + elf.command_dict["END"] + self.command_dict["END"]
+        self.queue_command(command)
+
+    def flush(self):
+    	self.queue_command("flush");
+    	command = self.command_dict["FLUSH"] + self.command_dict["END"] + elf.command_dict["END"] + self.command_dict["END"]
+    	self.queue_command(command)
+
     def stop(self):
         self.process_event.clear()
 
@@ -124,7 +142,11 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     print item,
                 print "Data:"
                 print data_buffer
-
+            
+            elif pipe_data == "flush":
+                cmnd_list = []
+                data_buffer = []
+                ack_count = 0
         # if there are commands to send
         if cmnd_list[-1][-3] == 0:
             # get first un-sent command
