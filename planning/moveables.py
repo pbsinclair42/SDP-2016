@@ -62,6 +62,7 @@ class Moveable(object):
             # calculate and save the new speed
             try:
                 newSpeed=self.pointHistory[0].distance(self.pointHistory[-1])/(len(self.pointHistory)-1)
+                newSpeed = round(newSpeed, 2)
                 self.speedHistory.append(newSpeed)
                 self.currentSpeed = newSpeed
                 # only store a max of _HISTORY_SIZE-1 points in the history
@@ -72,7 +73,8 @@ class Moveable(object):
 
             # calculate and save the new acceleration
             try:
-                self.acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
+                acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
+                self.acceleration = round(acceleration, 3)
             except (ZeroDivisionError, IndexError):
                 # if we don't have enough data to calculate an acceleration (not enough speeds recorded), wait for now
                 pass
