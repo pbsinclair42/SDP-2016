@@ -25,8 +25,9 @@ class Tracker():
             red_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'red')][0], color_range[(computer_name,'red')][1])
             maroon_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'maroon')][0], color_range[(computer_name,'maroon')][1])
             mask = cv2.bitwise_or(red_mask, maroon_mask)
-        else:    
+        else:
             mask = cv2.inRange(hsv_frame, color_range[(computer_name,color)][0], color_range[(computer_name,color)][1])
+
 
         _, threshold = cv2.threshold(mask, 127, 255, 0)
         _, contours, _ = cv2.findContours(threshold, 1, 2)
@@ -98,7 +99,7 @@ class Tracker():
         dx = ( point_1[0] - point_2[0] )
         dy = ( point_1[1] - point_2[1] )
 
-        return dx * dx + dy * dy 
+        return dx * dx + dy * dy
 
 
     def meanPoint(self, points):
@@ -140,7 +141,7 @@ class Tracker():
         y_new = x * math.sin(angle) + y * math.cos(angle)
 
         return [x_new, y_new]
-    
+
     @staticmethod
     def transformCoordstoDecartes( inputTuple ):
         if inputTuple==None:
@@ -187,10 +188,10 @@ class RobotTracker(Tracker):
         if num_of_pink == 1:
             self.num_pink['pink_robot'] = 4 - num_of_pink
             self.num_pink['green_robot'] = num_of_pink
-        else:    
+        else:
             self.num_pink['pink_robot'] = num_of_pink
             self.num_pink['green_robot'] = 4 - num_of_pink
- 
+
 
     # Gets the coordinates of the robot on a particular SIDE (us or opponent) and for a particular POSITION (attacker or defender)
     def getRobotCoordinates(self, frame, side, position):
@@ -273,20 +274,20 @@ class RobotTracker(Tracker):
 
 
     def opponent_green_coordinates(self, frame):
-        
+
         return self.getRobotCoordinates(frame, 'opponent', 'green_robot')
 
 
     def opponent_pink_coordinates(self, frame):
-        
+
         return self.getRobotCoordinates(frame, 'opponent', 'pink_robot')
 
 
     def our_green_coordinates(self, frame):
-        
+
         return self.getRobotCoordinates(frame, 'us', 'green_robot')
 
 
     def our_pink_coordinates(self, frame):
-        
-        return self.getRobotCoordinates(frame, 'us', 'pink_robot')   
+
+        return self.getRobotCoordinates(frame, 'us', 'pink_robot')

@@ -3,19 +3,22 @@ import sys
 import os
 from constants import ROOT_DIR, X_RATIO, Y_RATIO
 from cv2 import error as cv2Error
+from simulator import simulatedMe, simulatedAlly, simulatedEnemies, simulatedBall
 
 # enable access to the vision package
-sys.path.append(ROOT_DIR+'vision')
+sys.path.append(ROOT_DIR+'vision/')
 from tracker import BallTracker, RobotTracker
 from camera import Camera
+from globalObjects import *
 
 camera = Camera()
 
-# NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!  
+# NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!
 
 # check if the camera is connected
 try:
     frame = camera.get_frame_hack()
+    #raise cv2Error()
 except cv2Error:
     # if you can't get a frame from the camera, warn the user, but continue
     print
@@ -27,11 +30,19 @@ except cv2Error:
 
 # if we managed to connect to the camera, set up the robot variables
 if camera!=None:
-    print "\nPossible team colors: yellow/light_blue\n"
-    our_team_color = raw_input("Please specify your team colour: ")
-    num_of_pink = raw_input("Please now specify the number of pink dots on your robot: ")
-    ball_color = raw_input("Specify ball color (red/blue): ")
-    # create our trackers:
+    with open('conf.txt','r') as f:
+            context = f.readlines()
+            our_team_color = context[0].strip('\n')
+            num_of_pink = context[1].strip('\n')
+            ball_color = context[2].strip('\n')
+            if context[3] == "right":
+                ourGoal = rightGoalCenter
+                opponentGoal = leftGoalCenter
+            else:
+                ourGoal = leftGoalCenter
+                opponentGoal = rightGoalCenter
+
+    #create our trackers:
     robotTracker = RobotTracker(our_team_color, int(num_of_pink))
     ball = BallTracker(ball_color)
 
@@ -57,14 +68,14 @@ if camera!=None:
         our_robot_color = 'green_robot'
         mate_letters = 'PINK'
         mate_col = colors['pink']
-        our_mate_color = 'pink_robot' 
+        our_mate_color = 'pink_robot'
     else:
         our_letters = 'PINK'
         our_col = colors['pink']
-        our_robot_color = 'pink_robot' 
-        mate_letters = 'GREEN' 
+        our_robot_color = 'pink_robot'
+        mate_letters = 'GREEN'
         mate_col = colors['green']
-        our_mate_color = 'green_robot' 
+        our_mate_color = 'green_robot'
 
 
 def getBallCoords(frame=None):
@@ -81,8 +92,8 @@ def getBallCoords(frame=None):
             return None
         return Point(ball_center[0]*X_RATIO,ball_center[1]*Y_RATIO)
     else:
-        # if we have no connection to the camera, just return some dummy data
-        return Point(15,20)
+        # if we have no connection to the camera, just return data from the simulator
+        return simulatedBall.currentPoint
 
 
 def getBallStatus(frame=None):
@@ -95,7 +106,8 @@ def getBallStatus(frame=None):
         # TODO: work out the ball status and return it
         return BallStatus.free
     else:
-        # if we have no connection to the camera, just return some dummy data
+        # if we have no connection to the camera, just return data from the simulator
+        # TODO
         return BallStatus.free
 
 
@@ -113,8 +125,8 @@ def getMyCoords(frame=None):
             return None
         return Point(pixelCoordinates[0]*X_RATIO,pixelCoordinates[1]*Y_RATIO)
     else:
-        # if we have no connection to the camera, just return some dummy data
-        return Point(40,35)
+        # if we have no connection to the camera, just return data from the simulator
+        return simulatedMe.currentPoint
 
 
 def getAllyCoords(frame=None):
@@ -131,8 +143,8 @@ def getAllyCoords(frame=None):
             return None
         return Point(pixelCoordinates[0]*X_RATIO,pixelCoordinates[1]*Y_RATIO)
     else:
-        # if we have no connection to the camera, just return some dummy data
-        return Point(100,155)
+        # if we have no connection to the camera, just return data from the simulator
+        return simulatedAlly.currentPoint
 
 
 def getEnemyCoords(frame=None):
@@ -160,8 +172,8 @@ def getEnemyCoords(frame=None):
             greenPoint = Point(greenPixelCoordinates[0]*X_RATIO,greenPixelCoordinates[1]*Y_RATIO)
         return[pinkPoint,greenPoint]
     else:
-        # if we have no connection to the camera, just return some dummy data
-        return [Point(80,10), Point(220,76)]
+        # if we have no connection to the camera, just return data from the simulator
+        return [simulatedEnemies[0].currentPoint, simulatedEnemies[1].currentPoint]
 
 
 def getMyRotation(frame=None):
@@ -178,8 +190,8 @@ def getMyRotation(frame=None):
             return None
         return rotation[0]
     else:
-        # if we have no connection to the camera, just return some dummy data
-        return 18
+        # if we have no connection to the camera, just return data from the simulator
+        return simulatedMe.currentRotation
 
 
 def getAllyRotation(frame=None):
@@ -196,8 +208,8 @@ def getAllyRotation(frame=None):
             return None
         return rotation[0]
     else:
-        # if we have no connection to the camera, just return some dummy data
-        return 163
+        # if we have no connection to the camera, just return data from the simulator
+        return simulatedAlly.currentRotation
 
 
 def getEnemyRotation(frame=None):
@@ -219,8 +231,8 @@ def getEnemyRotation(frame=None):
             greenRotation = greenRotation[0]
         return [pinkRotation,greenRotation]
     else:
-        # if we have no connection to the camera, just return some dummy data
-        return [-66, 110]
+        # if we have no connection to the camera, just return data from the simulator
+        return [simulatedEnemies[0].currentRotation, simulatedEnemies[1].currentRotation]
 
 
 def getAllRobotCoords(frame=None):
@@ -230,8 +242,6 @@ def getAllRobotCoords(frame=None):
         # get the current frame if it's not been inputted
         if frame is None:
             frame = camera.get_frame_hack()
-        # TODO
-    # if we have no connection to the camera, just return some dummy data
     return [getMyCoords(frame), getAllyCoords(frame)]+getEnemyCoords(frame)
 
 
@@ -242,8 +252,6 @@ def getAllRobotRotations(frame=None):
         # get the current frame if it's not been inputted
         if frame is None:
             frame = camera.get_frame_hack()
-        # TODO
-    # if we have no connection to the camera, just return some dummy data
     return [getMyRotation(frame), getAllyRotation(frame)]+getEnemyRotation(frame)
 
 
@@ -259,7 +267,7 @@ def getAllRobotDetails(frame=None):
         allyRotation , allyCoords = robotTracker.getRobotOrientation(frame, 'us', our_mate_color)
         pinkRotation , pinkCoords = robotTracker.getRobotOrientation(frame, 'opponent', 'pink_robot')
         greenRotation , greenCoords = robotTracker.getRobotOrientation(frame, 'opponent', 'green_robot')
-        
+
         if ourRotation!=None:
             ourRotation = ourRotation[0]
         if allyRotation!=None:
@@ -290,5 +298,5 @@ def getAllRobotDetails(frame=None):
             greenCoords = robotTracker.transformCoordstoCV(greenCoords)
             greenPoint = Point(greenCoords[0]*X_RATIO,greenCoords[1]*Y_RATIO)
         return [(ourPoint,ourRotation),(allyPoint,allyRotation),(pinkPoint,pinkRotation),(greenPoint,greenRotation)]
-    # if we have no connection to the camera, just return some dummy data
+    # if we have no connection to the camera, just return data from the simulator
     return zip(getAllRobotCoords(frame), getAllRobotRotations(frame))

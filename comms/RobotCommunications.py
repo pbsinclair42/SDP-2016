@@ -1,5 +1,6 @@
 from Communications import Communications
-
+from time import sleep
+from multiprocessing import Process, Pipe, Event
 
 class RobotCommunications(Communications):
 
@@ -30,13 +31,8 @@ class RobotCommunications(Communications):
         return x
     # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
+        x = self.write(chr(129) +chr(int(degrees)) + chr(int(distance)) + chr(255))
         print("rotateneg")
-        x = self.write(chr(129) +chr(254)+chr(int(0)) + chr(255))
-        import time
-        time.sleep(degrees/180)
-        self.stop()
-        #x = self.write(chr(1) +chr(180-int(degrees))+chr(int(distance)) + chr(255))
-        #x = self.write(chr(129) +chr(int(degrees))+chr(int(distance)) + chr(255))
         return x
     # kick with power `distance`
     # TODO: calibrate to match distance
@@ -45,7 +41,7 @@ class RobotCommunications(Communications):
         return x
     # cancel previous command and any queued commands
     def flush(self):
-        x = self.write(chr(128)+chr(255)+chr(255)+chr(255))
+        x = self.write(chr(64)+chr(255)+chr(255)+chr(255))
         return x
     # grab the ball
     # ensure the grabber is opened before calling!

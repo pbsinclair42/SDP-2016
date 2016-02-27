@@ -2,6 +2,7 @@ import sys
 import os
 from constants import ROOT_DIR
 from globalObjects import me
+from simulator import Simulator
 
 # enable access to the comms package
 sys.path.append(ROOT_DIR+'comms')
@@ -16,67 +17,73 @@ except BaseException:
     print("WARNING: Robot not connected")
     print("****************************")
     print
-    commsSystem = False
+    commsSystem = Simulator()
 
 def turn(x):
     """Rotates the robot x degrees anticlockwise.  Use negative numbers to rotate clockwise.  """
     x = int(x)
-    if commsSystem:
-        if (x>255 or x< (-255)):
-            print("Max turn is 255 degrees")
-            # set x to 255 times the sign of x
-            x=255*x/abs(x)
-        if (x>=0):
-            commsSystem.rotateneg(0, abs(x))
-        elif (x<=0):
-            commsSystem.rotate(0, abs(x))
-    print("Turning "+str(abs(x))+"degrees "+("clockwise" if x<=0 else "anticlockwise"))
+    if x>255 or x< (-255):
+        print("Max turn is 255 degrees")
+        # set x to 255 times the sign of x
+        x=255*x/abs(x)
+    if x<0:
+        commsSystem.rotateneg(0, abs(x))
+    else:
+        commsSystem.rotate(0, abs(x))
+    print("Turning "+str(abs(x))+" degrees "+("clockwise" if x<=0 else "anticlockwise"))
 
 
 def move(distance, angle):
     """Moves `distance` cm at a direction of `angle` degrees"""
     # TODO: update for holo movement
-    if commsSystem:
-        commsSystem.rotate(distance,angle)
+    # ensure the distance is an appropriate size
+    distance = int(distance)
+    if distance>255 or distance<0:
+        print("Max distance is 255cm")
+        distance=0 if distance<0 else 255
+    # ensure the angle is an appropriate size
+    angle = int(angle)
+    if angle>255 or angle< (-255):
+        print("Max turn is 255 degrees")
+        # set angle to 255 times the sign of angle
+        angle=255*angle/abs(angle)
+    if angle>=0:
+        commsSystem.rotate(distance, abs(angle))
+    elif angle<=0:
+        commsSystem.rotateneg(distance, abs(angle))
     print("Moving "+str(distance)+"cm at an angle of "+str(angle)+" degrees")
 
 
 def kick(distance):
     """Kicks the ball `distance` cm"""
-    if commsSystem:
-        commsSystem.kick(distance)
+    # ensure the distance is an appropriate size
+    distance = int(distance)
+    if distance>255 or distance<0:
+        print("Max distance is 255cm")
+        distance=0 if distance<0 else 255
+    commsSystem.kick(distance)
     print("Kicking ball "+str(distance)+"cm")
 
 
 def grab():
     """Attempts to grab the ball"""
-    if commsSystem:
-        commsSystem.grab()
+    commsSystem.grab()
     print("Grabbing ball")
 
 
 def ungrab():
     """Attempts to ungrab the ball"""
-    if commsSystem:
-        commsSystem.ungrab()
+    commsSystem.ungrab()
     print("Opening claw")
 
 
 def stop():
     """Stops all motors"""
-    if commsSystem:
-        commsSystem.stop()
-    me.moving=False
-    me.rotationHistory=[]
-    me.pointHistory=[]
+    commsSystem.stop()
     print("Stopping all motors")
 
 
 def flush():
     """Clears all commands and stops all motors"""
-    if commsSystem:
-        commsSystem.flush()
-    me.moving=False
-    me.rotationHistory=[]
-    me.pointHistory=[]
+    commsSystem.flush()
     print("Clearing all commands")

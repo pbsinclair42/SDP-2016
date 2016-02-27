@@ -6,7 +6,6 @@ from arduinoAPI import turn, move
 
 
 def moveToPoint(point):
-    me.moving=True
     if not isinstance(point,Point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
     distance = point.distance(me.currentPoint)
@@ -21,9 +20,7 @@ def moveToPoint(point):
 
 
 def turnToDirection(angle):
-    me.moving=True
-    angleToMove = me.currentRotation-angle
-    print("Angle to move:",angleToMove)
+    angleToMove = angle-me.currentRotation
     # ensure the angle is between -180 and 80
     if angleToMove < -180:
         angleToMove+=360

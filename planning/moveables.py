@@ -31,7 +31,7 @@ class Moveable(object):
 
 
     def update(self, newPoint):
-        """Update the object with the position it's in this new tick.  To be called every tick.  
+        """Update the object with the position it's in this new tick.  To be called every tick.
 
         Args:
             newPoint (Point): the new coordinates of this object
@@ -43,15 +43,21 @@ class Moveable(object):
             print("Lost position of "+(self.name if self.name!=None else "moveable"))
         # if we've yet to find the robot, don't bother updating anything
         if newPoint!=None:
+            # save the old point
+            if self.currentPoint!=None:
+                self.pointHistory.append(self.currentPoint)
             # save the new position
             self.currentPoint = newPoint
-            self.pointHistory.append(newPoint)
             # only store a max of _HISTORY_SIZE points in the history
             if len(self.pointHistory)>self._HISTORY_SIZE:
                 self.pointHistory.pop(0)
 
-            # calculate and save the current direction
-            self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
+            try:
+                # calculate and save the current direction
+                self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
+            except IndexError:
+                # if we don't have enough information to calculate a direction, wait for now
+                pass
 
             # calculate and save the new speed
             try:
@@ -61,7 +67,7 @@ class Moveable(object):
                 # only store a max of _HISTORY_SIZE-1 points in the history
                 if len(self.speedHistory) > self._HISTORY_SIZE-1:
                     self.speedHistory.pop(0)
-            except ZeroDivisionError:
+            except (ZeroDivisionError, IndexError):
                 pass
 
             # calculate and save the new acceleration
@@ -128,7 +134,7 @@ class Moveable(object):
         elif isinstance(other,Point):
             return self.currentPoint.bearing(other)
         else:
-            raise TypeError("Moveable or Point expected, " + point.__class__.__name__ + " found")
+            raise TypeError("Moveable or Point expected, " + other.__class__.__name__ + " found")
 
 
     def __str__(self):
@@ -142,7 +148,7 @@ class Robot(Moveable):
     def __init__(self, p=None, name=None):
         super(Robot,self).__init__(p)
         # the direction the robot is facing, as detected by the vision system
-        self.currentRotation=0
+        self.currentRotation=None
         self.rotationHistory=[]
         # purely used for warning/error messages
         self.name=name
@@ -156,15 +162,16 @@ class Robot(Moveable):
     def updateRotation(self, rotation):
         """Update the rotation with a new value
 
-        If the vision system failed to find the rotation of the robot this frame, 
+        If the vision system failed to find the rotation of the robot this frame,
         just assume the rotation hasn't changed
 
         Args:
             rotation (float): the direction the robot is facing in degrees"""
-        # only store a max of _HISTORY_SIZE points in the history
-        if len(self.rotationHistory)>self._HISTORY_SIZE:
-            self.rotationHistory.pop(0)
-        self.rotationHistory.append(self.currentRotation)
+        if self.currentRotation!=None:
+            # only store a max of _HISTORY_SIZE points in the history
+            if len(self.rotationHistory)>self._HISTORY_SIZE:
+                self.rotationHistory.pop(0)
+            self.rotationHistory.append(self.currentRotation)
         if rotation!=None:
             self.currentRotation= rotation
 
