@@ -89,10 +89,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)    
     print "Radio On-line"
     
-    resend_time = time()
     while True:
         event.wait()
-        
+        resend_time = time()
         if pipe_in.poll():
             pipe_data = pipe_in.recv()
             
@@ -102,7 +101,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 # then turn to a list to support mutability
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
                 cmnd_list.append([ord(item) for item in pipe_data[0]] + [0, 0 ,0])
-
+                #comms.write(pipe_data[0])
+                #print "Sending: ", [ord(item) for item in pipe_data[0]]
+            
             # non-command-inputs:
             elif pipe_data == "exit":
                 return
@@ -121,18 +122,29 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     print item,
                 print "Data:"
                 print data_buffer
-        if cmnd
+
+        # if there are commands to send
+        if cmd_list[-1][-3] != 0:
+            cmd_to_send = (idx, command for idx, command in enumerate(cmd_list) if command[-3] != 0).next()[0]
+            comms.write(cmd_to_send[:4])
+            cmd_list[cmd_list.index(cmd_to_send)][-3] = 1
         
+
         while comms.in_waiting:
             data = comms.read(1)
             try:
                 data_buffer.append(ord(data))
             except ValueError:
                 pass
-
+        #print 80 * "="
+        #print data_buffer
+        #print cmnd_list
+        #print 80 * "-"
         process_data(cmnd_list, data_buffer)
         sleep(0.1)
-
+        #print data_buffer
+        #print cmnd_list
+        #print 80 * "="
 def process_data(commands, data):
     cutoff_index = 0
     for idx, item in enumerate(data):
