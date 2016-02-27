@@ -1,6 +1,6 @@
 from serial import Serial
 from multiprocessing import Process, Pipe, Event
-from time import sleep
+from time import sleep, time
 from struct import unpack
 
 class CommsThread(object):
@@ -54,13 +54,14 @@ class CommsThread(object):
         if degrees >= 0:
             command = self.command_dict["ROT_MOVE_POS"] + chr(degrees) + chr(distance) + self.command_dict["END"]
         else:
-            command = self.command_dict["ROT_MOVE_NEG"] + chr(degrees) + chr(distance) + self.command_dict["END"]
+            command = self.command_dict["ROT_MOVE_NEG"] + chr(-1 * degrees) + chr(distance) + self.command_dict["END"]
         self.queue_command(command)
 
     def holo(self, dist_vector, angular):
         pass
 
     def exit(self):
+        self.process_event.clear()
         self.process.join()
 
     def current_cmd(self):
@@ -88,8 +89,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)    
     print "Radio On-line"
     
+    resend_time = time()
     while True:
         event.wait()
+        
         if pipe_in.poll():
             pipe_data = pipe_in.recv()
             
@@ -97,10 +100,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             if isinstance(pipe_data, tuple):
                 # get a tuple to reduce risk of data damage,
                 # then turn to a list to support mutability
-                cmnd_list.append([ord(item) for item in pipe_data[0]] + [0 ,0])
-                comms.write(pipe_data[0])
-                print "Sending: ", pipe_data[0]
-            
+                # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
+                cmnd_list.append([ord(item) for item in pipe_data[0]] + [0, 0 ,0])
+
             # non-command-inputs:
             elif pipe_data == "exit":
                 return
@@ -119,25 +121,60 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     print item,
                 print "Data:"
                 print data_buffer
-
+        if cmnd
+        
         while comms.in_waiting:
             data = comms.read(1)
             try:
-            	data_buffer.append(ord(data))
-            	#data_buffer.append((data, ord(data), str(data), int(data), int(str(data)), unpack('B', data)[0]))
+                data_buffer.append(ord(data))
             except ValueError:
-            	pass
+                pass
+
         process_data(cmnd_list, data_buffer)
-        sleep(0.25)
+        sleep(0.1)
 
 def process_data(commands, data):
-    pass
-    # for idx, item in enumerate(data):
-    # print idx, item
+    cutoff_index = 0
+    for idx, item in enumerate(data):
+        if item == 248:
+            acknowledge_command(commands, 2)
+            cutoff_index = idx
+            print 248
+        elif item == 111:
+            acknowledge_command(commands, 1)
+            cutoff_index = idx
+            print 111
+    del data[:cutoff_index + 1]
+    
+
+def acknowledge_command(commands, flag):
+    assert flag == 1 or flag == 2
+    for item in commands:
+        if item[-flag] == 0:
+            item[-flag] = 1
+            return
 
 if __name__ == "__main__":
-	c = CommsThread()
-	c.rotate(200)
+    c = CommsThread()
+    sleep(5)
+    for i in range(10, 200, 10):
+        c.rotate(i)
 
-	sleep(3)
-	c.report()
+    sleep(10)
+
+    for i in range(10, 200, 10):
+        c.rotate(i)
+
+
+    sleep(10)
+
+    for i in range(10, 200, 10):
+        c.rotate(i)
+
+    sleep(10)
+
+    for i in range(10, 200, 10):
+        c.rotate(i)
+    c.report()
+    sleep(3)
+    c.exit()
