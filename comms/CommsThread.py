@@ -61,8 +61,10 @@ class CommsThread(object):
         pass
 
     def exit(self):
-        self.process_event.clear()
+        self.parent_pipe_in.send("exit")
         self.process.join()
+    def stop(self):
+    	self.process_event.clear()
 
     def current_cmd(self):
         self.parent_pipe_in.send("ccmd")
@@ -78,7 +80,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     cmnd_list = []
     data_buffer = []
     radio_connected = False
-
+    ack_count = 0
+    ewp
+    
     while not radio_connected:
         try:
             comms = Serial(port=port, baudrate=baudrate)
@@ -89,20 +93,17 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)    
     print "Radio On-line"
     
+    resend_time = time()
     while True:
         event.wait()
-        resend_time = time()
         if pipe_in.poll():
             pipe_data = pipe_in.recv()
             
-            #if you've received a command - send it
             if isinstance(pipe_data, tuple):
                 # get a tuple to reduce risk of data damage,
                 # then turn to a list to support mutability
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
                 cmnd_list.append([ord(item) for item in pipe_data[0]] + [0, 0 ,0])
-                #comms.write(pipe_data[0])
-                #print "Sending: ", [ord(item) for item in pipe_data[0]]
             
             # non-command-inputs:
             elif pipe_data == "exit":
@@ -117,6 +118,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 pipe_out.send(target)
 
             elif pipe_data == "rprt":
+                print len(cmnd_list), "=?", ack_count
                 print "Commands:"
                 for item in cmnd_list:
                     print item,
@@ -124,11 +126,20 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 print data_buffer
 
         # if there are commands to send
-        if cmd_list[-1][-3] != 0:
-            cmd_to_send = (idx, command for idx, command in enumerate(cmd_list) if command[-3] != 0).next()[0]
-            comms.write(cmd_to_send[:4])
-            cmd_list[cmd_list.index(cmd_to_send)][-3] = 1
-        
+        if cmnd_list[-1][-3] == 0:
+            # get first un-sent command
+            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0).next()
+            
+            # if the previous cmd is not ACK-ed -> send that
+            if cmnd_list[cmd_index - 1][-2] == 0:
+                cmd_index -= 1
+                cmd_to_send = cmnd_list[cmd_index]
+
+            if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
+                comms.write(cmd_to_send[:4])
+                cmnd_list[cmd_index][-3] = 1
+                resend_time = time()
+                print "Sending Command:", cmd_index + 1, "Ack_index:", ack_count
 
         while comms.in_waiting:
             data = comms.read(1)
@@ -136,27 +147,22 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 data_buffer.append(ord(data))
             except ValueError:
                 pass
-        #print 80 * "="
-        #print data_buffer
+        ack_count = process_data(cmnd_list, data_buffer, ack_count)
         #print cmnd_list
-        #print 80 * "-"
-        process_data(cmnd_list, data_buffer)
-        sleep(0.1)
-        #print data_buffer
-        #print cmnd_list
-        #print 80 * "="
-def process_data(commands, data):
+        sleep(0.5)
+
+def process_data(commands, data, ack_count):
     cutoff_index = 0
     for idx, item in enumerate(data):
         if item == 248:
             acknowledge_command(commands, 2)
             cutoff_index = idx
-            print 248
+            ack_count += 1
         elif item == 111:
             acknowledge_command(commands, 1)
             cutoff_index = idx
-            print 111
     del data[:cutoff_index + 1]
+    return ack_count
     
 
 def acknowledge_command(commands, flag):
@@ -168,25 +174,10 @@ def acknowledge_command(commands, flag):
 
 if __name__ == "__main__":
     c = CommsThread()
-    sleep(5)
-    for i in range(10, 200, 10):
-        c.rotate(i)
-
-    sleep(10)
 
     for i in range(10, 200, 10):
         c.rotate(i)
 
-
-    sleep(10)
-
-    for i in range(10, 200, 10):
-        c.rotate(i)
-
-    sleep(10)
-
-    for i in range(10, 200, 10):
-        c.rotate(i)
     c.report()
-    sleep(3)
+    sleep(10)
     c.exit()
