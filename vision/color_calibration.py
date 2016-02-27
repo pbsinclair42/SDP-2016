@@ -138,7 +138,6 @@ def getThresholds():
     print "Destroying all windows"        
     cv2.destroyAllWindows()
     c.close()
-    #c.close()     
     print "Averaging BGR values..."
     for colors in bgr:
         if (len(bgr[colors]) != 0):
@@ -160,7 +159,6 @@ def calibrateRanges():
     print "obtained thresholds: "
     print thresholds
     c = Camera()
-    #frame = cv2.imread('Pitch.png')
 
     for colors in thresholds:
         if colors != 'red' and colors != 'maroon': 
@@ -170,28 +168,21 @@ def calibrateRanges():
             h_low_init = thresholds[colors][0][0]
             h_high_init = thresholds[colors][1][0]
             s_low_init = thresholds[colors][0][1]
-            #s_high_init = thresholds[colors][1][1]
             v_low_init = thresholds[colors][0][2]
-            #v_high_init = thresholds[colors][1][2]
 
             cv2.createTrackbar('H low',colors,h_low_init,180,nothing)
             cv2.createTrackbar('H high',colors,h_high_init,180,nothing)
             cv2.createTrackbar('S low',colors,s_low_init,255,nothing)
-            #cv2.createTrackbar('S high',colors,s_high_init,255,nothing)
             cv2.createTrackbar('V low',colors,v_low_init,255,nothing)
-            #cv2.createTrackbar('V high',colors,v_high_init,255,nothing)  
 
             while(1):
                 frame = c.get_frame()
                 blur = cv2.GaussianBlur(frame,(11,11), 0)
                 hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
-                # get current positions of four trackbars
                 h_low = cv2.getTrackbarPos('H low',colors)
                 h_high = cv2.getTrackbarPos('H high',colors)
                 s_low = cv2.getTrackbarPos('S low',colors)
-                #s_high = cv2.getTrackbarPos('S high',colors)
                 v_low = cv2.getTrackbarPos('V low',colors)
-                #v_high = cv2.getTrackbarPos('V high',colors)
                 # create yellow mask
                 mask = cv2.inRange(hsv, (h_low, s_low, v_low), (h_high, 255, 255))
                 # show mask anc actual picture
@@ -209,34 +200,25 @@ def calibrateRanges():
     print "Now RED will be calibrated which takes two different color ranges"
                           
     cv2.namedWindow('red')
-    #cv2.namedWindow('maroon')
     h_low_red_init = thresholds['red'][0][0]
     h_high_red_init = thresholds['red'][1][0]
     s_low_red_init = thresholds['red'][0][1]
-    #s_high_red_init = thresholds['red'][1][1]
     v_low_red_init = thresholds['red'][0][2]
-    #v_high_red_init = thresholds['red'][1][2]
 
     h_low_maroon_init = thresholds['maroon'][0][0]
     h_high_maroon_init = thresholds['maroon'][1][0]
     s_low_maroon_init = thresholds['maroon'][0][1]
-    #s_high_maroon_init = thresholds['maroon'][1][1]
     v_low_maroon_init = thresholds['maroon'][0][2]
-    #v_high_maroon_init = thresholds['maroon'][1][2]
 
     cv2.createTrackbar('H low red','red',h_low_red_init,180,nothing)
     cv2.createTrackbar('H high red','red',h_high_red_init,180,nothing)
     cv2.createTrackbar('S low red','red',s_low_red_init,255,nothing)
-    #cv2.createTrackbar('S high red','red',s_high_init,255,nothing)
     cv2.createTrackbar('V low red','red',v_low_red_init,255,nothing)
-    #cv2.createTrackbar('V high red','red',v_high_init,255,nothing)  
 
     cv2.createTrackbar('H low maroon','red',h_low_maroon_init,180,nothing)
     cv2.createTrackbar('H high maroon','red',h_high_maroon_init,180,nothing)
     cv2.createTrackbar('S low maroon','red',s_low_maroon_init,255,nothing)
-    #cv2.createTrackbar('S high maroon','red',s_high_init,255,nothing)
     cv2.createTrackbar('V low maroon','red',v_low_maroon_init,255,nothing)
-    #cv2.createTrackbar('V high maroon','red',v_high_init,255,nothing) 
 
     while(1):
                 
@@ -244,16 +226,12 @@ def calibrateRanges():
         h_low_red = cv2.getTrackbarPos('H low red','red')
         h_high_red = cv2.getTrackbarPos('H high red','red')
         s_low_red = cv2.getTrackbarPos('S low red','red')
-        #s_high_red = cv2.getTrackbarPos('S high red','red')
         v_low_red = cv2.getTrackbarPos('V low red','red')
-        #v_high_red = cv2.getTrackbarPos('V high red','red')
 
         h_low_maroon = cv2.getTrackbarPos('H low maroon','red')
         h_high_maroon = cv2.getTrackbarPos('H high maroon','red')
         s_low_maroon = cv2.getTrackbarPos('S low maroon','red')
-        #s_high_maroon = cv2.getTrackbarPos('S high maroon','red')
         v_low_maroon = cv2.getTrackbarPos('V low maroon','red')
-        #v_high_maroon = cv2.getTrackbarPos('V high maroon','red')
 
         frame = c.get_frame()
         blur = cv2.GaussianBlur(frame,(11,11), 0)
