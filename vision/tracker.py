@@ -15,6 +15,12 @@ adjustments['blur'] = (11,11) # needs to be parametrized .. TODO
 
 class Tracker():
 
+    def denoiseMask(self, mask):
+        kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        po = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        po = cv2.morphologyEx(po, cv2.MORPH_OPEN, kernel)
+        return po
+
     def getContours(self, frame, color, adjustments):
 
         blur_intensity = adjustments['blur']
@@ -28,7 +34,7 @@ class Tracker():
         else:    
             mask = cv2.inRange(hsv_frame, color_range[(computer_name,color)][0], color_range[(computer_name,color)][1])
 
-        _, threshold = cv2.threshold(mask, 127, 255, 0)
+        _, threshold = cv2.threshold(self.denoiseMask(mask), 127, 255, 0)
         _, contours, _ = cv2.findContours(threshold, 1, 2)
 
         return self.removeUselessContours(contours)
@@ -142,16 +148,12 @@ class Tracker():
         return [x_new, y_new]
     
     @staticmethod
-    def transformCoordstoDecartes( inputTuple ):
-        if inputTuple==None:
-            return None
-        return ( inputTuple[0] - 320, 240 - inputTuple[1] )
+    def transformCoordstoDecartes( (x, y) ):
+        return ( x - 320, 240 - y )
 
     @staticmethod
-    def transformCoordstoCV( inputTuple ):
-        if inputTuple==None:
-            return None
-        return ( inputTuple[0] + 320, 240 - inputTuple[1] )
+    def transformCoordstoCV( (x, y) ) :
+        return ( x + 320, 240 - y )
 
 
 class BallTracker(Tracker):
@@ -225,7 +227,7 @@ class RobotTracker(Tracker):
 
         if self.num_pink[position] == 3:
 
-            green_contours = self.getContours(frame, 'bright_green', adjustments)
+            green_contours = self.getContours(frame, 'green', adjustments)
             pink_contours = self.getContours(frame, 'pink', adjustments)
 
             if green_contours == []:
