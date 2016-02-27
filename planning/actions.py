@@ -20,8 +20,7 @@ def moveToPoint(point):
 
 
 def turnToDirection(angle):
-    angleToMove = me.currentRotation-angle
-    print("Angle to move:",angleToMove)
+    angleToMove = angle-me.currentRotation
     # ensure the angle is between -180 and 80
     if angleToMove < -180:
         angleToMove+=360

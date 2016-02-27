@@ -1,11 +1,11 @@
 import threading
 
 from constants import *
-from globalObjects import me, ally, enemies, robots, ball 
+from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
-from goals import collectBall, shoot, passBall, recievePass, blockPass, guardGoal
+from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 import visionAPI
 from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem as ourSimulator
 from simulator import Simulator
@@ -41,7 +41,7 @@ def makePlan():
         elif action=="3":
             passBall()
         elif action=="4":
-            recievePass()
+            receivePass()
         elif action=="5":
             blockPass()
         elif action =="6":
@@ -62,38 +62,79 @@ def executePlan():
     if currentAction==Actions.rotateToAngle:
         #TODO replace with info from 'done' command from robot:
         try:
-            me.moving = currentRotation!=rotationHistory[-2]
+            me.moving = me.currentRotation!=me.rotationHistory[-1]
         except:
             print("oops")
-        # calculate what angle we're aiming for
-        targetAngle = me.plan[0]['targetFunction']()
-        # if we've yet to start it turning or we've stopped turning too soon/too late,
-        # turn to the angle we actually should be at
-        if not me.moving and not nearEnough(me.currentRotation, targetAngle):
-            print("turning")
-            turnToDirection(targetAngle)
-        # if we're close enough, we're done
-        elif not me.moving: # and implicitly, nearEnough(me.currentRotation, targetAngle)
-            print("Done!")
-            me.plan.pop(0)
-        # otherwise wait for it to do its stuff
-        else:
-            print("Still going")
+            return
 
-    elif currentAction==Actions.moveToPoint:
-        # calculate where we're headed
-        targetPoint = me.plan[0]['targetFunction']()
-        # if we've yet to start it moving or we've stopped moving too soon/too late,
-        # move to the position we actually should be at
-        if not me.moving and not nearEnough(me.currentPoint, targetPoint):
-            moveToPoint(targetPoint)
-        # if we're close enough, we're done
-        elif not me.moving: # and implicitly, nearEnough(me.currentPoint, targetPoint)
-            me.plan.pop(0)
-        # otherwise wait for it to do its stuff
-        else:
+        # if we've already started moving and haven't stopped yet, just keep going.  Why not.  
+        if me.moving:
             # TODO: add in some kind of checker/corrector
             print("Still going")
+            return
+        # otherwise:
+
+        # calculate what angle we're aiming for
+        targetAngle = me.plan[0]['targetFunction']()
+
+        # if we're at a close enough angle, we're done
+        if nearEnough(me.currentRotation, targetAngle):
+            print("Done!")
+            me.plan.pop(0)
+            # start on the next bit of the plan
+            executePlan()
+            return
+
+        # so if we're not currently turning and we're not yet facing the right directin,
+        # send the command to turn to the angle we actually should be at
+        else:
+            turnToDirection(targetAngle)
+
+    elif currentAction==Actions.moveToPoint:
+        #TODO replace with info from 'done' command from robot:
+        try:
+            me.moving = me.currentPoint!=me.pointHistory[-1]
+        except:
+            print("oops")
+            return
+
+        # if we've already started moving and haven't stopped yet, just keep going.  Why not.  
+        if me.moving:
+            # TODO: add in some kind of checker/corrector
+            print("Still going")
+            return
+        # otherwise:
+
+        # calculate where we're headed
+        targetPoint = me.plan[0]['targetFunction']()
+
+        # if we're close enough, we're done
+        if nearEnough(me.currentPoint, targetPoint):
+            me.plan.pop(0)
+            # start on the next bit of the plan
+            executePlan()
+            return
+
+        # otherwise, ensure we're facing the right direction, and change rotate if not
+        if not nearEnough(me.currentRotation, me.bearing(targetPoint)):
+            # if we're not facing the right direction, add a step to the plan to face the right way first
+            def targetAngle():
+                '''Return the angle between us and the point we're headed to in the next step of the plan'''
+                # get the index of this action
+                i = me.plan.index({'action':Actions.rotateToAngle, 'targetFunction':targetAngle})
+                # the target point is the position we're going to in the next action
+                targetPoint = me.plan[i+1]['targetFunction']()
+                # return the target angle (the bearing from us to the point we're headed to)
+                return me.bearing(targetPoint)
+            # add the rotation step to the plan
+            me.plan.insert(0,{'action':Actions.rotateToAngle,'targetFunction':targetAngle})
+            # start carrying out this step this tick
+            executePlan()
+            return
+        # so if we're not currently moving, we're not yet close enough and we're facing the right way,
+        # send the command to start moving
+        else: 
+            moveToPoint(targetPoint)
 
     elif currentAction==Actions.kick:
         kickDistance = me.plan[0]['targetFunction']()

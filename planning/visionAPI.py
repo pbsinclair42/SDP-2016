@@ -6,7 +6,7 @@ from cv2 import error as cv2Error
 from simulator import simulatedMe, simulatedAlly, simulatedEnemies, simulatedBall
 
 # enable access to the vision package
-sys.path.append(ROOT_DIR+'vision')
+sys.path.append(ROOT_DIR+'vision/')
 from tracker import BallTracker, RobotTracker
 from camera import Camera
 from globalObjects import *
@@ -41,7 +41,7 @@ if camera!=None:
             else:
                 ourGoal = leftGoalCenter
                 opponentGoal = rightGoalCenter
-    
+
     #create our trackers:
     robotTracker = RobotTracker(our_team_color, int(num_of_pink))
     ball = BallTracker(ball_color)
