@@ -7,30 +7,30 @@ class CommsThread(object):
     def __init__(self,
                  port="/dev/ttyACM0",
                  baudrate=115200):
-    self.command_list = []
-    self.command_dict = {
-        "ROT_MOVE_POS" : chr(1  ),
-        "ROT_MOVE_NEG" : chr(129),
-        "HOL_MOVE_POS" : chr(2  ),
-        "HOL_MOVE_NEG" : chr(130),
-        "KICK"         : chr(4  ),
-        "STOP"         : chr(8  ),
-        "GRAB"         : chr(16 ),
-        "UNGRAB"       : chr(32 ),
-        "FLUSH"        : chr(64 ),
-        "DONE"         : chr(111),
-        "ACK"          : chr(248),
-        "RESEND"       : chr(252),
-        "FULL"         : chr(254),
-        "END"          : chr(255)
-    }
+	    self.command_list = []
+	    self.command_dict = {
+	        "ROT_MOVE_POS" : chr(1  ),
+	        "ROT_MOVE_NEG" : chr(129),
+	        "HOL_MOVE_POS" : chr(2  ),
+	        "HOL_MOVE_NEG" : chr(130),
+	        "KICK"         : chr(4  ),
+	        "STOP"         : chr(8  ),
+	        "GRAB"         : chr(16 ),
+	        "UNGRAB"       : chr(32 ),
+	        "FLUSH"        : chr(64 ),
+	        "DONE"         : chr(111),
+	        "ACK"          : chr(248),
+	        "RESEND"       : chr(252),
+	        "FULL"         : chr(254),
+	        "END"          : chr(255)
+	    }
 
-    self.parent_pipe_end, self.child_pipe_end = Pipe()
-    self.process_event = multiprocessing.Event()
-    self.process = Process(name="comms_thread",
-                           target=comms_thread,
-                           args=(self.child_pipe_end, self.process_event, port, baudrate))
-    self.process.start()
+	    self.parent_pipe_end, self.child_pipe_end = Pipe()
+	    self.process_event = multiprocessing.Event()
+	    self.process = Process(name="comms_thread",
+	                           target=comms_thread,
+	                           args=(self.child_pipe_end, self.process_event, port, baudrate))
+	    self.process.start()
 
     def queue_command(self, command):
         self.parent_pipe_end.send(command)
@@ -83,7 +83,7 @@ def comms_thread(self, pipe, event, port, baudrate):
                 comms.write(pipe_data[0])
             
             # non-command-inputs:
-            elif pipe_data == "exit"
+            elif pipe_data == "exit":
             	return
         while comms.inWaiting():
         	data_buffer_buffer.append(comms.read(1))
@@ -92,10 +92,10 @@ def comms_thread(self, pipe, event, port, baudrate):
         sleep(0.5)
 
 def process_data(commands, data):
-	print "Commands", 
+	print "Commands:", 
 	for item in commands:
 		print item, 
-	print "Data":
+	print "Data:"
 	for item in data:
 		print item, 
 
