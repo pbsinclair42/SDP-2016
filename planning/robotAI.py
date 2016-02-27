@@ -67,7 +67,7 @@ def executePlan():
             print("oops")
             return
 
-        # if we've already started moving and haven't stopped yet, just keep going.  Why not.  
+        # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
             # TODO: add in some kind of checker/corrector
             print("Still going")
@@ -98,7 +98,7 @@ def executePlan():
             print("oops")
             return
 
-        # if we've already started moving and haven't stopped yet, just keep going.  Why not.  
+        # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
             # TODO: add in some kind of checker/corrector
             print("Still going")
@@ -133,7 +133,7 @@ def executePlan():
             return
         # so if we're not currently moving, we're not yet close enough and we're facing the right way,
         # send the command to start moving
-        else: 
+        else:
             moveToPoint(targetPoint)
 
     elif currentAction==Actions.kick:
@@ -156,6 +156,7 @@ def tick():
     """Each tick, update your beliefs about the world then decide what action to take based on this"""
     # if currently simulating, update the simulation
     if isinstance(ourSimulator,Simulator):
+        isSim =1
         ourSimulator.tick()
     updatePositions()
     makePlan()

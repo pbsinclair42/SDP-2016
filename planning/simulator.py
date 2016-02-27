@@ -22,10 +22,12 @@ class Simulator(object):
         self.currentActionQueue=[]
         self.grabbed=True
         self.holdingBall=False
+        self.current_cmd = 0
         simulatedStart(Point(50,50), Point(200,25), Point(166,211), Point(52,102), 15, 38, 150, -62, Point(100,100), BallStatus.free)
         # since we're using a simulator, set the fact that we know where we are exactly at all times
         POINT_ACCURACY = 0.1
         ANGLE_ACCURACY = 0.1
+
 
     # move holonomically at an angle of `degrees` anticlockwise and a distance of `distance` cm
     def holo(self,degrees,distance):
@@ -48,23 +50,28 @@ class Simulator(object):
         checkValid(degrees,distance)
         if degrees>0:
             self.currentActionQueue.append({'action': SimulatorActions.rotate, 'amount': degrees, 'timeLeft': degrees/MAX_ROT_SPEED})
+            self.current_cmd +=1
         if distance>0:
             self.currentActionQueue.append({'action': SimulatorActions.moveForwards, 'amount': distance, 'timeLeft': distance/MAX_SPEED})
-
+            self.current_cmd+=1
     # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
         checkValid(degrees,distance)
         if degrees>0:
             self.currentActionQueue.append({'action': SimulatorActions.rotate, 'amount': -degrees, 'timeLeft': degrees/MAX_ROT_SPEED})
+            self.current_cmd+=1
         if distance>0:
             self.currentActionQueue.append({'action': SimulatorActions.moveForwards, 'amount': distance, 'timeLeft': distance/MAX_SPEED})
-
+            self.current_cmd+=1
     # kick with power `distance`
     def kick(self,distance):
         checkValid(distance)
         self.currentActionQueue.append({'action': SimulatorActions.ungrab, 'timeLeft': UNGRAB_TIME})
+        self.current_cmd+=1
         self.currentActionQueue.append({'action': SimulatorActions.kick, 'amount': distance, 'timeLeft': KICK_TIME})
+        self.current_cmd+=1
         self.currentActionQueue.append({'action': SimulatorActions.grab, 'timeLeft': GRAB_TIME})
+        self.current_cmd+=1
 
     # cancel previous command and any queued commands
     def flush(self):
@@ -74,10 +81,12 @@ class Simulator(object):
     # ensure the grabber is opened before calling!
     def grab(self):
         self.currentActionQueue.append({'action': SimulatorActions.grab, 'timeLeft': GRAB_TIME})
+        self.current_cmd+=1
 
     # open the grabber, ready to grab
     def ungrab(self):
         self.currentActionQueue.append({'action': SimulatorActions.ungrab, 'timeLeft': UNGRAB_TIME})
+        self.current_cmd+=1
 
     def tick(self, tickTimeLeft=TICK_TIME):
         '''Update the status of our robot and the ball based on our recent actions
