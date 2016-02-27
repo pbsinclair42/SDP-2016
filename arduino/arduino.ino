@@ -488,7 +488,7 @@ float calculateRotaryTarget(float x3){
     float y1, y2;
     
     if (x3 <= 30) {
-        x1 = 0.5;
+        x1 = 0.75;
         x2 = 30;
         y1 = 0;
         y2 = 1.55;
