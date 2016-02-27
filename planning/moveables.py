@@ -43,15 +43,21 @@ class Moveable(object):
             print("Lost position of "+(self.name if self.name!=None else "moveable"))
         # if we've yet to find the robot, don't bother updating anything
         if newPoint!=None:
+            # save the old point
+            if self.currentPoint!=None:
+                self.pointHistory.append(self.currentPoint)
             # save the new position
             self.currentPoint = newPoint
-            self.pointHistory.append(newPoint)
             # only store a max of _HISTORY_SIZE points in the history
             if len(self.pointHistory)>self._HISTORY_SIZE:
                 self.pointHistory.pop(0)
 
-            # calculate and save the current direction
-            self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
+            try:
+                # calculate and save the current direction
+                self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
+            except IndexError:
+                # if we don't have enough information to calculate a direction, wait for now
+                pass
 
             # calculate and save the new speed
             try:
@@ -61,7 +67,7 @@ class Moveable(object):
                 # only store a max of _HISTORY_SIZE-1 points in the history
                 if len(self.speedHistory) > self._HISTORY_SIZE-1:
                     self.speedHistory.pop(0)
-            except ZeroDivisionError:
+            except (ZeroDivisionError, IndexError):
                 pass
 
             # calculate and save the new acceleration

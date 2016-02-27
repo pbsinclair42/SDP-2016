@@ -22,7 +22,10 @@ class Simulator(object):
         self.currentActionQueue=[]
         self.grabbed=True
         self.holdingBall=False
-        simulatedStart(Point(50,50), Point(200,25), Point(166,211), Point(52,102), 15, 38, 150, -62, Point(60,60), BallStatus.free)
+        simulatedStart(Point(50,50), Point(200,25), Point(166,211), Point(52,102), 15, 38, 150, -62, Point(100,100), BallStatus.free)
+        # since we're using a simulator, set the fact that we know where we are exactly at all times
+        POINT_ACCURACY = 0.1
+        ANGLE_ACCURACY = 0.1
 
     # move holonomically at an angle of `degrees` anticlockwise and a distance of `distance` cm
     def holo(self,degrees,distance):
@@ -95,7 +98,7 @@ class Simulator(object):
                 distanceTravelled = MAX_SPEED*TICK_TIME
                 angle = simulatedMe.currentRotation
                 xDisplacement = round(cos(angle)*distanceTravelled, 2)
-                yDisplacement = round(sin(angle)*distanceTravelled, 2)
+                yDisplacement = -round(sin(angle)*distanceTravelled, 2)
                 simulatedMe.currentPoint = Point(simulatedMe.currentPoint.x+xDisplacement, simulatedMe.currentPoint.y+yDisplacement)
                 return
             # if not, move the simulated robot forwards the lesser amount, then start the next action in the queue with the remaining time
@@ -104,7 +107,7 @@ class Simulator(object):
                 distanceTravelled = MAX_SPEED*currentAction['timeLeft']
                 angle = simulatedMe.currentRotation
                 xDisplacement = round(cos(angle)*distanceTravelled, 2)
-                yDisplacement = round(sin(angle)*distanceTravelled, 2)
+                yDisplacement = -round(sin(angle)*distanceTravelled, 2)
                 simulatedMe.currentPoint = Point(simulatedMe.currentPoint.x+xDisplacement, simulatedMe.currentPoint.y+yDisplacement)
                 self.currentActionQueue.pop(0)
                 self.tick(tickTimeLeft)

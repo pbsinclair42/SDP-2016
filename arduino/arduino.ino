@@ -108,13 +108,14 @@ void setup() {
     bufferOverflow = 0;
     commandOverflow = 0;
     /* Custom commands can be initialized below */
-    
+    //for (int i = 0; i < 6; i ++)
+    //    motorForward(i, 255);
     //command_buffer[0] = 2;
     //command_buffer[1] = 45;
     //command_buffer[2] = 45;
     //command_buffer[3] = 255;
     //buffer_index = 4;
-    //Serial.println("Begin");
+    //Serial.writeln("Begin");
   }
 
 void loop() {
@@ -158,7 +159,7 @@ void loop() {
             MasterState = IDLE_STATE;
             break;
         default:
-            Serial.println(CMD_ERROR);
+            Serial.write(CMD_ERROR);
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
@@ -171,7 +172,7 @@ void loop() {
         if (command_index == 0){
             commandOverflow++;
         }
-        Serial.print(CMD_DONE);
+        Serial.write(CMD_DONE);
         
         
         }
@@ -203,21 +204,17 @@ void serialEvent() {
             }
          
             if (command_buffer[target_value - 1] == CMD_END){
-                Serial.print(CMD_ACK);
-                Serial.print("-");
-                Serial.print(command_buffer[target_value - 4]);
-                Serial.print("-");
-                Serial.print(command_buffer[target_value - 3]);
-                Serial.print("-");
-                Serial.print(command_buffer[target_value - 2]);
-                Serial.print("-");
-                Serial.print(command_buffer[target_value - 1]);
+                Serial.write(CMD_ACK);
+                Serial.write(command_buffer[target_value - 4]);
+                Serial.write(command_buffer[target_value - 3]);
+                Serial.write(command_buffer[target_value - 2]);
+                Serial.write(command_buffer[target_value - 1]);
                 
             }
             // report bad command
             else{
-                Serial.print("Bad Command");
-                Serial.print(CMD_ERROR);
+                //Serial.write("Bad Command");
+                Serial.write(CMD_ERROR);
                 buffer_index = target_value - 4;
             }
             
@@ -233,8 +230,8 @@ void serialEvent() {
 
 
         } else if (millis() - serial_time > 500){ // TODO: Break this only here;
-            Serial.print("Time-Out");
-            Serial.println(CMD_ERROR);
+            //Serial.write("Time-Out");
+            Serial.write(CMD_ERROR);
             while(buffer_index %4 != 0) {
                 buffer_index--;
             }
@@ -435,9 +432,9 @@ int kickStep(){
             }
             return 0;
         default:
-            Serial.println("BAD KICK");
+            //Serial.writeln("BAD KICK");
             rotMoveGrabMode = 0;
-            Serial.print(CMD_ERROR);
+            Serial.write(CMD_ERROR);
             return -1;
     }
     return -1;

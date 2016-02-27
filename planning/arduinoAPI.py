@@ -26,11 +26,11 @@ def turn(x):
         print("Max turn is 255 degrees")
         # set x to 255 times the sign of x
         x=255*x/abs(x)
-    if x>=0:
+    if x<0:
         commsSystem.rotateneg(0, abs(x))
     else:
         commsSystem.rotate(0, abs(x))
-    print("Turning "+str(abs(x))+"degrees "+("clockwise" if x<=0 else "anticlockwise"))
+    print("Turning "+str(abs(x))+" degrees "+("clockwise" if x<=0 else "anticlockwise"))
 
 
 def move(distance, angle):
@@ -80,16 +80,10 @@ def ungrab():
 def stop():
     """Stops all motors"""
     commsSystem.stop()
-    me.moving=False
-    me.rotationHistory=[]
-    me.pointHistory=[]
     print("Stopping all motors")
 
 
 def flush():
     """Clears all commands and stops all motors"""
     commsSystem.flush()
-    me.moving=False
-    me.rotationHistory=[]
-    me.pointHistory=[]
     print("Clearing all commands")
