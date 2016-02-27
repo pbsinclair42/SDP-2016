@@ -64,7 +64,7 @@ class CommsThread(object):
         self.parent_pipe_in.send("exit")
         self.process.join()
     def stop(self):
-    	self.process_event.clear()
+        self.process_event.clear()
 
     def current_cmd(self):
         self.parent_pipe_in.send("ccmd")
@@ -81,7 +81,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     data_buffer = []
     radio_connected = False
     ack_count = 0
-    ewp
+    
     
     while not radio_connected:
         try:
@@ -135,12 +135,14 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 cmd_index -= 1
                 cmd_to_send = cmnd_list[cmd_index]
 
+            # if the command is not acknowledged on time
             if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
                 comms.write(cmd_to_send[:4])
                 cmnd_list[cmd_index][-3] = 1
                 resend_time = time()
                 print "Sending Command:", cmd_index + 1, "Ack_index:", ack_count
 
+        # parse all incoming comms
         while comms.in_waiting:
             data = comms.read(1)
             try:
@@ -179,5 +181,5 @@ if __name__ == "__main__":
         c.rotate(i)
 
     c.report()
-    sleep(10)
+    #sleep(10)
     c.exit()
