@@ -2,9 +2,7 @@ from tracker import *
 from camera import Camera
 import math
 
-
 c = Camera()
-
 frame = c.get_frame()
 
 colors = {}
@@ -54,7 +52,6 @@ while True:
     if k == 27:
         break
     frame = c.get_frame()
-  
     # get robot orientations and centers, also get ball coordinates
     ball_center = ball.getBallCoordinates(frame)
     our_orientation, our_robot_center = our_robot.getRobotOrientation(frame, 'us', our_robot_color)
