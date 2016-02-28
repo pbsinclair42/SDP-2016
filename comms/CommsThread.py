@@ -40,21 +40,22 @@ class CommsThread(object):
         #self.command_list.append((command, 0, 0))
         self.process_event.set()
     
-    def move(self, distance):
-        command = self.command_dict["ROT_MOVE_POS"] + chr(0) + chr(distance) + self.command_dict["END"]
+    def move(self, distance, degrees=0):
+        command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(distance) + self.command_dict["END"]
         self.queue_command(command)
     
-    def rotate(self, degrees):
+    def rotate(self, degrees, distance=0):
         if degrees >= 0:
-            command = self.command_dict["ROT_MOVE_POS"] + chr(degrees) + chr(0) + self.command_dict["END"]
+            command = self.command_dict["ROT_MOVE_POS"] + chr(degrees) + chr(int(distance)) + self.command_dict["END"]
         else:
-            command = self.command_dict["ROT_MOVE_NEG"] + chr(-1 * degrees) + chr(0) + self.command_dict["END"]
+            command = self.command_dict["ROT_MOVE_NEG"] + chr(-1 * degrees) + chr(int(distance)) + self.command_dict["END"]
         self.queue_command(command)
+    
     def rot_move(self, distance, degrees):
         if degrees >= 0:
-            command = self.command_dict["ROT_MOVE_POS"] + chr(degrees) + chr(distance) + self.command_dict["END"]
+            command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(int(distance)) + self.command_dict["END"]
         else:
-            command = self.command_dict["ROT_MOVE_NEG"] + chr(-1 * degrees) + chr(distance) + self.command_dict["END"]
+            command = self.command_dict["ROT_MOVE_NEG"] + chr(int(-1 * degrees)) + chr(int(distance)) + self.command_dict["END"]
         self.queue_command(command)
 
     def holo(self, dist_vector, angular):
@@ -63,7 +64,7 @@ class CommsThread(object):
     def exit(self):
         self.parent_pipe_in.send("exit")
         self.process.join()
-    
+
     def kick(self, power):
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
@@ -95,10 +96,12 @@ class CommsThread(object):
 
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
+    
+
     cmnd_list = []
     data_buffer = []
     radio_connected = False
-    ack_count = 0
+    ack_count = (0, 0)
     
     
     while not radio_connected:
@@ -131,6 +134,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             
             # non-command-inputs:
             elif pipe_data == "exit":
+            	print 100 * "="
                 return
 
             elif pipe_data == "ccmd":
@@ -159,21 +163,15 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         # if there are commands to send
         if not all(cmnd_list[-1][-3:-1]):
-            # get first un-sent command or sent and un-acknowledged
-            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-3:-1] == [1, 0]).next()
+            # get first un-sent command or un-acknowledged, but send
+            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
             
-            # if the previous cmd is not ACK-ed -> send that
-            #if cmnd_list[cmd_index - 1][-2] == 0:
-            #    cmd_index -= 1
-            #    cmd_to_send = cmnd_list[cmd_index]
-
             # if the command is not acknowledged on time
             if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
                 comms.write(cmd_to_send[:4])
                 cmnd_list[cmd_index][-3] = 1
                 resend_time = time()
-                print "Sending command: ", cmd_index
-                print "ACK index: ", ack_count
+                print "Sending command: ", cmd_index, cmnd_list[cmd_index]
         
         # parse all incoming comms
         while comms.in_waiting:
@@ -183,12 +181,12 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             except ValueError:
                 pass
         ack_count = process_data(cmnd_list, data_buffer, ack_count)
-        #print cmnd_list
         sleep(0.5)
-        #print cmnd_list
+        print "I live"
 
-def process_data(commands, data, ack_count):
-    cutoff_index = 0
+
+def process_data(commands, data, comb_count):
+    cutoff_index, ack_count, end_count = 0, 0, 0
     for idx, item in enumerate(data):
         if item == 248:
             acknowledge_command(commands, 2)
@@ -197,8 +195,9 @@ def process_data(commands, data, ack_count):
         elif item == 111:
             acknowledge_command(commands, 1)
             cutoff_index = idx
+            end_count += 1
     del data[:cutoff_index + 1]
-    return ack_count
+    return (comb_count[0] + ack_count, comb_count[1] + end_count)
     
 
 def acknowledge_command(commands, flag):
@@ -213,20 +212,17 @@ if __name__ == "__main__":
 
     
     c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
-    c.rotate(90)
+    c.rotate(91)
+    c.rotate(92)
+    c.rotate(93)
+    c.rotate(94)
+    c.rotate(95)
+    c.rotate(96)
+    c.rotate(97)
+    c.rotate(98)
+    c.rotate(99)
+    c.rotate(100)
+    c.rotate(101)
     #c.move(100)
-
-    #c.report()
-    #sleep(10)
-
-    #c.exit()
+    c.report()
+    c.exit()
