@@ -255,13 +255,11 @@ def calibrateRanges():
         k = cv2.waitKey(1) & 0xFF
         if k == 27:
             break 
-       
-
-    print "---CALIBRATION DONE------"
 
     cv2.destroyAllWindows()
     #c.close()
     save_colors(0, calibrated_thresholds)
-    return calibrated_thresholds
+    print calibrated_thresholds
 
-
+calibrateRanges()
+print "---CALIBRATION DONE------"
