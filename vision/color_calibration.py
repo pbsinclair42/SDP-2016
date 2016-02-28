@@ -1,10 +1,12 @@
 import sys
-from camera import Camera
-from calibrate import step
+#from camera import Camera
+#from calibrate import step
 import math
-
+import os
+import json
 import numpy as np
 import cv2
+from tools import *
 
 bgr = {
     'blue' : [],
@@ -106,9 +108,10 @@ def getThresholds():
     print "If you want to redo, press 'r'"
     cv2.namedWindow('image')
     cv2.setMouseCallback('image',getColorValues)
-    c = Camera()
+    #c = Camera()
     while(1):
-        img = c.get_frame()
+        #img = c.get_frame()
+        img = cv2.imread('pitch.png')
         cv2.imshow('image',img)
         # keys for colours: 
         k = cv2.waitKey(1) & 0xFF
@@ -137,7 +140,7 @@ def getThresholds():
 
     print "Destroying all windows"        
     cv2.destroyAllWindows()
-    c.close()
+    #c.close()
     print "Averaging BGR values..."
     for colors in bgr:
         if (len(bgr[colors]) != 0):
@@ -158,7 +161,7 @@ def calibrateRanges():
     calibrated_thresholds = {}
     print "obtained thresholds: "
     print thresholds
-    c = Camera()
+    #c = Camera()
 
     for colors in thresholds:
         if colors != 'red' and colors != 'maroon': 
@@ -176,7 +179,8 @@ def calibrateRanges():
             cv2.createTrackbar('V low',colors,v_low_init,255,nothing)
 
             while(1):
-                frame = c.get_frame()
+                #frame = c.get_frame()
+                frame = cv2.imread('pitch.png')
                 blur = cv2.GaussianBlur(frame,(11,11), 0)
                 hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
                 h_low = cv2.getTrackbarPos('H low',colors)
@@ -189,7 +193,7 @@ def calibrateRanges():
                 cv2.imshow(colors, denoiseMask(mask))
                 cv2.imshow('actual feed', frame)
                     
-                calibrated_thresholds[colors] = ( np.array([h_low, s_low, v_low]), np.array([h_high, 255, 255]) )
+                calibrated_thresholds[colors] = {'min': np.array([h_low, s_low, v_low]),'max': np.array([h_high, 255, 255]) }
 
                 k = cv2.waitKey(1) & 0xFF
                 if k == 27:
@@ -233,7 +237,8 @@ def calibrateRanges():
         s_low_maroon = cv2.getTrackbarPos('S low maroon','red')
         v_low_maroon = cv2.getTrackbarPos('V low maroon','red')
 
-        frame = c.get_frame()
+        #frame = c.get_frame()
+        frame = cv2.imread('pitch.png')
         blur = cv2.GaussianBlur(frame,(11,11), 0)
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
         # create masks
@@ -244,8 +249,8 @@ def calibrateRanges():
         cv2.imshow('red', denoiseMask(mask))
         cv2.imshow('actual feed', frame)
                     
-        calibrated_thresholds['red'] = ( np.array([h_low_red, s_low_red, v_low_red]), np.array([h_high_red, 255, 255]) )
-        calibrated_thresholds['maroon'] = ( np.array([h_low_maroon, s_low_maroon, v_low_maroon]), np.array([h_high_maroon, 255, 255]) )
+        calibrated_thresholds['red'] = {'min': np.array([h_low_red, s_low_red, v_low_red]), 'max': np.array([h_high_red, 255, 255]) }
+        calibrated_thresholds['maroon'] = {'min': np.array([h_low_maroon, s_low_maroon, v_low_maroon]),'max': np.array([h_high_maroon, 255, 255]) }
 
         k = cv2.waitKey(1) & 0xFF
         if k == 27:
@@ -255,7 +260,8 @@ def calibrateRanges():
     print "---CALIBRATION DONE------"
 
     cv2.destroyAllWindows()
-    c.close()
+    #c.close()
+    save_colors(0, calibrated_thresholds)
     return calibrated_thresholds
 
 
