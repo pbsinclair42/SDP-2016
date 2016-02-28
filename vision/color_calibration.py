@@ -1,6 +1,7 @@
 import sys
-#from camera import Camera
-#from calibrate import step
+from camera import Camera
+from calibrate import step
+import argparse
 import math
 import os
 import json
@@ -25,6 +26,11 @@ def nothing(x):
 '''
 denoises mask, so that colors will not flicker
 '''
+def parseArgs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", help="Pitch number", required=True, choices=["0", "1"])
+    return parser.parse_args()
+
 def denoiseMask(mask):
     kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
     po = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
@@ -104,43 +110,42 @@ def getThresholds():
     hsv_range['maroon'] = ( np.array([175, 190, 190]), np.array([180, 255, 255]) )
     
     print "What colours do you want to calibrate?"
-    print "Click once the image after pressing the following: \n 'b' -> blue \n 'c' -> bright_blue \n 'p' -> pink \n 'g' -> green \n 'y' -> yellow"
-    print "If you want to redo, press 'r'"
+    print "Click once on the image after pressing the following: \n 'b' -> blue \n 'c' -> bright_blue \n 'p' -> pink \n 'g' -> green \n 'y' -> yellow"
+    print "If you want to redo, click corresponding color character agian."
+    print "Once done with obtaining pixel values, pres ESC to proceed."
     cv2.namedWindow('image')
     cv2.setMouseCallback('image',getColorValues)
-    #c = Camera()
+    c = Camera()
     while(1):
-        #img = c.get_frame()
-        img = cv2.imread('pitch.png')
+        img = c.get_frame()
         cv2.imshow('image',img)
-        # keys for colours: 
         k = cv2.waitKey(1) & 0xFF
         if k == ord('b'):
             print "Click on BLUE"
+            bgr['blue'] = []
             color = 'blue'
         elif k == ord('c'):
-            print "Click on BRIGHT BLUE"            
+            print "Click on BRIGHT BLUE" 
+            bgr['bright_blue'] = []           
             color = 'bright_blue'  
         elif k == ord('p'):
             print "Click on PINK"
+            bgr['pink'] = []
             color = 'pink'
         elif k == ord('g'):
             print "Click on GREEN"
+            bgr['green'] = []
             color = 'green'
         elif k == ord('y'):
             print "Click on YELLOW"
-            color = 'yellow'
-        if k == ord('r'):
-            inp = raw_input("Type which color you want redo: \n")
-            print "will redo " + inp
-            bgr[inp] = []
-            print "Click corresponding color character again\n"                  
+            bgr['yellow'] = []
+            color = 'yellow'                 
         elif k == 27:
             break
 
     print "Destroying all windows"        
     cv2.destroyAllWindows()
-    #c.close()
+    c.close()
     print "Averaging BGR values..."
     for colors in bgr:
         if (len(bgr[colors]) != 0):
@@ -153,7 +158,7 @@ def getThresholds():
 uses GUI sliding trackbars to calibrate thresholds
 and returns dictionary with calibrated thresholds
 '''
-def calibrateRanges():
+def calibrateRanges(pitch):
 
     # keys: blue, pink, maroon, green, yellow, bright_blue, red
 
@@ -161,7 +166,7 @@ def calibrateRanges():
     calibrated_thresholds = {}
     print "obtained thresholds: "
     print thresholds
-    #c = Camera()
+    c = Camera()
 
     for colors in thresholds:
         if colors != 'red' and colors != 'maroon': 
@@ -179,17 +184,16 @@ def calibrateRanges():
             cv2.createTrackbar('V low',colors,v_low_init,255,nothing)
 
             while(1):
-                #frame = c.get_frame()
-                frame = cv2.imread('pitch.png')
+                frame = c.get_frame()
                 blur = cv2.GaussianBlur(frame,(11,11), 0)
                 hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
                 h_low = cv2.getTrackbarPos('H low',colors)
                 h_high = cv2.getTrackbarPos('H high',colors)
                 s_low = cv2.getTrackbarPos('S low',colors)
                 v_low = cv2.getTrackbarPos('V low',colors)
-                # create yellow mask
+                # create  mask
                 mask = cv2.inRange(hsv, (h_low, s_low, v_low), (h_high, 255, 255))
-                # show mask anc actual picture
+                # show mask and an actual picture for comparison
                 cv2.imshow(colors, denoiseMask(mask))
                 cv2.imshow('actual feed', frame)
                     
@@ -237,15 +241,14 @@ def calibrateRanges():
         s_low_maroon = cv2.getTrackbarPos('S low maroon','red')
         v_low_maroon = cv2.getTrackbarPos('V low maroon','red')
 
-        #frame = c.get_frame()
-        frame = cv2.imread('pitch.png')
+        frame = c.get_frame()
         blur = cv2.GaussianBlur(frame,(11,11), 0)
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
         # create masks
         red_mask = cv2.inRange(hsv, (h_low_red, s_low_red, v_low_red), (h_high_red, 255, 255))
         maroon_mask = cv2.inRange(hsv, (h_low_maroon, s_low_maroon, v_low_maroon), (h_high_maroon, 255, 255))
         mask = cv2.bitwise_or(red_mask, maroon_mask)
-        # show mask and actual picture
+
         cv2.imshow('red', denoiseMask(mask))
         cv2.imshow('actual feed', frame)
                     
@@ -257,9 +260,11 @@ def calibrateRanges():
             break 
 
     cv2.destroyAllWindows()
-    #c.close()
-    save_colors(0, calibrated_thresholds)
+    c.close()
+    save_colors(pitch, calibrated_thresholds)
     print calibrated_thresholds
 
-calibrateRanges()
+args = parseArgs()
+pitch = args.p
+calibrateRanges(pitch)
 print "---CALIBRATION DONE------"
