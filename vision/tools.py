@@ -42,7 +42,7 @@ def get_croppings(filename=PATH+'/config/croppings.json', pitch=0):
     return croppings[PITCHES[pitch]]
 
 
-def get_json(filename=PATH+'/config/calibrations.json'):
+def get_json(filename=PATH+'/config/colors.json'):
     _file = open(filename, 'r')
     content = json.loads(_file.read())
     _file.close()
@@ -83,8 +83,8 @@ def get_colors(pitch=0, filename=PATH+'/config/colors.json'):
 
 def save_colors(pitch, colors, filename=PATH+'/config/colors.json'):
     json_content = get_json(filename)
-    machine_name = "default"
-    # machine_name = socket.gethostname().split('.')[0]
+    #machine_name = "default"
+    machine_name = socket.gethostname().split('.')[0]
     # now that we have the feed settings set by v4lctl, should be no need to store calibrations
     # from different pcs
     pitch_name = 'PITCH0' if pitch == 0 else 'PITCH1'
