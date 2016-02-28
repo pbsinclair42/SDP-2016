@@ -4,11 +4,16 @@ from time import sleep, time
 from struct import unpack
 
 class CommsThread(object):
-    
+    """
+        A thread-based API for the communication system. See the command_dict for command-based firmware API
+    """
     def __init__(self,
                  port="/dev/ttyACM0",
                  baudrate=115200,
                  debug=False):
+        """
+            Initialize firware API and start the communications parallel process
+        """
         self.command_list = []
         self.command_dict = {
             "ROT_MOVE_POS" : chr(1  ),
@@ -36,27 +41,82 @@ class CommsThread(object):
         self.process.start()
 
     def queue_command(self, command):
+        """
+            Convenience function to send-in a command, along with receipt flags
+        """
         self.parent_pipe_in.send((command, 0, 0))
-        #self.command_list.append((command, 0, 0))
         self.process_event.set()
+        print "Queue-ing:", [ord(item) for item in command]
     
     def move(self, distance, degrees=0):
-        command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(distance) + self.command_dict["END"]
-        self.queue_command(command)
+        """
+            A movement-only function for distance up-to 255 cm
+        """
+        assert distance >= 255, "Distance should not be longer than 255"
+        if degrees:
+            self.rot_move(distance, degrees)
+        
+        else:
+            # add extra commands
+            while distance > 255:
+                self.queue_command(self.command_dict["ROT_MOVE_POS"] + chr(0) + chr(255) + self.command_dict["END"])
+                distance -= 255
+
+            command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(distance) + self.command_dict["END"]
+            self.queue_command(command)
     
     def rotate(self, degrees, distance=0):
-        if degrees >= 0:
-            command = self.command_dict["ROT_MOVE_POS"] + chr(degrees) + chr(int(distance)) + self.command_dict["END"]
+        """
+            A rotation-only function for angles up-to 255 deg
+        """
+        assert degrees <= 255 and degrees >= -255, "Degrees should be in range of [-255, 255]"
+        
+        if distance:
+            self.rot_move(distance, degrees)
+        
         else:
-            command = self.command_dict["ROT_MOVE_NEG"] + chr(-1 * degrees) + chr(int(distance)) + self.command_dict["END"]
-        self.queue_command(command)
+            if degrees >= 0:
+                command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(0) + self.command_dict["END"]
+            
+            else:
+                command = self.command_dict["ROT_MOVE_NEG"] + chr((-1 * degrees)) + chr(0) + self.command_dict["END"]
+            
+            self.queue_command(command)
     
-    def rot_move(self, distance, degrees):
+    def rot_move(self, degrees, distance):
+        """
+            Perform movement and/or rotation for any degrees and any distance.
+            Assumes both are passed as integers
+        """
+
+        offset = 0
+
+        # add positive offset
+        while degrees > 255:
+            self.rotate(255)
+            degrees -= 255
+
+        # add negative offset
+        while degrees < -255:
+            self.rotate(-255)
+            degrees += 255
+
+        # calculate movement offset
+        while distance > 255:
+            offset += 255
+            distance -= 255
+
+        # issue command
         if degrees >= 0:
             command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(int(distance)) + self.command_dict["END"]
         else:
             command = self.command_dict["ROT_MOVE_NEG"] + chr(int(-1 * degrees)) + chr(int(distance)) + self.command_dict["END"]
         self.queue_command(command)
+
+        # issue movement offset command
+        while offset > 0:
+            self.move(255);
+            offset -= 255
 
     def holo(self, dist_vector, angular):
         pass
@@ -182,8 +242,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 pass
         ack_count = process_data(cmnd_list, data_buffer, ack_count)
         sleep(0.5)
-        print "I live"
-
 
 def process_data(commands, data, comb_count):
     cutoff_index, ack_count, end_count = 0, 0, 0
@@ -211,18 +269,9 @@ if __name__ == "__main__":
     c = CommsThread()
 
     
-    c.rotate(90)
-    c.rotate(91)
-    c.rotate(92)
-    c.rotate(93)
-    c.rotate(94)
-    c.rotate(95)
-    c.rotate(96)
-    c.rotate(97)
-    c.rotate(98)
-    c.rotate(99)
-    c.rotate(100)
-    c.rotate(101)
+    c.rot_move(400, 400)
     #c.move(100)
+    sleep(10)
     c.report()
+    sleep(2)
     c.exit()
