@@ -52,7 +52,7 @@ while(1):
 
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-    print color_range[('belsay','pink')]
+    print color_range[('chatton','green')]
     yellow_mask = cv2.inRange(hsv, color_range[(computer_name, 'yellow')][0], color_range[(computer_name, 'yellow')][1])
     pink_mask = cv2.inRange(hsv, color_range[(computer_name, 'pink')][0], color_range[(computer_name, 'pink')][1])
     green_mask = cv2.inRange(hsv, color_range[(computer_name, 'bright_green')][0], color_range[(computer_name, 'bright_green')][1])
