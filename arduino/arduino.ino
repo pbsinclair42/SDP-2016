@@ -20,6 +20,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define GRABBER     4
 #define KICKER      5 // TODO: Remove once second kicker motor has been added
 
+
 // Power calibrations
 #define POWER_LFT 255
 #define POWER_RGT 252  
@@ -29,14 +30,17 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define KICKER_RGT_POWER 255
 #define GRABBER_POWER 255
 
+
 // temporal calibrations
 #define KICK_TIME 550
 #define GRAB_TIME 650
+
 
 // Movement Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
 #define KICKER_CONST 10.0  
+
 
 // COMMS API Byte Definitions
 #define CMD_ROTMOVE    B00000001 // Buffered: MSB 1 performs CCW rotation
@@ -48,13 +52,12 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define CMD_UNGRAB     B00100000 // Buffered
 #define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
 #define CMD_END        B11111111 // Buffered
-
 #define CMD_DONE       B01101111 // Sent when command is finished
-
 #define CMD_ERROR      B11111111 // Sent for errors
 #define CMD_FULL       B11111110 // Sent if buffer is full
 #define CMD_RESEND     B11111100 // if all commands haven't been received in 500 miliseconds
 #define CMD_ACK        B11111000 // Sent after command has been received
+
 
 // utils
 #define BUFFERSIZE 256
@@ -71,23 +74,29 @@ byte finishGrabbing = 0;
 // positions of wheels based on rotary encoder values
 int positions[ROTARY_COUNT] = {0};
 
+
 // circular command buffer
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 
+
 unsigned long serial_time; // used for the millis function.
 unsigned long command_time;
+
 
 // rotation parameters
 byte rotMoveGrabMode = 0;
 int rotaryTarget;
 int rotaryBias;
 
+
 // circular buffer counters
 byte bufferOverflow = 0;
 byte commandOverflow = 0;
 
+
+// targets for rotary encoders
 int rotary_target;
 int motion_target;
 int holono_target;
@@ -123,6 +132,7 @@ void loop() {
   
   // Switch statement for the FSM state
   switch(MasterState){
+        
         case IDLE_STATE:
             if ((command_index != buffer_index && command_index + 4 <= buffer_index && commandOverflow == bufferOverflow) || 
                  commandOverflow < bufferOverflow){
@@ -130,40 +140,59 @@ void loop() {
                 restoreMotorPositions(positions);
           }
             break;
+        
+
         case CMD_ROTMOVE:
             state_end = rotMoveStep();
             break;
+        
+
         case CMD_ROTMOVECCW:
             state_end = rotMoveStep();
             break;
+        
+
         case CMD_HOLMOVE:
             state_end = holoMoveStep();
             break;
+        
+
         case CMD_KICK:
             state_end = kickStep();
             break;
+        
+
         case CMD_GRAB:
             state_end = grabStep();
             break;
+        
+
         case CMD_UNGRAB:
             state_end = unGrabStep();
             break;
+        
+
         case CMD_STOP:
             state_end = 1;
             motorAllStop();
             break;
+        
+
         case CMD_FLUSH:
             state_end = 0;
             buffer_index = 0;
             command_index = 0;
             MasterState = IDLE_STATE;
             break;
+        
+
         default:
             Serial.write(CMD_ERROR);
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
         }
+    
     if (state_end){
         MasterState = IDLE_STATE;
         command_index += 4;
@@ -397,6 +426,8 @@ int kickStep(){
             motorBackward(GRABBER, GRABBER_POWER);
             rotMoveGrabMode = 1;
             return 0;
+        
+
         // if done with ungrabbing, start kicking
         case 1:
             if (millis() - command_time > GRAB_TIME){
@@ -406,6 +437,8 @@ int kickStep(){
                 command_time = millis(); // restore current time
             }
             return 0;
+        
+
         // if done with kicking - start "un-kicking"
         case 2:
             if (millis() - command_time > KICK_TIME){
@@ -414,6 +447,8 @@ int kickStep(){
                 command_time = millis(); // restore current time
             }
             return 0;
+        
+
         // if done with "un-kicking" - re-grab
         case 3:
             if (millis() - command_time > KICK_TIME){
@@ -423,6 +458,8 @@ int kickStep(){
                 command_time = millis(); // restore current time
             }
             return 0;
+        
+
         // if re-grabbed, process is finished
         case 4:
             if (millis() - command_time > GRAB_TIME){
@@ -431,6 +468,8 @@ int kickStep(){
                 return 1; // make sure that the only way to return from this function is to 
             }
             return 0;
+        
+
         default:
             //Serial.writeln("BAD KICK");
             rotMoveGrabMode = 0;
