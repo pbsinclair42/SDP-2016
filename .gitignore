@@ -63,3 +63,6 @@ target/
 
 # Swap files for vim
 *.swp
+
+# Config files
+/vision/config/
