@@ -160,6 +160,9 @@ void setup() {
   }
 
 void loop() {
+  // get sensor data at each time-step
+  pollAccComp()
+  
   int state_end = 0;
   
   // Switch statement for the FSM state
@@ -298,6 +301,30 @@ void serialEvent() {
             }
         }
     }
+}
+
+void pollAccComp(){
+
+    // calculate real acceleration values, in units of g
+    // X:0, Y:1, Z:2 for index:axis
+    Lsm303d.getAccel(accel);
+    for (int i=0; i<3; i++)
+        {
+            realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
+        }
+    
+    // wait for the magnetometer readings to be ready
+    if(Lsm303d.isMagReady()){
+
+        // get the magnetometer values, store them in mag
+        Lsm303d.getMag(mag);
+        
+        // angle between X and north
+        heading = Lsm303d.getHeading(mag);
+        
+        // tilt-compensated angle
+        titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
+        }
 }
 
 void restoreState(){
