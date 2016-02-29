@@ -48,7 +48,7 @@
 #define Y 1
 #define Z 2
 
-class Lsm303D
+class LSM303D
 {
 	public:
 

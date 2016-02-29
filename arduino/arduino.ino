@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include <Math.h>
 #include <Wire.h>
-
+#include "Accelerometer_Compass_LSM303D.h"
 /***
 IMPORTANT: PLEASE READ BEFORE EDITING:
 
@@ -20,6 +20,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define GRABBER     4
 #define KICKER      5 // TODO: Remove once second kicker motor has been added
 
+
 // Power calibrations
 #define POWER_LFT 255
 #define POWER_RGT 252  
@@ -29,14 +30,17 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define KICKER_RGT_POWER 255
 #define GRABBER_POWER 255
 
+
 // temporal calibrations
 #define KICK_TIME 550
 #define GRAB_TIME 650
+
 
 // Movement Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
 #define KICKER_CONST 10.0  
+
 
 // COMMS API Byte Definitions
 #define CMD_ROTMOVE    B00000001 // Buffered: MSB 1 performs CCW rotation
@@ -48,13 +52,12 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define CMD_UNGRAB     B00100000 // Buffered
 #define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
 #define CMD_END        B11111111 // Buffered
-
 #define CMD_DONE       B01101111 // Sent when command is finished
-
 #define CMD_ERROR      B11111111 // Sent for errors
 #define CMD_FULL       B11111110 // Sent if buffer is full
 #define CMD_RESEND     B11111100 // if all commands haven't been received in 500 miliseconds
 #define CMD_ACK        B11111000 // Sent after command has been received
+
 
 // utils
 #define BUFFERSIZE 256
@@ -62,35 +65,60 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define IDLE_STATE 0
 
 // *** Globals ***
-
-// A finite state machine is required to provide concurrency between loop and 
+// A finite state machine is required to provide concurrency between loop, sensor_poll and 
 // serialEvent functions which both support reading serial while moving and
-// rotary-encoder-based motion
+// rotary-encoder-based motion, plus sensor data-gathering
+
 byte MasterState = 0; 
 byte finishGrabbing = 0;
+
 // positions of wheels based on rotary encoder values
 int positions[ROTARY_COUNT] = {0};
+
 
 // circular command buffer
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 
+
 unsigned long serial_time; // used for the millis function.
 unsigned long command_time;
+
 
 // rotation parameters
 byte rotMoveGrabMode = 0;
 int rotaryTarget;
 int rotaryBias;
 
+
 // circular buffer counters
 byte bufferOverflow = 0;
 byte commandOverflow = 0;
 
+
+// targets for rotary encoders
 int rotary_target;
 int motion_target;
 int holono_target;
+
+float accel_targetx = 0;
+float accel_targety = 0;
+
+float accel_offsetx = 0;
+float accel_offsety = 0;
+
+// accelerometer/compass targets
+float start_angle;
+float target_angle;
+float previous_gyro;
+
+
+// Accelerometer/Compass values
+int accel[3];               // we'll store the raw acceleration values here
+int mag[3];                 // raw magnetometer values stored here
+float realAccel[3];         // calculated acceleration values here
+float heading, titleHeading;
 
 
 // Main Functions: Setup, Loop and SerialEvent
@@ -107,22 +135,51 @@ void setup() {
     rotMoveGrabMode = 0;
     bufferOverflow = 0;
     commandOverflow = 0;
+
+    // initialize Accelerometer/Compass sensor
+    char init = 0;
+    init = Lsm303d.initI2C();
+    if (init == 0){
+        Serial.println("Sensor is found");
+    }
+    
+    // get initial Accelerometer/Compass Data
+    Lsm303d.getAccel(accel);
+    
+    while(!Lsm303d.isMagReady());// wait for the magnetometer readings to be ready
+    Lsm303d.getMag(mag);  // get the magnetometer values, store them in mag
+    
+    // X:0, Y:1, Z:2 for index:axis
+    for (int i=0; i<3; i++)
+    {
+        realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;  // calculate real acceleration values, in units of g
+    }
+    // angle between X and north
+    heading = Lsm303d.getHeading(mag);
+    // tilt-compensated angl
+    titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
+    
+    // remember offset gyro-values
+    accel_offsetx = realAccel[0];
+    accel_offsety = realAccel[1];
+    
     /* Custom commands can be initialized below */
+    
     //for (int i = 0; i < 6; i ++)
     //    motorForward(i, 255);
-    //command_buffer[0] = 2;
-    //command_buffer[1] = 45;
-    //command_buffer[2] = 45;
-    //command_buffer[3] = 255;
-    //buffer_index = 4;
-    //Serial.writeln("Begin");
+    
   }
 
 void loop() {
+  // get sensor data at each time-step
+  pollAccComp();
+  //Serial.println(titleHeading);
+  //delay(1000);
   int state_end = 0;
   
   // Switch statement for the FSM state
   switch(MasterState){
+        
         case IDLE_STATE:
             if ((command_index != buffer_index && command_index + 4 <= buffer_index && commandOverflow == bufferOverflow) || 
                  commandOverflow < bufferOverflow){
@@ -130,40 +187,59 @@ void loop() {
                 restoreMotorPositions(positions);
           }
             break;
+        
+
         case CMD_ROTMOVE:
             state_end = rotMoveStep();
             break;
+        
+
         case CMD_ROTMOVECCW:
             state_end = rotMoveStep();
             break;
+        
+
         case CMD_HOLMOVE:
             state_end = holoMoveStep();
             break;
+        
+
         case CMD_KICK:
             state_end = kickStep();
             break;
+        
+
         case CMD_GRAB:
             state_end = grabStep();
             break;
+        
+
         case CMD_UNGRAB:
             state_end = unGrabStep();
             break;
+        
+
         case CMD_STOP:
             state_end = 1;
             motorAllStop();
             break;
+        
+
         case CMD_FLUSH:
             state_end = 0;
             buffer_index = 0;
             command_index = 0;
             MasterState = IDLE_STATE;
             break;
+        
+
         default:
             Serial.write(CMD_ERROR);
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
         }
+    
     if (state_end){
         MasterState = IDLE_STATE;
         command_index += 4;
@@ -173,7 +249,7 @@ void loop() {
             commandOverflow++;
         }
         Serial.write(CMD_DONE);
-        
+        delay(5000);
         
         }
     }
@@ -239,6 +315,32 @@ void serialEvent() {
     }
 }
 
+void pollAccComp(){
+
+    // calculate real acceleration values, in units of g
+    // X:0, Y:1, Z:2 for index:axis
+    Lsm303d.getAccel(accel);
+    for (int i=0; i<3; i++)
+        {
+            realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
+        }
+    //realAccel[0] -= accel_offsetx;
+    //realAccel[1] -= accel_offsety;
+    
+    // wait for the magnetometer readings to be ready
+    if(Lsm303d.isMagReady()){
+
+        // get the magnetometer values, store them in mag
+        Lsm303d.getMag(mag);
+        
+        // angle between X and north
+        heading = Lsm303d.getHeading(mag);
+        
+        // tilt-compensated angle
+        titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
+        }
+}
+
 void restoreState(){
     buffer_index = 0;
     command_index = 0;
@@ -279,6 +381,9 @@ int rotMoveStep(){
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
 
+            start_angle = titleHeading;
+            target_angle = float(degrees);
+
             if (left == 1)
                 rotateLeft();
             else
@@ -294,6 +399,8 @@ int rotMoveStep(){
             if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
                 updateMotorPositions(positions);
                 rotMoveGrabMode = 1;
+                // accel_targetx += realAccel[0];
+                // accel_targety += realAccel[1];
             }
             else{
                 // delay to make sure motor actions are not being performed too quckly
@@ -302,6 +409,16 @@ int rotMoveStep(){
                 delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
+                //Serial.println();
+                //Serial.println();
+                //Serial.println();
+                //Serial.println(accel_targetx);
+                //Serial.println(accel_targety);
+                //Serial.println(titleHeading);
+                //Serial.println(start_angle);
+                //Serial.println();
+                //accel_targetx = 0;
+                //accel_targety = 0;
                 // TODO: Add dynamic calibration system feedback calculation here;
             }
             return 0;
@@ -327,10 +444,6 @@ int rotMoveStep(){
         case 3 :
             if (-1 * positions[MOTOR_LFT] < rotaryTarget && positions[MOTOR_RGT] < rotaryTarget){
                 updateMotorPositions(positions);
-                //if (rotaryTarget - (-1 * positions[MOTOR_LFT] + positions[MOTOR_RGT]) / 2 < 40 * MOTION_CONST ){
-                //  motorBackward(GRABBER, GRABBER_POWER);
-                //  finishGrabbing = 1;
-                //}
                 return 0;
             }
             else{
@@ -346,7 +459,7 @@ int rotMoveStep(){
 }
 int holoMoveStep(){
     // TODO: Add rotational values and feedback
-    // TODO: Scale motor values by 1 / abs(value1, value2, value3)
+    // TODO: Scale motor values by 1 / max: abs(value1, value2, value3)
     // to make sure motors are running as fast as possible since
     // maths functions may produce vectors not properly scaled to 1
 
@@ -397,6 +510,8 @@ int kickStep(){
             motorBackward(GRABBER, GRABBER_POWER);
             rotMoveGrabMode = 1;
             return 0;
+        
+
         // if done with ungrabbing, start kicking
         case 1:
             if (millis() - command_time > GRAB_TIME){
@@ -406,6 +521,8 @@ int kickStep(){
                 command_time = millis(); // restore current time
             }
             return 0;
+        
+
         // if done with kicking - start "un-kicking"
         case 2:
             if (millis() - command_time > KICK_TIME){
@@ -414,6 +531,8 @@ int kickStep(){
                 command_time = millis(); // restore current time
             }
             return 0;
+        
+
         // if done with "un-kicking" - re-grab
         case 3:
             if (millis() - command_time > KICK_TIME){
@@ -423,6 +542,8 @@ int kickStep(){
                 command_time = millis(); // restore current time
             }
             return 0;
+        
+
         // if re-grabbed, process is finished
         case 4:
             if (millis() - command_time > GRAB_TIME){
@@ -431,6 +552,8 @@ int kickStep(){
                 return 1; // make sure that the only way to return from this function is to 
             }
             return 0;
+        
+
         default:
             //Serial.writeln("BAD KICK");
             rotMoveGrabMode = 0;
@@ -626,6 +749,11 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
+
+
+
+
 
 
 
