@@ -194,7 +194,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             
             # non-command-inputs:
             elif pipe_data == "exit":
-            	print 100 * "="
                 return
 
             elif pipe_data == "ccmd":
