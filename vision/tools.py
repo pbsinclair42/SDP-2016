@@ -8,19 +8,6 @@ import cPickle
 PATH = os.path.dirname(os.path.realpath(__file__))
 BLACK = (0, 0, 0)
 
-# HSV Colors
-WHITE_LOWER = np.array([1, 0, 100])
-WHITE_HIGHER = np.array([36, 255, 255])
-
-BLUE_LOWER = np.array([95., 50., 50.])
-BLUE_HIGHER = np.array([110., 255., 255.])
-
-RED_LOWER = np.array([0, 240, 140])
-RED_HIGHER = np.array([9, 255, 255])
-
-YELLOW_LOWER = np.array([9, 50, 50])
-YELLOW_HIGHER = np.array([11, 255, 255])
-
 PITCHES = ['Pitch_0', 'Pitch_1', 'Pitch_2']
 
 
@@ -56,19 +43,18 @@ def get_radial_data(pitch=0, filename=PATH+'/config/undistort.txt'):
     return data[pitch]
 
 
-def get_colors(pitch=0, filename=PATH+'/config/colors.json'):
+def get_colors(filename=PATH+'/config/colors.json'):
     """
     Get colros from the JSON calibration file.
     Converts all
     """
     json_content = get_json(filename)
     machine_name = socket.gethostname().split('.')[0]
-    pitch_name = 'PITCH0' if pitch == 0 else 'PITCH1'
 
     if machine_name in json_content:
-        current = json_content[machine_name][pitch_name]
+        current = json_content[machine_name]
     else:
-        current = json_content['default'][pitch_name]
+        current = json_content['default']
 
     # convert mins and maxes into np.array
     for key in current:
@@ -81,14 +67,15 @@ def get_colors(pitch=0, filename=PATH+'/config/colors.json'):
     return current
 
 
-def save_colors(pitch, colors, filename=PATH+'/config/colors.json'):
-    json_content = get_json(filename)
+def save_colors(colors, filename=PATH+'/config/colors.json'):
+    #json_content = get_json(filename)
     #machine_name = "default"
     machine_name = socket.gethostname().split('.')[0]
+    print filename
+    print machine_name
     # now that we have the feed settings set by v4lctl, should be no need to store calibrations
     # from different pcs
-    pitch_name = 'PITCH0' if pitch == 0 else 'PITCH1'
-
+    print colors
     # convert np.arrays into lists
     for key in colors:
         key_dict = colors[key]
@@ -97,13 +84,23 @@ def save_colors(pitch, colors, filename=PATH+'/config/colors.json'):
         if 'max' in key_dict:
             key_dict['max'] = list(key_dict['max'])
 
-    if machine_name in json_content:
-        json_content[machine_name][pitch_name].update(colors)
-    else:
-        json_content[machine_name] = json_content['default']
-        json_content[machine_name][pitch_name].update(colors)
-
-    write_json(filename, json_content)
+    with open(filename, "r+") as jsonFile:
+        data = json.load(jsonFile)
+        if machine_name in data:
+            data[machine_name] = colors
+            print "Updating JSON file"
+        else:
+            data[machine_name] = data['default']
+            data[machine_name] = colors
+        print "DATA:" 
+        for comp_name in data: 
+            print comp_name + ":"   
+            print data[comp_name]    
+        print "Writing into a file"    
+        jsonFile.seek(0)  # rewind
+        jsonFile.write(json.dumps(data, indent=4))
+        jsonFile.truncate()
+    #write_json(filename, json_content)
 
 
 def save_croppings(pitch, data, filename=PATH+'/config/croppings.json'):

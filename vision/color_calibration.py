@@ -118,6 +118,7 @@ def getThresholds():
     c = Camera()
     while(1):
         img = c.get_frame()
+        #img = cv2.imread('pitch.png')
         cv2.imshow('image',img)
         k = cv2.waitKey(1) & 0xFF
         if k == ord('b'):
@@ -158,14 +159,11 @@ def getThresholds():
 uses GUI sliding trackbars to calibrate thresholds
 and returns dictionary with calibrated thresholds
 '''
-def calibrateRanges(pitch):
+def calibrateThresholds():
 
     # keys: blue, pink, maroon, green, yellow, bright_blue, red
-
     thresholds = getThresholds()
     calibrated_thresholds = {}
-    print "obtained thresholds: "
-    print thresholds
     c = Camera()
 
     for colors in thresholds:
@@ -185,6 +183,7 @@ def calibrateRanges(pitch):
 
             while(1):
                 frame = c.get_frame()
+                #frame = cv2.imread('pitch.png')
                 blur = cv2.GaussianBlur(frame,(11,11), 0)
                 hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
                 h_low = cv2.getTrackbarPos('H low',colors)
@@ -242,6 +241,7 @@ def calibrateRanges(pitch):
         v_low_maroon = cv2.getTrackbarPos('V low maroon','red')
 
         frame = c.get_frame()
+        #frame = cv2.imread('pitch.png')
         blur = cv2.GaussianBlur(frame,(11,11), 0)
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
         # create masks
@@ -261,10 +261,11 @@ def calibrateRanges(pitch):
 
     cv2.destroyAllWindows()
     c.close()
-    save_colors(pitch, calibrated_thresholds)
-    print calibrated_thresholds
+    return calibrated_thresholds
 
-args = parseArgs()
-pitch = args.p
-calibrateRanges(pitch)
-print "---CALIBRATION DONE------"
+if __name__ == "__main__":
+    #args = parseArgs()
+    #pitch = args.p
+    data = calibrateThresholds()
+    save_colors(data)
+    print "---CALIBRATION DONE------"
