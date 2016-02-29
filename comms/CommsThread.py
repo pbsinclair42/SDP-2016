@@ -202,6 +202,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)    
     print "Radio On-line"
     
+    # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
 
@@ -223,14 +224,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             # non-command-inputs:
             elif pipe_data == "exit":
                 return
-
+            # return index of command currently being performed
             elif pipe_data == "ccmd":
-                target = 0
-                for idx, item in enumerate(cmnd_list):
-                    if item[2] == 0:
-                        target = idx;
-                        break;
-                pipe_out.send(target)
+                pipe_out.send(ack_count[1])
 
             elif pipe_data == "rprt":
                 print len(cmnd_list), "=?", ack_count
@@ -243,7 +239,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             elif pipe_data == "flush":
                 cmnd_list = []
                 data_buffer = []
-                ack_count = 0
+                ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
 
