@@ -249,7 +249,7 @@ void loop() {
             commandOverflow++;
         }
         Serial.write(CMD_DONE);
-        delay(5000);
+        //delay(5000);
         
         }
     }
