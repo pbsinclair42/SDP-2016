@@ -52,6 +52,7 @@ while True:
     if k == 27:
         break
     frame = c.get_frame()
+    #frame = cv2.imread('pitch.png')
     # get robot orientations and centers, also get ball coordinates
     ball_center = ball.getBallCoordinates(frame)
     our_orientation, our_robot_center = our_robot.getRobotOrientation(frame, 'us', our_robot_color)
