@@ -14,6 +14,7 @@ class CommsThread(object):
         """
             Initialize firware API and start the communications parallel process
         """
+        self.x = 0
         self.command_list = []
         self.command_dict = {
             "ROT_MOVE_POS" : chr(1  ),
@@ -166,22 +167,28 @@ class CommsThread(object):
             stop communications process until a new command has been issued
         """
         self.process_event.clear()
-
+        '''
     def current_cmd(self):
         """
             get current command 
         """
-        self.parent_pipe_in.send("ccmd")
-        while not self.parent_pipe_out.poll():
-            pass
-        return self.parent_pipe_out.recv()
 
+
+        self.parent_pipe_in.send("ccmd")
+        while self.parent_pipe_out.poll():
+            self.x = self.parent_pipe_out.recv()
+        return self.x
+        '''
     def report(self):
         """
             Return a report of sent commands and currently-buffered data
         """
         self.parent_pipe_in.send("rprt")
 
+    def am_i_done(self):
+        while self.parent_pipe_out.poll():
+            self.x = self.parent_pipe_out.recv()
+        return self.x
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     
@@ -226,7 +233,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 return
             # return index of command currently being performed
             elif pipe_data == "ccmd":
-                pipe_out.send(ack_count[1])
+                pipe_out.send(len(cmnd_list) == ack_count[1])
 
             elif pipe_data == "rprt":
                 print len(cmnd_list), "=?", ack_count
@@ -246,6 +253,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
          # parse all incoming comms
         while comms.in_waiting:
             data = comms.read(1)
+            print "DATA +=", ord(data)
             try:
                 data_buffer.append(ord(data))
             except ValueError:
@@ -253,32 +261,45 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         # ensure data has been processed before attempting to send data
         ack_count = process_data(cmnd_list, data_buffer, ack_count)
+        try:
+            # if there are commands to send
+            if cmnd_list and not all(cmnd_list[-1][-3:-1]):
+                # get first un-sent command or un-acknowledged, but send
+                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+                
+                # if the command is not acknowledged on time
+                if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
+                    comms.write(cmd_to_send[:4])
+                    cmnd_list[cmd_index][-3] = 1
+                    resend_time = time()
+                    print "Sending command: ", cmd_index, cmnd_list[cmd_index]
+        except IndexError:
+            print "This fucked up --->", cmnd_list
         
-        # if there are commands to send
-        if not all(cmnd_list[-1][-3:-1]):
-            # get first un-sent command or un-acknowledged, but send
-            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
-            
-            # if the command is not acknowledged on time
-            if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
-                comms.write(cmd_to_send[:4])
-                cmnd_list[cmd_index][-3] = 1
-                resend_time = time()
-                print "Sending command: ", cmd_index, cmnd_list[cmd_index]
-        
+        pipe_out.send(len(cmnd_list) == ack_count[1])
+        print 10 * "-=", len(cmnd_list), "=?", ack_count[1]
         sleep(0.5)
+        
 
 def process_data(commands, data, comb_count):
     cutoff_index, ack_count, end_count = 0, 0, 0
+
     for idx, item in enumerate(data):
         if item == 248:
             acknowledge_command(commands, 2)
             cutoff_index = idx
             ack_count += 1
+            if idx < len(data) - 1 and data[idx + 1] == 248:
+                ack_count-= 1 
         elif item == 111:
             acknowledge_command(commands, 1)
             cutoff_index = idx
             end_count += 1
+            if idx < len(data) - 1 and data[idx + 1] == 111:
+                end_count-= 1
+            else:
+                print "============== ENDED CMDS", comb_count[1] + end_count
+
     del data[:cutoff_index + 1]
     return (comb_count[0] + ack_count, comb_count[1] + end_count)
     

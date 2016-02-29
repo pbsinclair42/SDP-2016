@@ -33,7 +33,7 @@ def collectBall():
         expectedBallPosition = interceptObject(ball)
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
-        distanceAway = ROBOT_WIDTH/2 + GRAB_DISTANCE
+        distanceAway = ROBOT_WIDTH + GRAB_DISTANCE
         xDisplacement = round(cos(bearingAway)*distanceAway, 2)
         yDisplacement = -round(sin(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
@@ -51,7 +51,7 @@ def shoot():
 
     # work out how far to kick the ball
     def distanceToKick():
-        return me.distance(opponentGoal) # maybe change to always belt it?
+        return 255# me.distance(opponentGoal) # maybe change to be more accurate?
 
     # function to aim at the goal
     def aim():

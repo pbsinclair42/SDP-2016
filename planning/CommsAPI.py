@@ -9,14 +9,15 @@ from simulator import Simulator
 sys.path.append(ROOT_DIR+'comms')
 from CommsThread import CommsThread
 
-    commsSystem = CommsThread()
-    # commsSystem = Simulator()
+commsSystem = CommsThread()
+# commsSystem = Simulator()
 
 def turn(x):
     """Rotates the robot x degrees anticlockwise.  Use negative numbers to rotate clockwise.  """
     x = int(x)
     commsSystem.rot_move(x, 0)
     me.moving=True
+    print(me.lastCommandFinished)
     print("Turning " + str(abs(x)) + " degrees " + ("clockwise" if x <= 0 else "anticlockwise"))
 
 def move(distance, angle):
@@ -25,8 +26,9 @@ def move(distance, angle):
     # ensure the distance is an appropriate size
     distance = int(distance)
     angle = int(angle)
-    commsSystem.rot_move(distance, angle)
+    commsSystem.rot_move(angle, distance)
     me.moving=True
+    print(me.lastCommandFinished)
     print("Turning " + str(angle) + " degrees then moving " + str(distance) + "cm")
 
 

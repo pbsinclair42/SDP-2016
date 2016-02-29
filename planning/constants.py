@@ -18,7 +18,7 @@ KICK_TIME = 1.0
 # the time taken for the robot to ungrab, kick, unkick, and grab (seconds)
 FULL_KICK_TIME = GRAB_TIME+KICK_TIME+UNGRAB_TIME
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
-GRAB_DISTANCE = 5.0
+GRAB_DISTANCE = 3.0
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
 UNGRAB_DISTANCE = 20.0
 # the number of centimeters per pixel in the x (length) direction
@@ -34,12 +34,12 @@ BOX_LENGTH = 75
 # the item dimentions in centimeters
 BALL_DIAMETER = 4.9
 BALL_RADIUS = BALL_DIAMETER/2.0
-ROBOT_WIDTH = 20
+ROBOT_WIDTH = 6
 # how close to a target point you need to be to count as equal, give or take normal vision inaccuracy (centimeters)
 POINT_ACCURACY = 3
 # how close to a target angle you need to be to count as equal, give or take normal vision inaccuracy (degrees)
-ANGLE_ACCURACY = 10
+ANGLE_ACCURACY = 15
 # how close to a target point you need to be to count as 'close enough' for the sake of doing stuff (centimeters)
 ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (degrees)
-ITLL_DO_ANGLE = 5
+ITLL_DO_ANGLE = 10

@@ -249,6 +249,10 @@ void loop() {
             commandOverflow++;
         }
         Serial.write(CMD_DONE);
+        Serial.write(CMD_DONE);
+        Serial.write(CMD_DONE);
+        Serial.write(CMD_RESEND);
+        Serial.write(CMD_RESEND);
         //delay(5000);
         
         }
@@ -281,6 +285,10 @@ void serialEvent() {
          
             if (command_buffer[target_value - 1] == CMD_END){
                 Serial.write(CMD_ACK);
+                Serial.write(CMD_ACK);
+                Serial.write(CMD_ACK);
+                Serial.write(CMD_RESEND);
+                Serial.write(CMD_RESEND);
                 Serial.write(command_buffer[target_value - 4]);
                 Serial.write(command_buffer[target_value - 3]);
                 Serial.write(command_buffer[target_value - 2]);
