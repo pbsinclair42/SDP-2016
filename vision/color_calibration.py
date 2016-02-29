@@ -261,7 +261,7 @@ def calibrateThresholds():
 
     cv2.destroyAllWindows()
     c.close()
-    return calibrat
+    return calibrated_thresholds
 
 if __name__ == "__main__":
     #args = parseArgs()
