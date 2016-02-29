@@ -324,8 +324,8 @@ void pollAccComp(){
         {
             realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
         }
-    realAccel[0] -= accel_offsetx;
-    realAccel[1] -= accel_offsety;
+    //realAccel[0] -= accel_offsetx;
+    //realAccel[1] -= accel_offsety;
     
     // wait for the magnetometer readings to be ready
     if(Lsm303d.isMagReady()){
@@ -399,8 +399,8 @@ int rotMoveStep(){
             if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
                 updateMotorPositions(positions);
                 rotMoveGrabMode = 1;
-                accel_targetx += realAccel[0];
-                accel_targety += realAccel[1];
+                // accel_targetx += realAccel[0];
+                // accel_targety += realAccel[1];
             }
             else{
                 // delay to make sure motor actions are not being performed too quckly
@@ -459,7 +459,7 @@ int rotMoveStep(){
 }
 int holoMoveStep(){
     // TODO: Add rotational values and feedback
-    // TODO: Scale motor values by 1 / abs(value1, value2, value3)
+    // TODO: Scale motor values by 1 / max: abs(value1, value2, value3)
     // to make sure motors are running as fast as possible since
     // maths functions may produce vectors not properly scaled to 1
 
