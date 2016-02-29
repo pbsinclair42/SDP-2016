@@ -180,7 +180,7 @@ class CommsThread(object):
         """
             Return a report of sent commands and currently-buffered data
         """
-           self.parent_pipe_in.send("rprt")
+        self.parent_pipe_in.send("rprt")
 
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
