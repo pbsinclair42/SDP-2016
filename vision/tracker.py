@@ -6,13 +6,10 @@ import numpy as np
 import cv2
 import math
 from tools import *
-#from colorsHSV import *
-
-# get computer name
 
 adjustments = {}
 adjustments['blur'] = (11,11) # needs to be parametrized .. TODO
-color_range = get_colors(0) #for PITHC=0
+color_range = get_colors() #for PITHC=0
 
 class Tracker():
 

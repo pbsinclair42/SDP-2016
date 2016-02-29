@@ -56,7 +56,7 @@ const int SCL = 13;
 */
 
 
-#include <Accelerometer_Compass_LSM303D.h>
+#include "Accelerometer_Compass_LSM303D.h"
 #include <Wire.h>
 #include <SPI.h>
 
@@ -140,7 +140,7 @@ char LSM303D::initI2C()
     
 	return rtn;
 }
-
+/*
 //SPI mode
 char LSM303D::initSPI(char cspin)
 {
@@ -149,12 +149,12 @@ char LSM303D::initSPI(char cspin)
     _mode = 1;//SPI mode
     _cs = cspin;
     pinMode(_cs, OUTPUT);//initialize the chip select pins;
-    SPI.begin();//start the SPI library;
+    //SPI.begin();//start the SPI library;
     rtn = config();
     
 	return rtn;
 }
-
+*/
 char LSM303D::config()
 {
     char rtn = -1;
@@ -187,14 +187,14 @@ unsigned char LSM303D::read(unsigned char address)
         temp = Wire.read();
         Wire.endTransmission();
     }
-    else//SPI Mode
+    /*else//SPI Mode
     {
         digitalWrite(_cs, LOW); 
         SPI.transfer(Read | address);
         temp = SPI.transfer(0x00);
         digitalWrite(_cs, HIGH);
     }
-    
+    */
 	return temp;
 }
 
@@ -207,13 +207,13 @@ void LSM303D::write(unsigned char data, unsigned char address)
         Wire.write(data);
         Wire.endTransmission();
     }
-    else
+    /*else
     {
         digitalWrite(_cs, LOW);
         SPI.transfer(Write | address);
         SPI.transfer(data);
         digitalWrite(_cs, HIGH);
-    }
+    }*/
 }
 
 char LSM303D::isMagReady()

@@ -6,41 +6,18 @@ import math
 from matplotlib import pyplot as plt
 import numpy as np
 import cv2
-
+from tools import *
 from socket import gethostname
-from colorsHSV import *
-computer_name = gethostname().split('.')[0]
+
+color_range = get_colors() #for PITHC=0
 
 def nothing(x):
     pass
-
-# HSV Colors
-WHITE_LOWER = np.array([1, 0, 100])
-WHITE_HIGHER = np.array([36, 255, 255])
-
-BLUE_LOWER = np.array([105, 140, 140])
-BLUE_HIGHER = np.array([120, 255, 255])
-
-CYAN_LOWER = np.array([80, 110, 110])
-CYAN_HIGHER = np.array([100, 255, 255])
-
-PINK_LOWER = np.array([150, 110, 110])
-PINK_HIGHER = np.array([175, 255, 255])
-
-RED_LOWER = np.array([0, 190, 190])
-RED_HIGHER = np.array([4, 255, 255])
-
-MAROON_LOWER = np.array([176, 190, 190])
-MAROON_HIGHER = np.array([180, 255, 255])
-
-GREEN_LOWER = np.array([60, 110, 110])
-GREEN_HIGHER = np.array([75, 255, 255])
-
-BRIGHT_GREEN_LOWER = np.array([50, 170, 170])
-BRIGHT_GREEN_HIGHER = np.array([55, 255, 255])
-
-YELLOW_LOWER = np.array([33, 190, 190])
-YELLOW_HIGHER = np.array([43, 255, 255])
+def denoiseMask(mask):
+    kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+    po = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    po = cv2.morphologyEx(po, cv2.MORPH_OPEN, kernel)
+    return po
 
 c = Camera()
 num_of_pink_dots = 0
@@ -60,16 +37,23 @@ while(1):
     blue_mask = cv2.inRange(hsv, color_range[(computer_name, 'blue')][0], color_range[(computer_name, 'blue')][1])
     red_mask = cv2.inRange(hsv, color_range[(computer_name, 'red')][0], color_range[(computer_name, 'red')][1])
     maroon_mask = cv2.inRange(hsv, color_range[(computer_name, 'maroon')][0], color_range[(computer_name, 'maroon')][1])
+    yellow_mask = cv2.inRange(hsv, color_range['yellow']['min'], color_range['yellow']['max'])
+    pink_mask = cv2.inRange(hsv, color_range['pink']['min'], color_range['pink']['max'])
+    green_mask = cv2.inRange(hsv, color_range['green']['min'], color_range['green']['max'])
+    cyan_mask = cv2.inRange(hsv, color_range['bright_blue']['min'], color_range['bright_blue']['max'])
+    blue_mask = cv2.inRange(hsv, color_range['blue']['min'], color_range['blue']['max'])
+    red_mask = cv2.inRange(hsv, color_range['red']['min'], color_range['red']['max'])
+    maroon_mask = cv2.inRange(hsv, color_range['maroon']['min'], color_range['maroon']['max'])
     red = cv2.bitwise_or(red_mask, maroon_mask)
     haha = cv2.bitwise_or(green_mask, cyan_mask)
 
-    cv2.imshow('red', red)
-    cv2.imshow('pink_mask', pink_mask)
-    cv2.imshow('green_mask', green_mask)
-    cv2.imshow('pink_mask', pink_mask)
-    cv2.imshow('cyan_mask', cyan_mask)
-    cv2.imshow('blue_mask', blue_mask)
-    cv2.imshow('yellow_mask', yellow_mask)
+    cv2.imshow('red', denoiseMask(red))
+    cv2.imshow('pink_mask', denoiseMask(pink_mask))
+    cv2.imshow('green_mask', denoiseMask(green_mask))
+    cv2.imshow('pink_mask', denoiseMask(pink_mask))
+    cv2.imshow('cyan_mask', denoiseMask(cyan_mask))
+    cv2.imshow('blue_mask', denoiseMask(blue_mask))
+    cv2.imshow('yellow_mask', denoiseMask(yellow_mask))
 
     yellow_ret, yellow_thresh = cv2.threshold(yellow_mask,127,255,cv2.THRESH_BINARY)
     pink_ret, pink_thresh = cv2.threshold(pink_mask,127,255,cv2.THRESH_BINARY)
