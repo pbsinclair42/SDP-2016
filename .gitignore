@@ -65,4 +65,4 @@ target/
 *.swp
 
 # Config files
-/vision/config/
+vision/config/
