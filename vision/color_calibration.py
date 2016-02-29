@@ -161,11 +161,7 @@ def calibrateRanges():
     calibrated_thresholds = {}
     print "obtained thresholds: "
     print thresholds
-<<<<<<< HEAD
-    #c = Camera()
-=======
     c = Camera()
->>>>>>> fb3bee4fb7230b3c4e5bb25a5d89fba84bea9a89
 
     for colors in thresholds:
         if colors != 'red' and colors != 'maroon': 
@@ -197,11 +193,7 @@ def calibrateRanges():
                 cv2.imshow(colors, denoiseMask(mask))
                 cv2.imshow('actual feed', frame)
                     
-<<<<<<< HEAD
                 calibrated_thresholds[colors] = {'min': np.array([h_low, s_low, v_low]),'max': np.array([h_high, 255, 255]) }
-=======
-                calibrated_thresholds[colors] = ( np.array([h_low, s_low, v_low]), np.array([h_high, 255, 255]) )
->>>>>>> fb3bee4fb7230b3c4e5bb25a5d89fba84bea9a89
 
                 k = cv2.waitKey(1) & 0xFF
                 if k == 27:
@@ -256,14 +248,9 @@ def calibrateRanges():
         # show mask and actual picture
         cv2.imshow('red', denoiseMask(mask))
         cv2.imshow('actual feed', frame)
-                    
-<<<<<<< HEAD
+
         calibrated_thresholds['red'] = {'min': np.array([h_low_red, s_low_red, v_low_red]), 'max': np.array([h_high_red, 255, 255]) }
         calibrated_thresholds['maroon'] = {'min': np.array([h_low_maroon, s_low_maroon, v_low_maroon]),'max': np.array([h_high_maroon, 255, 255]) }
-=======
-        calibrated_thresholds['red'] = ( np.array([h_low_red, s_low_red, v_low_red]), np.array([h_high_red, 255, 255]) )
-        calibrated_thresholds['maroon'] = ( np.array([h_low_maroon, s_low_maroon, v_low_maroon]), np.array([h_high_maroon, 255, 255]) )
->>>>>>> fb3bee4fb7230b3c4e5bb25a5d89fba84bea9a89
 
         k = cv2.waitKey(1) & 0xFF
         if k == 27:
