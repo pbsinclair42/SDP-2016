@@ -243,7 +243,17 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
 
+         # parse all incoming comms
+        while comms.in_waiting:
+            data = comms.read(1)
+            try:
+                data_buffer.append(ord(data))
+            except ValueError:
+                pass
 
+        # ensure data has been processed before attempting to send data
+        ack_count = process_data(cmnd_list, data_buffer, ack_count)
+        
         # if there are commands to send
         if not all(cmnd_list[-1][-3:-1]):
             # get first un-sent command or un-acknowledged, but send
@@ -256,14 +266,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 resend_time = time()
                 print "Sending command: ", cmd_index, cmnd_list[cmd_index]
         
-        # parse all incoming comms
-        while comms.in_waiting:
-            data = comms.read(1)
-            try:
-                data_buffer.append(ord(data))
-            except ValueError:
-                pass
-        ack_count = process_data(cmnd_list, data_buffer, ack_count)
         sleep(0.5)
 
 def process_data(commands, data, comb_count):
@@ -292,9 +294,12 @@ if __name__ == "__main__":
     c = CommsThread()
 
     
-    c.rot_move(400, 400)
+    #c.rot_move(-400, 400)
     #c.move(100)
-    sleep(10)
+    c.grab()
+    c.ungrab()
+    c.kick(255)
+    sleep(20)
     c.report()
     sleep(2)
     c.exit()
