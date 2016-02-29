@@ -42,9 +42,10 @@ class CommsThread(object):
 
     def queue_command(self, command):
         """
-            Convenience function to send-in a command, along with receipt flags
+            Convenience function to send-in a command, as a tuple to reduce
+            data corruption possibility. Command flags are added on receipt
         """
-        self.parent_pipe_in.send((command, 0, 0))
+        self.parent_pipe_in.send((command,))
         self.process_event.set()
         print "Queue-ing:", [ord(item) for item in command]
     
@@ -119,39 +120,66 @@ class CommsThread(object):
             offset -= 255
 
     def holo(self, dist_vector, angular):
+        """
+           Not yet implemented due to command-length issue
+        """
         pass
 
     def exit(self):
+        """
+            Exit comms process
+        """
         self.parent_pipe_in.send("exit")
         self.process.join()
 
     def kick(self, power):
+        """
+            kick
+        """
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
     def grab(self):
+        """
+            grab
+        """
         command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
     def ungrab(self):
+        """
+            ungrab
+        """
         command = self.command_dict["UNGRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
     def flush(self):
+        """
+            flush comms and arduino buffers
+        """
         self.queue_command("flush");
         command = self.command_dict["FLUSH"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
     def stop(self):
+        """
+            stop communications process until a new command has been issued
+        """
         self.process_event.clear()
 
     def current_cmd(self):
+        """
+            get current command 
+        """
         self.parent_pipe_in.send("ccmd")
         while not self.parent_pipe_out.poll():
             pass
         return self.parent_pipe_out.recv()
 
     def report(self):
+        """
+            Return a report of sent commands and currently-buffered data
+        """
            self.parent_pipe_in.send("rprt")
 
 
