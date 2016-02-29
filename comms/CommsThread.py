@@ -293,13 +293,44 @@ def acknowledge_command(commands, flag):
 if __name__ == "__main__":
     c = CommsThread()
 
-    
-    #c.rot_move(-400, 400)
-    #c.move(100)
-    c.grab()
-    c.ungrab()
-    c.kick(255)
+    # 15 x 30 degrees = 90
+    c.rotate(30)
+    sleep(1)
+    for i in range(0, 5):
+        c.rotate(15)
+        sleep(1)
+
+    sleep(5)
+
+    # 3 x 30 = 90
+    for i in range(0, 3):
+        c.rotate(30)
+        sleep(1)
+
+    sleep(5)
+
+    # 4 x 45 = 180
+    for i in range(0, 4):
+        c.rotate(45)
+        sleep(1)
+
+    sleep(5)
+    # 4 x 90 = 360
+    for i in range(0, 4):
+        c.rotate(90)
+        sleep(1)
+
+    # 3 x 120 = 360
+    for i in range (0, 3):
+        c.rotate(120)
+        sleep(1)
+
+    sleep(5)
+
+    # 2 x 180 = 360
+    c.rotate(180)
+    c.rotate(180)
+
     sleep(20)
     c.report()
-    sleep(2)
     c.exit()
