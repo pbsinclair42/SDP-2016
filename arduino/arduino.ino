@@ -65,11 +65,13 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define IDLE_STATE 0
 
 // *** Globals ***
-// A finite state machine is required to provide concurrency between loop and 
+// A finite state machine is required to provide concurrency between loop, sensor_poll and 
 // serialEvent functions which both support reading serial while moving and
-// rotary-encoder-based motion
+// rotary-encoder-based motion, plus sensor data-gathering
+
 byte MasterState = 0; 
 byte finishGrabbing = 0;
+
 // positions of wheels based on rotary encoder values
 int positions[ROTARY_COUNT] = {0};
 
@@ -100,6 +102,17 @@ int rotary_target;
 int motion_target;
 int holono_target;
 
+float accel_targetx = 0;
+float accel_targety = 0;
+
+float accel_offsetx = 0;
+float accel_offsety = 0;
+
+// accelerometer/compass targets
+float start_angle;
+float target_angle;
+float previous_gyro;
+
 
 // Accelerometer/Compass values
 int accel[3];               // we'll store the raw acceleration values here
@@ -127,7 +140,7 @@ void setup() {
     char init = 0;
     init = Lsm303d.initI2C();
     if (init == 0){
-        Serial.print("Sensor is found");
+        Serial.println("Sensor is found");
     }
     
     // get initial Accelerometer/Compass Data
@@ -143,26 +156,25 @@ void setup() {
     }
     // angle between X and north
     heading = Lsm303d.getHeading(mag);
-    
     // tilt-compensated angl
     titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
+    
+    // remember offset gyro-values
+    accel_offsetx = realAccel[0];
+    accel_offsety = realAccel[1];
     
     /* Custom commands can be initialized below */
     
     //for (int i = 0; i < 6; i ++)
     //    motorForward(i, 255);
-    //command_buffer[0] = 2;
-    //command_buffer[1] = 45;
-    //command_buffer[2] = 45;
-    //command_buffer[3] = 255;
-    //buffer_index = 4;
-    //Serial.writeln("Begin");
+    
   }
 
 void loop() {
   // get sensor data at each time-step
-  pollAccComp()
-  
+  pollAccComp();
+  //Serial.println(titleHeading);
+  //delay(1000);
   int state_end = 0;
   
   // Switch statement for the FSM state
@@ -237,7 +249,7 @@ void loop() {
             commandOverflow++;
         }
         Serial.write(CMD_DONE);
-        
+        delay(5000);
         
         }
     }
@@ -312,6 +324,8 @@ void pollAccComp(){
         {
             realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
         }
+    realAccel[0] -= accel_offsetx;
+    realAccel[1] -= accel_offsety;
     
     // wait for the magnetometer readings to be ready
     if(Lsm303d.isMagReady()){
@@ -367,6 +381,9 @@ int rotMoveStep(){
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
 
+            start_angle = titleHeading;
+            target_angle = float(degrees);
+
             if (left == 1)
                 rotateLeft();
             else
@@ -382,6 +399,8 @@ int rotMoveStep(){
             if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
                 updateMotorPositions(positions);
                 rotMoveGrabMode = 1;
+                accel_targetx += realAccel[0];
+                accel_targety += realAccel[1];
             }
             else{
                 // delay to make sure motor actions are not being performed too quckly
@@ -390,6 +409,16 @@ int rotMoveStep(){
                 delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
+                //Serial.println();
+                //Serial.println();
+                //Serial.println();
+                //Serial.println(accel_targetx);
+                //Serial.println(accel_targety);
+                //Serial.println(titleHeading);
+                //Serial.println(start_angle);
+                //Serial.println();
+                //accel_targetx = 0;
+                //accel_targety = 0;
                 // TODO: Add dynamic calibration system feedback calculation here;
             }
             return 0;
@@ -415,10 +444,6 @@ int rotMoveStep(){
         case 3 :
             if (-1 * positions[MOTOR_LFT] < rotaryTarget && positions[MOTOR_RGT] < rotaryTarget){
                 updateMotorPositions(positions);
-                //if (rotaryTarget - (-1 * positions[MOTOR_LFT] + positions[MOTOR_RGT]) / 2 < 40 * MOTION_CONST ){
-                //  motorBackward(GRABBER, GRABBER_POWER);
-                //  finishGrabbing = 1;
-                //}
                 return 0;
             }
             else{
@@ -724,6 +749,10 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
+
+
+
 
 
 
