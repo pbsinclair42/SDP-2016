@@ -5,13 +5,11 @@ from socket import gethostname
 import numpy as np
 import cv2
 import math
-from colorsHSV import *
-
-# get computer name
-computer_name = gethostname().split('.')[0]
+from tools import *
 
 adjustments = {}
 adjustments['blur'] = (11,11) # needs to be parametrized .. TODO
+color_range = get_colors() #for PITHC=0
 
 class Tracker():
 
@@ -28,11 +26,11 @@ class Tracker():
         hsv_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_BGR2HSV)
 
         if color == 'red':
-            red_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'red')][0], color_range[(computer_name,'red')][1])
-            maroon_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'maroon')][0], color_range[(computer_name,'maroon')][1])
+            red_mask = cv2.inRange(hsv_frame, color_range['red']['min'], color_range['red']['max'])
+            maroon_mask = cv2.inRange(hsv_frame, color_range['maroon']['min'], color_range['maroon']['max'])
             mask = cv2.bitwise_or(red_mask, maroon_mask)
         else:
-            mask = cv2.inRange(hsv_frame, color_range[(computer_name,color)][0], color_range[(computer_name,color)][1])
+            mask = cv2.inRange(hsv_frame, color_range[color]['min'], color_range[color]['max'])
 
         _, threshold = cv2.threshold(self.denoiseMask(mask), 127, 255, 0)
 

@@ -23,8 +23,8 @@ def collectBall():
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
         distanceAway = ROBOT_WIDTH/2 + UNGRAB_DISTANCE
         xDisplacement = round(cos(bearingAway)*distanceAway, 2)
-        yDisplacement = round(sin(bearingAway)*distanceAway, 2)
-        return Point(expectedBallPosition.x-xDisplacement,expectedBallPosition.y-yDisplacement)
+        yDisplacement = -round(sin(bearingAway)*distanceAway, 2)
+        return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
         # Note, if we're already closer than we should be, we'll end up moving back a bit first to avoid knocking it
 
     # function to calculate where to move to before grabbing
@@ -35,11 +35,12 @@ def collectBall():
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
         distanceAway = ROBOT_WIDTH/2 + GRAB_DISTANCE
         xDisplacement = round(cos(bearingAway)*distanceAway, 2)
-        yDisplacement = round(sin(bearingAway)*distanceAway, 2)
+        yDisplacement = -round(sin(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
 
     me.plan = [ {'action':Actions.moveToPoint,'targetFunction':ungrabHere},
                 {'action':Actions.ungrab},
+                {'action':Actions.moveToPoint,'targetFunction':grabHere},
                 {'action':Actions.grab}]
 
 

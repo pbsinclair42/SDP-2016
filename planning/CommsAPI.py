@@ -7,53 +7,27 @@ from simulator import Simulator
 
 # enable access to the comms package
 sys.path.append(ROOT_DIR+'comms')
-from RobotCommunications import RobotCommunications
+from CommsThread import CommsThread
 
-# try to connect to the comms system.  If unsuccessful, continue simulation nonetheless
-try:
-    commsSystem = RobotCommunications()
-except BaseException:
-    print
-    print("****************************")
-    print("WARNING: Robot not connected")
-    print("****************************")
-    print
-    commsSystem = Simulator()
+    commsSystem = CommsThread()
+    # commsSystem = Simulator()
 
 def turn(x):
     """Rotates the robot x degrees anticlockwise.  Use negative numbers to rotate clockwise.  """
     x = int(x)
-    if x>255 or x< (-255):
-        print("Max turn is 255 degrees")
-        # set x to 255 times the sign of x
-        x=255*x/abs(x)
-    if x<0:
-        commsSystem.rotateneg(0, abs(x))
-    else:
-        commsSystem.rotate(0, abs(x))
+    commsSystem.rot_move(x, 0)
     me.moving=True
-    print("Turning "+str(abs(x))+" degrees "+("clockwise" if x<=0 else "anticlockwise"))
+    print("Turning " + str(abs(x)) + " degrees " + ("clockwise" if x <= 0 else "anticlockwise"))
 
 def move(distance, angle):
     """Moves `distance` cm at a direction of `angle` degrees"""
     # TODO: update for holo movement
     # ensure the distance is an appropriate size
     distance = int(distance)
-    if distance>255 or distance<0:
-        print("Max distance is 255cm")
-        distance=0 if distance<0 else 255
-    # ensure the angle is an appropriate size
     angle = int(angle)
-    if angle>255 or angle< (-255):
-        print("Max turn is 255 degrees")
-        # set angle to 255 times the sign of angle
-        angle=255*angle/abs(angle)
-    if angle>=0:
-        commsSystem.rotate(distance, abs(angle))
-    elif angle<=0:
-        commsSystem.rotateneg(distance, abs(angle))
+    commsSystem.rot_move(distance, angle)
     me.moving=True
-    print("Turning "+str(angle)+" degrees then moving "+str(distance)+"cm")
+    print("Turning " + str(angle) + " degrees then moving " + str(distance) + "cm")
 
 
 def kick(distance):
@@ -64,7 +38,7 @@ def kick(distance):
         print("Max distance is 255cm")
         distance=0 if distance<0 else 255
     commsSystem.kick(distance)
-    me.moving=True
+    me.moving=True ###why ?!
     print("Kicking ball "+str(distance)+"cm")
 
 
@@ -81,9 +55,9 @@ def ungrab():
     print("Opening claw")
 
 def stop():
-    """Stops all motors"""
+    """Stops all communications"""
     commsSystem.stop()
-    print("Stopping all motors")
+    print("Stopping all communications")
 
 def flush():
     """Clears all commands and stops all motors"""
