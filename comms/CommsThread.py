@@ -261,6 +261,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         # ensure data has been processed before attempting to send data
         ack_count = process_data(cmnd_list, data_buffer, ack_count)
+        if ack_count[1] > len(cmnd_list):
+            ack_count = ack_count[0], len(cmnd_list)
         try:
             # if there are commands to send
             if cmnd_list and not all(cmnd_list[-1][-3:-1]):

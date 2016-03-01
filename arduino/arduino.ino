@@ -172,7 +172,7 @@ void setup() {
 
 void loop() {
   // get sensor data at each time-step
-  pollAccComp();
+  //pollAccComp();
   //Serial.println(titleHeading);
   //delay(1000);
   int state_end = 0;
@@ -185,6 +185,7 @@ void loop() {
                  commandOverflow < bufferOverflow){
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
+                command_time = millis();
           }
             break;
         
@@ -365,7 +366,6 @@ int rotMoveStep(){
     int left;
     byte degrees, centimeters;
 
-
     switch(rotMoveGrabMode){
 
         // calculate rotation target and start rotating
@@ -389,8 +389,8 @@ int rotMoveStep(){
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
 
-            start_angle = titleHeading;
-            target_angle = float(degrees);
+            //start_angle = titleHeading;
+            //target_angle = float(degrees);
 
             if (left == 1)
                 rotateLeft();
@@ -407,8 +407,6 @@ int rotMoveStep(){
             if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
                 updateMotorPositions(positions);
                 rotMoveGrabMode = 1;
-                // accel_targetx += realAccel[0];
-                // accel_targety += realAccel[1];
             }
             else{
                 // delay to make sure motor actions are not being performed too quckly
@@ -417,6 +415,7 @@ int rotMoveStep(){
                 delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
+                Serial.write(CMD_ERROR);
                 //Serial.println();
                 //Serial.println();
                 //Serial.println();
