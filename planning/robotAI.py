@@ -96,7 +96,7 @@ def executePlan():
             # send the command to turn to the angle we actually should be at
             else:
                 turnToDirection(targetAngle)
-    elif currentPlan == Actions.guardGoal:
+    elif currentAction == Actions.guardGoal:
         if ball.moving == False:
             turnToDirection(me.bearing(ball))
         elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
