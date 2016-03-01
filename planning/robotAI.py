@@ -1,4 +1,5 @@
 import threading
+import math
 
 from constants import *
 from globalObjects import me, ally, enemies, robots, ball
@@ -22,6 +23,17 @@ def updatePositions():
     # get the info on the ball from the vision system and update the system's beliefs about the ball
     ball.update(visionAPI.getBallCoords())
     ball.status = visionAPI.getBallStatus()
+    #update who has the ball - workaround until vision can tell us
+    if ball is not None:#if ball exists in vision
+        if ball.distance(enemies[0]) < 5:
+           ball.status = 2
+        elif ball.distance(enemies[1]) <5:
+           ball.status = 3
+        elif ball.distance(ally)<5:
+           ball.status = 1
+        elif ball.distance(me)<5 and me.grabberState == 0:
+            ball.status = 0
+
     # check if the last command we sent to the robot has finished
     #newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd()
     #if newCommandFinished:
@@ -84,7 +96,13 @@ def executePlan():
             # send the command to turn to the angle we actually should be at
             else:
                 turnToDirection(targetAngle)
-
+    elif currentAction == Actions.waitForBall:
+        if ball.distance(me) >5:
+            print "Not Got Ball Yet"
+            executePlan()
+        else:
+            print "I've Got The Ball"
+            me.plan.pop(0)
     elif currentAction==Actions.moveToPoint:
         # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
@@ -133,6 +151,7 @@ def executePlan():
             print("Still doing stuff")
         else:
             ungrab()
+            me.grabberSate=1
             me.plan.pop(0)
 
     elif currentAction==Actions.grab:
@@ -140,6 +159,8 @@ def executePlan():
             print("Still doing stuff")
         else:
             grab()
+            me.grabberState=0
+            "I tries to grab the ball"
             me.plan.pop(0)
 
     # if our plan is over, we've achieved our goal
@@ -166,4 +187,5 @@ updatePositions()
 from helperClasses import Point
 me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
 me.goal = Goals.collectBall'''
+
 #tick()

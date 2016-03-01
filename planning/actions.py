@@ -1,6 +1,6 @@
 from constants import *
 from globalObjects import *
-from moveables import Moveable
+from moveables import Moveable, Ball
 from helperClasses import Point
 from CommsAPI import turn, move
 
@@ -48,3 +48,6 @@ def interceptObject(target):
     # if it would take more than 10 seconds to catch up, don't bother trying
     print("Can't catch up")
     return None
+
+def waitForBall():
+       return None
