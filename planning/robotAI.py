@@ -179,7 +179,7 @@ def executePlan():
 def tick():
     """Each tick, update your beliefs about the world then decide what action to take based on this"""
     # if currently simulating, update the simulation
-    if isinstance(commsSystem,Simulator):
+    if USING_SIMULATOR:
         commsSystem.tick()
     updatePositions()
     #print(me.lastCommandFinished, commsSystem.current_cmd())
@@ -195,4 +195,5 @@ updatePositions()
 from helperClasses import Point
 me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
 me.goal = Goals.collectBall'''
-tick()
+
+#tick()
