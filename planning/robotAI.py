@@ -96,6 +96,14 @@ def executePlan():
             # send the command to turn to the angle we actually should be at
             else:
                 turnToDirection(targetAngle)
+    elif currentPlan == Actions.guardGoal:
+        if ball.moving == False:
+            turnToDirection(me.bearing(ball))
+        elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
+            executePlan()
+        elif ball.moving:# ball moving but not towards us
+            me.interceptObject(ball)
+            me.plan.pop(0)
     elif currentAction == Actions.waitForBall:
         if ball.distance(me) >5:
             print "Not Got Ball Yet"

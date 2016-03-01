@@ -49,5 +49,4 @@ def interceptObject(target):
     print("Can't catch up")
     return None
 
-def waitForBall():
-       return None
+

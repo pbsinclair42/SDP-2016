@@ -117,11 +117,8 @@ def guardGoal():
         """rotate into position"""
         return me.bearing(ball)
 
-    def guard():
-        """guard until ball moves"""
-
 
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':gotoGoal},
-               {'action':Actions.rotateToAngle,'targetFunction':rotate}
-               #run the guard function
+               {'action':Actions.rotateToAngle,'targetFunction':rotate},
+               {'action':Actions.guardGoal}
                ]
