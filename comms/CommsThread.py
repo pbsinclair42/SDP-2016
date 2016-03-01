@@ -271,6 +271,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         # ensure data has been processed before attempting to send data
         ack_count, seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
+        
         try:
             # if there are commands to send
             if cmnd_list and not all(cmnd_list[-1][-3:-1]):
@@ -287,8 +288,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         except IndexError:
             print "This fucked up --->", cmnd_list
         
-        pipe_out.send(ack_count)
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
+        ack_count = check_ack_count(ack_count, cmnd_list)
+        pipe_out.send(ack_count)
         sleep(0.1)
         
 
@@ -331,6 +333,20 @@ def flip_seq(seq):
 def sequence_command(command, seq):
     return [ord(chr(seq * 128 + command[0]))] + command[1:4]
 
+def check_ack_count(ack_count, cmnd_list):
+    received = ack_count[0]
+    finished = ack_count[1]
+    if finished > received:
+        print 80 * "="
+        print 80 * "*"
+        x = ((80 - len("Show this to Krassy!")) / 2 - 4) * " "
+        print x, "Show this to Krassy", x
+        print 80 * "*"
+        print 80 * "="
+        acknowledge_command(cmnd_list, 2)
+        return (finished, finished)
+    else:
+        return ack_count
 
 if __name__ == "__main__":
     c = CommsThread()
