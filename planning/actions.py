@@ -1,6 +1,6 @@
 from constants import *
 from globalObjects import *
-from moveables import Moveable
+from moveables import Moveable, Ball
 from helperClasses import Point
 from CommsAPI import turn, move
 

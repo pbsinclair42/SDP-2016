@@ -52,7 +52,7 @@ class CommsThread(object):
         self.parent_pipe_in.send((command,))
         self.process_event.set()
         print "Queue-ing:", [ord(item) for item in command]
-    
+
     def move(self, distance, degrees=0):
         """
             A movement-only function for distance up-to 255 cm
@@ -60,7 +60,7 @@ class CommsThread(object):
         assert distance >= 255, "Distance should not be longer than 255"
         if degrees:
             self.rot_move(distance, degrees)
-        
+
         else:
             # add extra commands
             while distance > 255:
@@ -69,25 +69,25 @@ class CommsThread(object):
 
             command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(distance) + self.command_dict["END"]
             self.queue_command(command)
-    
+
     def rotate(self, degrees, distance=0):
         """
             A rotation-only function for angles up-to 255 deg
         """
         assert degrees <= 255 and degrees >= -255, "Degrees should be in range of [-255, 255]"
-        
+
         if distance:
             self.rot_move(distance, degrees)
-        
+
         else:
             if degrees >= 0:
                 command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(0) + self.command_dict["END"]
-            
+
             else:
                 command = self.command_dict["ROT_MOVE_NEG"] + chr((-1 * degrees)) + chr(0) + self.command_dict["END"]
-            
+
             self.queue_command(command)
-    
+
     def rot_move(self, degrees, distance):
         """
             Perform movement and/or rotation for any degrees and any distance.
@@ -175,7 +175,7 @@ class CommsThread(object):
         '''
     def current_cmd(self):
         """
-            get current command 
+            get current command
         """
 
 
@@ -201,14 +201,13 @@ class CommsThread(object):
 
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
-    
 
     cmnd_list = []
     data_buffer = []
     radio_connected = False
     ack_count = (0, 0)
     seq_num = 0
-    
+
     while not radio_connected:
         try:
             comms = Serial(port=port, baudrate=baudrate)
@@ -216,28 +215,28 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         except Exception as e:
             print "Comms: Radio not connected. Trying again in 5 seconds;", str(e)
             radio_connected = False
-            sleep(5)    
+            sleep(5)
     print "Radio On-line"
-    
+
     # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
 
     resend_time = time()
-    
+
 
 
     while True:
         event.wait()
         if pipe_in.poll():
             pipe_data = pipe_in.recv()
-            
+
             if isinstance(pipe_data, tuple):
                 # get a tuple to reduce risk of data damage,
                 # then turn to a list to support mutability
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
                 cmnd_list.append([ord(item) for item in pipe_data[0]] + [0, 0 ,0])
-            
+
             # non-command-inputs:
             elif pipe_data == "exit":
                 return
@@ -252,7 +251,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     print item,
                 print "Data:"
                 print data_buffer
-            
+
             elif pipe_data == "flush":
                 cmnd_list = []
                 data_buffer = []
@@ -276,7 +275,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             if cmnd_list and not all(cmnd_list[-1][-3:-1]):
                 # get first un-sent command or un-acknowledged, but send
                 cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
-                
+
                 # if the command is not acknowledged on time
                 if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
                     sequenced = sequence_command(cmd_to_send[:4], seq_num)
@@ -286,11 +285,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     print "Sending command: ", cmd_index, sequenced
         except IndexError:
             print "This fucked up --->", cmnd_list
-        
+
         pipe_out.send(ack_count)
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
         sleep(0.1)
-        
 
 def process_data(commands, data, comb_count, seq_num):
     cutoff_index, ack_count, end_count = 0, 0, 0
@@ -313,7 +311,7 @@ def process_data(commands, data, comb_count, seq_num):
 
     del data[:cutoff_index + 1]
     return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
-    
+
 
 def acknowledge_command(commands, flag):
     assert flag == 1 or flag == 2
@@ -334,7 +332,7 @@ def sequence_command(command, seq):
 
 if __name__ == "__main__":
     c = CommsThread()
-    
+
     c.rotate(30)
 
     """
@@ -378,5 +376,4 @@ if __name__ == "__main__":
 
     sleep(20)
     c.report()
-    c.exit()
-    """
+    c.exit()"""
