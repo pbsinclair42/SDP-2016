@@ -43,3 +43,11 @@ ANGLE_ACCURACY = 15
 ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (degrees)
 ITLL_DO_ANGLE = 10
+
+# get whether we're using the simulator or the real world from the config file
+with open('conf.txt','r') as f:
+    simConfig = f.readlines()[4]
+    if simConfig.lower() == 'true':
+        USING_SIMULATOR=True
+    else:
+        USING_SIMULATOR=False

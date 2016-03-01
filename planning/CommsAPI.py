@@ -1,7 +1,7 @@
 import sys
 import time
 import os
-from constants import ROOT_DIR
+from constants import ROOT_DIR, USING_SIMULATOR
 from globalObjects import me
 from simulator import Simulator
 
@@ -9,8 +9,10 @@ from simulator import Simulator
 sys.path.append(ROOT_DIR+'comms')
 from CommsThread import CommsThread
 
-commsSystem = CommsThread()
-# commsSystem = Simulator()
+if USING_SIMULATOR:
+    commsSystem = Simulator()
+else:
+    commsSystem = CommsThread()
 
 def turn(x):
     """Rotates the robot x degrees anticlockwise.  Use negative numbers to rotate clockwise.  """
