@@ -24,12 +24,15 @@ def updatePositions():
     ball.update(visionAPI.getBallCoords())
     ball.status = visionAPI.getBallStatus()
     #update who has the ball - workaround until vision can tell us
-    if math.sqrt((ball.currentPoint.x - enemies[0].currentPoint.x)**2 + (ball.currentPoint.y - enemies[0].currentPoint.y)**2) > 0.1:
-       ball.status = 2
-    elif math.sqrt((ball.currentPoint.x - enemies[1].currentPoint.x)**2 + (ball.currentPoint.y - enemies[1].currentPoint.y)**2) > 0.1:
-       ball.status = 3
-    elif math.sqrt((ball.currentPoint.x - ally.currentPoint.x)**2 + (ball.currentPoint.y - ally.currentPoint.y)**2) > 0.1:
-       ball.status = 1
+    if ball is not None:#if ball exists in vision
+        if ball.distance(enemies[0]) < 5:
+           ball.status = 2
+        elif ball.distance(enemies[1]) <5:
+           ball.status = 3
+        elif ball.distance(ally)<5:
+           ball.status = 1
+        elif ball.distance(me)<5 and me.grabberState == 0:
+            ball.status = 0
 
     # check if the last command we sent to the robot has finished
     #newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd()
@@ -142,6 +145,7 @@ def executePlan():
             print("Still doing stuff")
         else:
             ungrab()
+            me.grabberSate=1
             me.plan.pop(0)
 
     elif currentAction==Actions.grab:
@@ -149,11 +153,9 @@ def executePlan():
             print("Still doing stuff")
         else:
             grab()
-            if math.sqrt((ball.currentPoint.x - me.currentPoint.x)**2 + (ball.currentPoint.y - me.currentPoint.y)**2) > 0.1:
-                print "I Think We Have The Ball"
-                me.plan.pop(0)
-            else:
-                print "Didn't quite manage to get the ball"
+            me.grabberState=0
+            "I tries to grab the ball"
+            me.plan.pop(0)
 
     # if our plan is over, we've achieved our goal
     if len(me.plan)==0:
