@@ -14,12 +14,8 @@ class CommsThread(object):
         """
             Initialize firware API and start the communications parallel process
         """
-<<<<<<< HEAD
-        self.x = 0
-=======
         self.ack_counts = (0, 0)
         self.commands = 0
->>>>>>> master
         self.command_list = []
         self.command_dict = {
             "ROT_MOVE_POS" : chr(3  ),
@@ -196,17 +192,13 @@ class CommsThread(object):
 
     def am_i_done(self):
         while self.parent_pipe_out.poll():
-<<<<<<< HEAD
-            self.x = self.parent_pipe_out.recv()
-        return self.x
-=======
             self.ack_counts = self.parent_pipe_out.recv()
         if self.ack_counts[0] == self.commands and self.ack_counts[1] == self.commands:
             #print self.ack_counts, self.commands
             return True
         else:
             return False
->>>>>>> master
+
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     
@@ -278,13 +270,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 pass
 
         # ensure data has been processed before attempting to send data
-<<<<<<< HEAD
-        ack_count = process_data(cmnd_list, data_buffer, ack_count)
-        if ack_count[1] > len(cmnd_list):
-            ack_count = ack_count[0], len(cmnd_list)
-=======
         ack_count, seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
->>>>>>> master
         try:
             # if there are commands to send
             if cmnd_list and not all(cmnd_list[-1][-3:-1]):
@@ -293,18 +279,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 
                 # if the command is not acknowledged on time
                 if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
-<<<<<<< HEAD
-                    comms.write(cmd_to_send[:4])
-                    cmnd_list[cmd_index][-3] = 1
-                    resend_time = time()
-                    print "Sending command: ", cmd_index, cmnd_list[cmd_index]
-        except IndexError:
-            print "This fucked up --->", cmnd_list
-        
-        pipe_out.send(len(cmnd_list) == ack_count[1])
-        print 10 * "-=", len(cmnd_list), "=?", ack_count[1]
-        sleep(0.5)
-=======
                     sequenced = sequence_command(cmd_to_send[:4], seq_num)
                     comms.write(sequenced)
                     cmnd_list[cmd_index][-3] = 1
@@ -316,7 +290,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         pipe_out.send(ack_count)
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
         sleep(0.1)
->>>>>>> master
         
 
 def process_data(commands, data, comb_count, seq_num):
@@ -328,24 +301,15 @@ def process_data(commands, data, comb_count, seq_num):
             cutoff_index = idx
             ack_count += 1
             if idx < len(data) - 1 and data[idx + 1] == 248:
-<<<<<<< HEAD
-                ack_count-= 1 
-=======
                 ack_count-= 1
             else:
                 seq_num = flip_seq(seq_num)
->>>>>>> master
         elif item == 111:
             acknowledge_command(commands, 1)
             cutoff_index = idx
             end_count += 1
             if idx < len(data) - 1 and data[idx + 1] == 111:
                 end_count-= 1
-<<<<<<< HEAD
-            else:
-                print "============== ENDED CMDS", comb_count[1] + end_count
-=======
->>>>>>> master
 
     del data[:cutoff_index + 1]
     return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
