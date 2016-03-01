@@ -1,4 +1,5 @@
 import threading
+import math
 
 from constants import *
 from globalObjects import me, ally, enemies, robots, ball
@@ -22,6 +23,14 @@ def updatePositions():
     # get the info on the ball from the vision system and update the system's beliefs about the ball
     ball.update(visionAPI.getBallCoords())
     ball.status = visionAPI.getBallStatus()
+    #update who has the ball - workaround until vision can tell us
+    if math.sqrt((ball.currentPoint.x - enemies[0].currentPoint.x)**2 + (ball.currentPoint.y - enemies[0].currentPoint.y)**2) > 0.1:
+       ball.status = 2
+    elif math.sqrt((ball.currentPoint.x - enemies[1].currentPoint.x)**2 + (ball.currentPoint.y - enemies[1].currentPoint.y)**2) > 0.1:
+       ball.status = 3
+    elif math.sqrt((ball.currentPoint.x - ally.currentPoint.x)**2 + (ball.currentPoint.y - ally.currentPoint.y)**2) > 0.1:
+       ball.status = 1
+
     # check if the last command we sent to the robot has finished
     newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd
     if newCommandFinished:
@@ -142,7 +151,11 @@ def executePlan():
             print("Still doing stuff")
         else:
             grab()
-            me.plan.pop(0)
+            if math.sqrt((ball.currentPoint.x - me.currentPoint.x)**2 + (ball.currentPoint.y - me.currentPoint.y)**2) > 0.1:
+                print "I Think We Have The Ball"
+                me.plan.pop(0)
+            else:
+                print "Didn't quite manage to get the ball"
 
     # if our plan is over, we've achieved our goal
     if len(me.plan)==0:
