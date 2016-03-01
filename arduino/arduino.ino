@@ -180,7 +180,7 @@ void loop() {
         case IDLE_STATE:
             // check whether circular buffer contains a valid command
             if ((command_index != buffer_index && command_index + 4 <= buffer_index && commandOverflow == bufferOverflow) || 
-                 commandOverflow < bufferOverflow){
+                 commandOverflow < bufferOverflow) {
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
                 command_time = millis(); // for time-out
@@ -243,7 +243,7 @@ void loop() {
             break;
         }
     
-    if (state_end){
+    if (state_end == 1){
         MasterState = IDLE_STATE;
         command_index += 4;
         
@@ -256,11 +256,18 @@ void loop() {
         Serial.write(CMD_DONE);
         Serial.write(command_index / 4);
         Serial.write(buffer_index / 4);
+        Serial.write(rotMoveGrabMode);
         //delay(5000);
         
         }
+/*      else if (rotMoveGrabMode != 0 && command_time - millis() > 5000){
+            restoreState();
+            Serial.write(CMD_ERROR);
+            Serial.write(CMD_ERROR);
+            Serial.write(CMD_ERROR);
+            Serial.write(CMD_ERROR);
+        }*/
     }
-
 /* 
 SerialEvent occurs whenever a new data comes in the
 hardware serial RX. This routine is run between each
@@ -283,7 +290,7 @@ void serialEvent() {
         
         // read command
         command_buffer[buffer_index++] = Serial.read();
-        
+        Serial.write(command_buffer[buffer_index - 1]);
         if (buffer_index % 4 == 0){
             
             // acknowledge proper command
@@ -301,8 +308,9 @@ void serialEvent() {
                     Serial.write(CMD_ACK);
                     Serial.write(CMD_ACK);
                     Serial.write(CMD_ACK);
-                    Serial.write(CMD_RESEND);
-                    Serial.write(CMD_RESEND);
+                    Serial.write(command_index / 4);
+                    Serial.write(buffer_index / 4);
+                    Serial.write(rotMoveGrabMode);
                     Serial.write(command_buffer[target_value - 4]);
                     Serial.write(command_buffer[target_value - 3]);
                     Serial.write(command_buffer[target_value - 2]);
@@ -311,9 +319,9 @@ void serialEvent() {
                 }
                 // report bad command
                 else{
-                    //Serial.write("Bad Command");
-                    Serial.write(CMD_ERROR);
-                    buffer_index = target_value - 4;
+                     while(command_buffer[buffer_index -1] != CMD_END) {
+                         buffer_index--;
+                     }
                 }
                 
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
