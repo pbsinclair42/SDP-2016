@@ -24,7 +24,7 @@ def updatePositions():
     ball.update(visionAPI.getBallCoords())
     ball.status = visionAPI.getBallStatus()
     #update who has the ball - workaround until vision can tell us
-    if ball is not None:#if ball exists in vision
+    """if ball is not None:#if ball exists in vision
         if ball.distance(enemies[0]) < 5:
            ball.status = 2
         elif ball.distance(enemies[1]) <5:
@@ -33,7 +33,7 @@ def updatePositions():
            ball.status = 1
         elif ball.distance(me)<5 and me.grabberState == 0:
             ball.status = 0
-
+    """
     # check if the last command we sent to the robot has finished
     #newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd()
     #if newCommandFinished:
@@ -96,7 +96,7 @@ def executePlan():
             # send the command to turn to the angle we actually should be at
             else:
                 turnToDirection(targetAngle)
-    elif currentPlan == Actions.guardGoal:
+    elif currentAction == Actions.guardGoal:
         if ball.moving == False:
             turnToDirection(me.bearing(ball))
         elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:

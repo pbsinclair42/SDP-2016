@@ -51,6 +51,8 @@ def get_colors(filename=PATH+'/config/colors.json'):
     json_content = get_json(filename)
     machine_name = socket.gethostname().split('.')[0]
 
+    print "Adjusting settings for: " + machine_name
+
     if machine_name in json_content:
         current = json_content[machine_name]
     else:
@@ -68,14 +70,8 @@ def get_colors(filename=PATH+'/config/colors.json'):
 
 
 def save_colors(colors, filename=PATH+'/config/colors.json'):
-    #json_content = get_json(filename)
-    #machine_name = "default"
+    data = get_json(filename)
     machine_name = socket.gethostname().split('.')[0]
-    print filename
-    print machine_name
-    # now that we have the feed settings set by v4lctl, should be no need to store calibrations
-    # from different pcs
-    print colors
     # convert np.arrays into lists
     for key in colors:
         key_dict = colors[key]
@@ -84,24 +80,22 @@ def save_colors(colors, filename=PATH+'/config/colors.json'):
         if 'max' in key_dict:
             key_dict['max'] = list(key_dict['max'])
 
-    with open(filename, "r+") as jsonFile:
-        data = json.load(jsonFile)
-        if machine_name in data:
+    if machine_name in data:
             data[machine_name] = colors
-            print "Updating JSON file"
-        else:
-            data[machine_name] = data['default']
-            data[machine_name] = colors
-        print "DATA:" 
-        for comp_name in data: 
-            print comp_name + ":"   
-            print data[comp_name]    
-        print "Writing into a file"    
-        jsonFile.seek(0)  # rewind
-        jsonFile.write(json.dumps(data, indent=4))
-        jsonFile.truncate()
-    #write_json(filename, json_content)
+    else:
+        data[machine_name] = data['default']
+        data[machine_name] = colors        
 
+    write_json(filename, data)
+
+def get_dimensions(pitch, filename=PATH+'/config/dimensions.json'):
+    data = get_json(filename)
+    return data[str(pitch)] 
+
+def save_dimensions(pitch, dimensions, filename=PATH+'/config/dimensions.json'):
+    data = get_json(filename)
+    data[str(pitch)] = dimensions
+    write_json(filename, data)
 
 def save_croppings(pitch, data, filename=PATH+'/config/croppings.json'):
     """
