@@ -8,7 +8,7 @@ from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 import visionAPI
-from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
+from CommsAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
 from simulator import Simulator
 
 
@@ -32,24 +32,24 @@ def updatePositions():
        ball.status = 1
 
     # check if the last command we sent to the robot has finished
-    newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd
-    if newCommandFinished:
+    #newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd()
+    #if newCommandFinished:
+    if commsSystem.am_i_done():
         me.lastCommandFinished+=1
         me.moving=False
+    else:
+        print"Not done"
 
 
 def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
         action = "0"
-        while action not in ['1','1b','2','3','4','5','6', '7']:
+        while action not in ['1','2','3','4','5','6', '7']:
             print("What action should I do now?")
             action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Stop\n? ")
         if action=="1":
             collectBall()
-        elif action=="1b":
-            collectBall()
-            me.plan = [me.plan[2]]
         elif action=="2":
             shoot()
         elif action=="3":
@@ -79,7 +79,6 @@ def executePlan():
             # TODO: add in some kind of checker/corrector
             print("Still doing stuff")
         else:
-            print me
             # calculate what angle we're aiming for
             targetAngle = me.plan[0]['targetFunction']()
 
@@ -101,7 +100,6 @@ def executePlan():
             # TODO: add in some kind of checker/corrector
             print("Still doing stuff")
         else:
-            print me
             # calculate where we're headed
             targetPoint = me.plan[0]['targetFunction']()
 
@@ -168,6 +166,7 @@ def tick():
     if isinstance(commsSystem,Simulator):
         commsSystem.tick()
     updatePositions()
+    #print(me.lastCommandFinished, commsSystem.current_cmd())
     makePlan()
     executePlan()
     threading.Timer(TICK_TIME, tick).start()
