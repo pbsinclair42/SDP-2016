@@ -14,11 +14,16 @@ class CommsThread(object):
         """
             Initialize firware API and start the communications parallel process
         """
+<<<<<<< HEAD
         self.x = 0
+=======
+        self.ack_counts = (0, 0)
+        self.commands = 0
+>>>>>>> master
         self.command_list = []
         self.command_dict = {
-            "ROT_MOVE_POS" : chr(1  ),
-            "ROT_MOVE_NEG" : chr(129),
+            "ROT_MOVE_POS" : chr(3  ),
+            "ROT_MOVE_NEG" : chr(15),
             "HOL_MOVE_POS" : chr(2  ),
             "HOL_MOVE_NEG" : chr(130),
             "KICK"         : chr(4  ),
@@ -26,6 +31,7 @@ class CommsThread(object):
             "GRAB"         : chr(16 ),
             "UNGRAB"       : chr(32 ),
             "FLUSH"        : chr(64 ),
+
             "DONE"         : chr(111),
             "ACK"          : chr(248),
             "RESEND"       : chr(252),
@@ -46,6 +52,7 @@ class CommsThread(object):
             Convenience function to send-in a command, as a tuple to reduce
             data corruption possibility. Command flags are added on receipt
         """
+        self.commands += 1
         self.parent_pipe_in.send((command,))
         self.process_event.set()
         print "Queue-ing:", [ord(item) for item in command]
@@ -158,6 +165,8 @@ class CommsThread(object):
         """
             flush comms and arduino buffers
         """
+        self.commands = 0
+        self.ack_counts = (0, 0)
         self.queue_command("flush");
         command = self.command_dict["FLUSH"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
@@ -187,8 +196,17 @@ class CommsThread(object):
 
     def am_i_done(self):
         while self.parent_pipe_out.poll():
+<<<<<<< HEAD
             self.x = self.parent_pipe_out.recv()
         return self.x
+=======
+            self.ack_counts = self.parent_pipe_out.recv()
+        if self.ack_counts[0] == self.commands and self.ack_counts[1] == self.commands:
+            #print self.ack_counts, self.commands
+            return True
+        else:
+            return False
+>>>>>>> master
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     
@@ -197,7 +215,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     data_buffer = []
     radio_connected = False
     ack_count = (0, 0)
-    
+    seq_num = 0
     
     while not radio_connected:
         try:
@@ -249,7 +267,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
-
+        print 80 * "-"
          # parse all incoming comms
         while comms.in_waiting:
             data = comms.read(1)
@@ -260,9 +278,13 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 pass
 
         # ensure data has been processed before attempting to send data
+<<<<<<< HEAD
         ack_count = process_data(cmnd_list, data_buffer, ack_count)
         if ack_count[1] > len(cmnd_list):
             ack_count = ack_count[0], len(cmnd_list)
+=======
+        ack_count, seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
+>>>>>>> master
         try:
             # if there are commands to send
             if cmnd_list and not all(cmnd_list[-1][-3:-1]):
@@ -271,6 +293,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 
                 # if the command is not acknowledged on time
                 if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
+<<<<<<< HEAD
                     comms.write(cmd_to_send[:4])
                     cmnd_list[cmd_index][-3] = 1
                     resend_time = time()
@@ -281,9 +304,22 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         pipe_out.send(len(cmnd_list) == ack_count[1])
         print 10 * "-=", len(cmnd_list), "=?", ack_count[1]
         sleep(0.5)
+=======
+                    sequenced = sequence_command(cmd_to_send[:4], seq_num)
+                    comms.write(sequenced)
+                    cmnd_list[cmd_index][-3] = 1
+                    resend_time = time()
+                    print "Sending command: ", cmd_index, sequenced
+        except IndexError:
+            print "This fucked up --->", cmnd_list
+        
+        pipe_out.send(ack_count)
+        print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
+        sleep(0.1)
+>>>>>>> master
         
 
-def process_data(commands, data, comb_count):
+def process_data(commands, data, comb_count, seq_num):
     cutoff_index, ack_count, end_count = 0, 0, 0
 
     for idx, item in enumerate(data):
@@ -292,18 +328,27 @@ def process_data(commands, data, comb_count):
             cutoff_index = idx
             ack_count += 1
             if idx < len(data) - 1 and data[idx + 1] == 248:
+<<<<<<< HEAD
                 ack_count-= 1 
+=======
+                ack_count-= 1
+            else:
+                seq_num = flip_seq(seq_num)
+>>>>>>> master
         elif item == 111:
             acknowledge_command(commands, 1)
             cutoff_index = idx
             end_count += 1
             if idx < len(data) - 1 and data[idx + 1] == 111:
                 end_count-= 1
+<<<<<<< HEAD
             else:
                 print "============== ENDED CMDS", comb_count[1] + end_count
+=======
+>>>>>>> master
 
     del data[:cutoff_index + 1]
-    return (comb_count[0] + ack_count, comb_count[1] + end_count)
+    return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
     
 
 def acknowledge_command(commands, flag):
@@ -313,9 +358,22 @@ def acknowledge_command(commands, flag):
             item[-flag] = 1
             return
 
+def flip_seq(seq):
+    if seq == 1:
+        return 0
+    else:
+        return 1
+
+def sequence_command(command, seq):
+    return [ord(chr(seq * 128 + command[0]))] + command[1:4]
+
+
 if __name__ == "__main__":
     c = CommsThread()
+    
+    c.rotate(30)
 
+    """
     # 15 x 30 degrees = 90
     c.rotate(30)
     sleep(1)
@@ -357,3 +415,4 @@ if __name__ == "__main__":
     sleep(20)
     c.report()
     c.exit()
+    """
