@@ -81,8 +81,7 @@ def receivePass():
 
     me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate},
                {'action':Actions.ungrab},
-               {'action':Actions.waitForBall},
-               {'action':Actions.grab}]
+               {'action':Actions.waitForBall}]
 
 def blockPass():
     me.goal = Goals.blockPass
@@ -102,8 +101,7 @@ def blockPass():
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':blockHere},
                {'action':Actions.rotateToAngle, 'targetFunction':rotate},
                {'action':Actions.ungrab},
-               {'action':Actions.waitForBall},
-               {'action':Actions.grab}]
+               {'action':Actions.waitForBall}]
 
 def guardGoal():
     """Stop bad people from scoring"""

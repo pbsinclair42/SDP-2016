@@ -105,12 +105,13 @@ def executePlan():
             me.interceptObject(ball)
             me.plan.pop(0)
     elif currentAction == Actions.waitForBall:
-        if ball.distance(me) >5:
-            print "Not Got Ball Yet"
+        if ball.status != BallStatus.free:
+            print "Balls not moving yet"
             executePlan()
         else:
-            print "I've Got The Ball"
+            print "Balls Maving, Better Go Get It"
             me.plan.pop(0)
+            collectBall()
     elif currentAction==Actions.moveToPoint:
         # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
