@@ -1,4 +1,5 @@
 yellow
-1
-red
-right
+3
+blue
+left
+True

@@ -33,7 +33,7 @@ def collectBall():
         expectedBallPosition = interceptObject(ball)
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
-        distanceAway = ROBOT_WIDTH/2 + GRAB_DISTANCE
+        distanceAway = ROBOT_WIDTH + GRAB_DISTANCE
         xDisplacement = round(cos(bearingAway)*distanceAway, 2)
         yDisplacement = -round(sin(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
@@ -51,7 +51,7 @@ def shoot():
 
     # work out how far to kick the ball
     def distanceToKick():
-        return me.distance(opponentGoal) # maybe change to always belt it?
+        return 255# me.distance(opponentGoal) # maybe change to be more accurate?
 
     # function to aim at the goal
     def aim():
@@ -81,7 +81,7 @@ def receivePass():
 
     me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate},
                {'action':Actions.ungrab},
-               #wait until we have the ball
+               {'action':Actions.waitForBall},
                {'action':Actions.grab}]
 
 def blockPass():
@@ -102,8 +102,8 @@ def blockPass():
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':blockHere},
                {'action':Actions.rotateToAngle, 'targetFunction':rotate},
                {'action':Actions.ungrab},
-                #wait till we have the ball
-               {'action':Actions.ungrab}]
+               {'action':Actions.waitForBall},
+               {'action':Actions.grab}]
 
 def guardGoal():
     """Stop bad people from scoring"""
@@ -117,11 +117,8 @@ def guardGoal():
         """rotate into position"""
         return me.bearing(ball)
 
-    def guard():
-        """guard until ball moves"""
-
 
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':gotoGoal},
-               {'action':Actions.rotateToAngle,'targetFunction':rotate}
-               #run the guard function
+               {'action':Actions.rotateToAngle,'targetFunction':rotate},
+               {'action':Actions.guardGoal}
                ]

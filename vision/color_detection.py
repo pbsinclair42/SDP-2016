@@ -29,14 +29,6 @@ while(1):
 
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-    print color_range[('chatton','green')]
-    yellow_mask = cv2.inRange(hsv, color_range[(computer_name, 'yellow')][0], color_range[(computer_name, 'yellow')][1])
-    pink_mask = cv2.inRange(hsv, color_range[(computer_name, 'pink')][0], color_range[(computer_name, 'pink')][1])
-    green_mask = cv2.inRange(hsv, color_range[(computer_name, 'bright_green')][0], color_range[(computer_name, 'bright_green')][1])
-    cyan_mask = cv2.inRange(hsv, color_range[(computer_name, 'bright_blue')][0], color_range[(computer_name, 'bright_blue')][1])
-    blue_mask = cv2.inRange(hsv, color_range[(computer_name, 'blue')][0], color_range[(computer_name, 'blue')][1])
-    red_mask = cv2.inRange(hsv, color_range[(computer_name, 'red')][0], color_range[(computer_name, 'red')][1])
-    maroon_mask = cv2.inRange(hsv, color_range[(computer_name, 'maroon')][0], color_range[(computer_name, 'maroon')][1])
     yellow_mask = cv2.inRange(hsv, color_range['yellow']['min'], color_range['yellow']['max'])
     pink_mask = cv2.inRange(hsv, color_range['pink']['min'], color_range['pink']['max'])
     green_mask = cv2.inRange(hsv, color_range['green']['min'], color_range['green']['max'])

@@ -1,4 +1,5 @@
 import threading
+import math
 
 from constants import *
 from globalObjects import me, ally, enemies, robots, ball
@@ -7,7 +8,7 @@ from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 import visionAPI
-from arduinoAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
+from CommsAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
 from simulator import Simulator
 
 
@@ -22,25 +23,36 @@ def updatePositions():
     # get the info on the ball from the vision system and update the system's beliefs about the ball
     ball.update(visionAPI.getBallCoords())
     ball.status = visionAPI.getBallStatus()
+    #update who has the ball - workaround until vision can tell us
+    if ball is not None:#if ball exists in vision
+        if ball.distance(enemies[0]) < 5:
+           ball.status = 2
+        elif ball.distance(enemies[1]) <5:
+           ball.status = 3
+        elif ball.distance(ally)<5:
+           ball.status = 1
+        elif ball.distance(me)<5 and me.grabberState == 0:
+            ball.status = 0
+
     # check if the last command we sent to the robot has finished
-    newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd
-    if newCommandFinished:
+    #newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd()
+    #if newCommandFinished:
+    if commsSystem.am_i_done():
         me.lastCommandFinished+=1
         me.moving=False
+    else:
+        print"Not done"
 
 
 def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
         action = "0"
-        while action not in ['1','1b','2','3','4','5','6', '7']:
+        while action not in ['1','2','3','4','5','6', '7']:
             print("What action should I do now?")
             action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Stop\n? ")
         if action=="1":
             collectBall()
-        elif action=="1b":
-            collectBall()
-            me.plan = [me.plan[2]]
         elif action=="2":
             shoot()
         elif action=="3":
@@ -70,7 +82,6 @@ def executePlan():
             # TODO: add in some kind of checker/corrector
             print("Still doing stuff")
         else:
-            print me
             # calculate what angle we're aiming for
             targetAngle = me.plan[0]['targetFunction']()
 
@@ -85,14 +96,27 @@ def executePlan():
             # send the command to turn to the angle we actually should be at
             else:
                 turnToDirection(targetAngle)
-
+    elif currentPlan == Actions.guardGoal:
+        if ball.moving == False:
+            turnToDirection(me.bearing(ball))
+        elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
+            executePlan()
+        elif ball.moving:# ball moving but not towards us
+            me.interceptObject(ball)
+            me.plan.pop(0)
+    elif currentAction == Actions.waitForBall:
+        if ball.distance(me) >5:
+            print "Not Got Ball Yet"
+            executePlan()
+        else:
+            print "I've Got The Ball"
+            me.plan.pop(0)
     elif currentAction==Actions.moveToPoint:
         # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
             # TODO: add in some kind of checker/corrector
             print("Still doing stuff")
         else:
-            print me
             # calculate where we're headed
             targetPoint = me.plan[0]['targetFunction']()
 
@@ -135,6 +159,7 @@ def executePlan():
             print("Still doing stuff")
         else:
             ungrab()
+            me.grabberSate=1
             me.plan.pop(0)
 
     elif currentAction==Actions.grab:
@@ -142,6 +167,8 @@ def executePlan():
             print("Still doing stuff")
         else:
             grab()
+            me.grabberState=0
+            "I tries to grab the ball"
             me.plan.pop(0)
 
     # if our plan is over, we've achieved our goal
@@ -152,9 +179,10 @@ def executePlan():
 def tick():
     """Each tick, update your beliefs about the world then decide what action to take based on this"""
     # if currently simulating, update the simulation
-    if isinstance(commsSystem,Simulator):
+    if USING_SIMULATOR:
         commsSystem.tick()
     updatePositions()
+    #print(me.lastCommandFinished, commsSystem.current_cmd())
     makePlan()
     executePlan()
     threading.Timer(TICK_TIME, tick).start()
@@ -167,4 +195,5 @@ updatePositions()
 from helperClasses import Point
 me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
 me.goal = Goals.collectBall'''
-tick()
+
+#tick()
