@@ -17,7 +17,7 @@ bgr = {
     'yellow' : []
 }
 
-
+circle_coords = []
 color = ''
 
 def nothing(x):
@@ -50,14 +50,11 @@ takes the list of list (aka BGR values of all dots)
 and returns average
 '''
 def averageValue(array):
-    print len(array)
-    print array
     b, g, r = 0, 0, 0
     for item in array:
         b += item[0]
         g += item[1]
-        r += item[2]
-    print b, g, r    
+        r += item[2]  
     return math.floor(b/len(array)), math.floor(g/len(array)), math.floor(r/len(array))
 
 '''
@@ -68,6 +65,10 @@ def getHueValue(array):
     hsv_hue = cv2.cvtColor(hue,cv2.COLOR_BGR2HSV)
     return hsv_hue
 
+def drawCircle(array, img):
+    for tuples in array:
+        cv2.circle(img,tuples,5,(255,0,0),3)
+
 '''
 function which is responsible for recording mouse clicks
 and getting their pixel values and appending them to the list
@@ -75,39 +76,40 @@ and getting their pixel values and appending them to the list
 def getColorValues(event,x,y,flags,param):
     global color
     global img
+    global circle_coords
     if event == cv2.EVENT_LBUTTONDOWN:
         if color == 'blue':
             bgr['blue'].append(getPixelValue(img, y, x).tolist())
-            cv2.circle(img,(x,y),5,(255,0,0),-1) 
+            circle_coords.append((x,y))
                
         elif color == 'bright_blue':
             bgr['bright_blue'].append(getPixelValue(img, y, x).tolist()) 
-            cv2.circle(img,(x,y),5,(255,255,0),-1) 
-                      
+            circle_coords.append((x,y))
+
         elif color == 'pink':
             bgr['pink'].append(getPixelValue(img, y, x).tolist())
-            cv2.circle(img,(x,y),5,(255,0,255),-1) 
+            circle_coords.append((x,y))
                 
         elif color == 'green':
             bgr['green'].append(getPixelValue(img, y, x).tolist())
-            cv2.circle(img,(x,y),5,(0,255,0),-1) 
+            circle_coords.append((x,y))
                 
         elif color == 'yellow':
             bgr['yellow'].append(getPixelValue(img, y, x).tolist())
-            cv2.circle(img,(x,y),5,(0,255,255),-1) 
-    
+            circle_coords.append((x,y))
+
 
 '''
 getThresholds() automatically thresholds colors only by clicking on the current feed
 Function returns 'hsv_range' - dictionary that contains all needed thresholds
 for these colors: red, maroon, green (aka bright_green), pink, yellow, blue and light_blue
 '''
-def getThresholds():
+def getThresholds(pitch):
     global color
     global img
     hsv_range = {}
-    hsv_range['red'] = ( np.array([0, 190, 190]), np.array([5, 255, 255]) )
-    hsv_range['maroon'] = ( np.array([175, 190, 190]), np.array([180, 255, 255]) )
+    hsv_range['red'] = ( np.array([0, 150, 150]), np.array([5, 255, 255]) )
+    hsv_range['maroon'] = ( np.array([175, 150, 150]), np.array([180, 255, 255]) )
     
     print "What colours do you want to calibrate?"
     print "Click once on the image after pressing the following: \n 'b' -> blue \n 'c' -> bright_blue \n 'p' -> pink \n 'g' -> green \n 'y' -> yellow"
@@ -115,11 +117,11 @@ def getThresholds():
     print "Once done with obtaining pixel values, pres ESC to proceed."
     cv2.namedWindow('image')
     cv2.setMouseCallback('image',getColorValues)
-    c = Camera()
+    c = Camera(pitch)
     while(1):
         img = c.get_frame()
-        #img = cv2.imread('pitch.png')
         cv2.imshow('image',img)
+
         k = cv2.waitKey(1) & 0xFF
         if k == ord('b'):
             print "Click on BLUE"
@@ -159,12 +161,12 @@ def getThresholds():
 uses GUI sliding trackbars to calibrate thresholds
 and returns dictionary with calibrated thresholds
 '''
-def calibrateThresholds():
+def calibrateThresholds(pitch):
 
     # keys: blue, pink, maroon, green, yellow, bright_blue, red
-    thresholds = getThresholds()
+    thresholds = getThresholds(pitch)
     calibrated_thresholds = {}
-    c = Camera()
+    c = Camera(pitch)
 
     for colors in thresholds:
         if colors != 'red' and colors != 'maroon': 
@@ -183,7 +185,6 @@ def calibrateThresholds():
 
             while(1):
                 frame = c.get_frame()
-                #frame = cv2.imread('pitch.png')
                 blur = cv2.GaussianBlur(frame,(11,11), 0)
                 hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
                 h_low = cv2.getTrackbarPos('H low',colors)
@@ -241,7 +242,6 @@ def calibrateThresholds():
         v_low_maroon = cv2.getTrackbarPos('V low maroon','red')
 
         frame = c.get_frame()
-        #frame = cv2.imread('pitch.png')
         blur = cv2.GaussianBlur(frame,(11,11), 0)
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
         # create masks
@@ -251,7 +251,7 @@ def calibrateThresholds():
 
         cv2.imshow('red', denoiseMask(mask))
         cv2.imshow('actual feed', frame)
-
+                    
         calibrated_thresholds['red'] = {'min': np.array([h_low_red, s_low_red, v_low_red]), 'max': np.array([h_high_red, 255, 255]) }
         calibrated_thresholds['maroon'] = {'min': np.array([h_low_maroon, s_low_maroon, v_low_maroon]),'max': np.array([h_high_maroon, 255, 255]) }
 
@@ -264,8 +264,9 @@ def calibrateThresholds():
     return calibrated_thresholds
 
 if __name__ == "__main__":
-    #args = parseArgs()
-    #pitch = args.p
-    data = calibrateThresholds()
+    args = parseArgs()
+    pitch = args.p
+    data = calibrateThresholds(pitch)
+    print data
     save_colors(data)
     print "---CALIBRATION DONE------"
