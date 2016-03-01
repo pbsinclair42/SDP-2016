@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 import sys
+import os
 sys.path.insert(0, '../')
 sys.path.insert(0, './')
 import cv2
@@ -9,9 +10,9 @@ from os.path import abspath
 
 COLS = 640
 ROWS = 480
-
+PATH = os.path.dirname(os.path.realpath(__file__))
 # enable access to the json file from any directory in SDP
-absPathToJson = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP-2016/vision/config/undistort.json'
+absPathToJson = PATH+"/config/undistort.json"
 
 pitches = util.read_json(absPathToJson)
 
@@ -39,7 +40,7 @@ def translate(frame, pitch=0):
 def undistort(frame, pitch_num=0):
 
     pitch = pitch_to_numpy(pitches[str(pitch_num)])
-
+    
     return cv2.undistort(frame, pitch["camera_matrix"], pitch["dist"], None,
                         pitch["new_camera_matrix"])
 

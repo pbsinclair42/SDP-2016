@@ -1,5 +1,5 @@
-yellow
+light_blue
 3
-blue
+red
 left
-True
+False
