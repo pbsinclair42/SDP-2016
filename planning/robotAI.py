@@ -96,7 +96,13 @@ def executePlan():
             # send the command to turn to the angle we actually should be at
             else:
                 turnToDirection(targetAngle)
-
+    elif currentAction == Actions.waitForBall:
+        if ball.distance(me) >5:
+            print "Not Got Ball Yet"
+            executePlan()
+        else:
+            print "I've Got The Ball"
+            me.plan.pop(0)
     elif currentAction==Actions.moveToPoint:
         # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
