@@ -6,12 +6,14 @@ import cv2
 import util
 import numpy as np
 from os.path import abspath
+import os
 
 COLS = 640
 ROWS = 480
 
+PATH = os.path.dirname(os.path.realpath(__file__))
 # enable access to the json file from any directory in SDP
-absPathToJson = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP-2016/vision/config/undistort.json'
+absPathToJson = PATH+'/onfig/undistort.json'
 
 pitches = util.read_json(absPathToJson)
 
