@@ -6,7 +6,7 @@ from helperFunctions import sin, cos
 class Moveable(object):
     """An object in the game that can move (ie robot or ball)"""
     #TODO: walls
-    _HISTORY_SIZE = 10
+    _HISTORY_SIZE = 3
 
     def __init__(self, p=None):
         if p==None:
