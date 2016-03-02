@@ -355,11 +355,11 @@ void Communications() {
                 Serial.write(CMD_ACK);
                 Serial.write(CMD_ACK);
                 Serial.write(CMD_ACK);
-                Serial.write(command_index / 4);
-                Serial.write(buffer_index / 4);
-                Serial.write(command_buffer[target_value - 4]);
-                Serial.write(command_buffer[target_value - 3]);
-                Serial.write(command_buffer[target_value - 2]);
+                //Serial.write(command_index / 4);
+                //Serial.write(buffer_index / 4);
+                //Serial.write(command_buffer[target_value - 4]);
+                //Serial.write(command_buffer[target_value - 3]);
+                //Serial.write(command_buffer[target_value - 2]);
                 //Serial.write(command_buffer[target_value - 1]);
                  
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
@@ -382,12 +382,13 @@ void Communications() {
                 buffer_index -= 4;
                 while(Serial.available()){
                     garbage = Serial.read();
-                    Serial.write(garbage);
+                    //Serial.write(garbage);
                 }
                 if (bad_commands >= 50){
                     Serial.write(CMD_ACK);
                     Serial.write(CMD_ACK);
                     Serial.write(CMD_ACK);
+                    bad_commands = 0;
                 }
             }
         }
