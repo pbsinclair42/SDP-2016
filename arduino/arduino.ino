@@ -83,7 +83,7 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
-byte 
+byte bad_commands = 0;
 
 // used for the millis function.
 unsigned long serial_time;
@@ -289,7 +289,7 @@ void loop() {
       
      }
 
-    if (millis() - idle_time > 3000){
+    if (millis() - idle_time > 3000 && command_index != 0){
         Serial.write(rotMoveGrabMode);
         Serial.write(MasterState);
         Serial.write(SEQ_NUM);
@@ -303,8 +303,12 @@ void loop() {
     }
     // add this in before and set state_end to 1
     if (millis() - serial_time > 5000 && command_index != 0){
-        Serial.write(CMD_DONE);
-        serial_time = millis();
+       Serial.flush();
+       Serial.write(CMD_DONE);
+       Serial.write(CMD_DONE);
+       Serial.write(CMD_DONE);
+       Serial.flush();
+       serial_time = millis();
     }
 }
 
@@ -370,6 +374,7 @@ void Communications() {
             }
                 // report bad command
             else{
+                bad_commands += 1;
                 Serial.write(CMD_ERROR);
                 Serial.write(SEQ_NUM);
                 Serial.write(CMD_ERROR);
@@ -378,6 +383,11 @@ void Communications() {
                 while(Serial.available()){
                     garbage = Serial.read();
                     Serial.write(garbage);
+                }
+                if (bad_commands >= 50){
+                    Serial.write(CMD_ACK);
+                    Serial.write(CMD_ACK);
+                    Serial.write(CMD_ACK);
                 }
             }
         }

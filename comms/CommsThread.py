@@ -347,7 +347,8 @@ def check_ack_count(ack_count, cmnd_list):
         print 80 * "*"
         print 80 * "="
         acknowledge_command(cmnd_list, 2)
-        return (finished, finished)
+        #return (finished, finished)
+        return ack_count
     else:
         return ack_count
 
