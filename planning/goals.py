@@ -70,7 +70,7 @@ def passBall():
         return me.bearing(ally)
 
     def kickToAlly():
-        return me.distance(ally)
+        return 255#me.distance(ally)
 
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': rotate},
                 {'action':Actions.kick,'targetFunction': kickToAlly}]
