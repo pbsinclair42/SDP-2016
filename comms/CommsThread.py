@@ -292,7 +292,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
         ack_count = check_ack_count(ack_count, cmnd_list)
         pipe_out.send(ack_count)
-        sleep(0.1)
+        sleep(0.3)
         
 
 def process_data(commands, data, comb_count, seq_num):
