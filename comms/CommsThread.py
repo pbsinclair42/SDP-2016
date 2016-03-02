@@ -298,7 +298,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         except IndexError as e:
             print "This fucked up --->", cmnd_list
             print str(e)
-        
+
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
         ack_count = check_ack_count(ack_count, cmnd_list)
         pipe_out.send(ack_count)
@@ -324,7 +324,7 @@ def process_data(commands, data, comb_count, seq_num):
                 end_count-= 1
             #else:
             #    seq_num = flip_seq(seq_num)
-            
+
     del data[:cutoff_index + 1]
     return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
 
@@ -359,7 +359,7 @@ def check_ack_count(ack_count, cmnd_list):
         print x, "Show this to Krassy", x
         print 80 * "*"
         print 80 * "="
-        acknowledge_command(cmnd_list, 2)
+        acknowledge_command(cmnd_list, 1)
         return (received, received)
         #return ack_count
     else:
