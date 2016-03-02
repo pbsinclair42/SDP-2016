@@ -695,11 +695,11 @@ float calculateRotaryTarget(float x3){
         x1 = 0.75;
         x2 = 30;
         y1 = 0;
-        y2 = 1.55;
+        y2 = 1.7;
     } else if (x3 <= 45){
         x1 = 30;
         x2 = 45;
-        y1 = 1.55;
+        y1 = 1.7;
         y2 = 1.75;
     } else if (x3 <= 60){
         x1 = 45;
