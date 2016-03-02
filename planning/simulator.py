@@ -1,7 +1,7 @@
 from enum import Enum
 from constants import *
 from helperClasses import Point, BallStatus
-from helperFunctions import sin, cos
+from helperFunctions import sin, cos, nearEnough
 from moveables import Robot, Ball
 
 # our supreme robot
@@ -207,10 +207,10 @@ class Simulator(object):
 
         # if currently kicking
         elif currentAction['action']==SimulatorActions.kick:
-            # if it'll keep kicking for this whole tick, the only potential change is that the ball starts moving
+            # TODO if it'll keep kicking for this whole tick, the only potential change is that the ball starts moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
-                # TODO start the ball moving at the appropriate point
+                simulatedBall.get_kicked()
 
             # if not, start the next action in the queue with the remaining time
             else:
@@ -226,8 +226,11 @@ class Simulator(object):
             # if it'll keep grabbing for this whole tick, the only potential change is that the ball stops moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
-                # TODO potentially stop the ball and toggle 'holding ball' state
-
+                # if the ball is close enough stop the ball and toggle 'holding ball' state
+                if nearEnough(simulatedMe.currentPoint, simulatedBall.currentPoint):
+                    simulatedBall.currentSpeed = 0
+                    simulatedBall.acceleration = 0
+                    simulatedBall.state = BallStatus.me
             # if not, start the next action in the queue with the remaining time
             else:
                 self.grabbed=True
@@ -261,20 +264,30 @@ class SimBall(Ball):
     def __init__(self, p=None, name =None):
         super(SimBall, self).__init__(p, name)
 
-    def bounce():
+    def bounce(self):
         self.direction = abs(360 - self.direction)
-    def move():
-        simulatedBall.currentSpeed = simulatedBall.currentSpeed + simulatedBall.acceleration*tickTimeLeft
-        distanceTravelled = simulatedBall.currentSpeed* tickTimeLeft
-        angle = simulatedBall.currentRotation
+
+    def move(self):
+        if self.currentSpeed ==0 && self.acceleration ==0:
+            return
+        self.currentSpeed = self.currentSpeed + self.acceleration*tickTimeLeft
+        distanceTravelled = self.currentSpeed* tickTimeLeft
+        angle = self.currentRotation
         xDisplacement = round(cos(angle)*distanceTravelled, 2)
         yDisplacement = -round(sin(angle)*distanceTravelled, 2)
-        newX = simulatedBall.currentPoint.x+xDisplacement
-        newY = simulatedBall.currentPoint.y+yDisplacement
+        newX = self.currentPoint.x+xDisplacement
+        newY = self.currentPoint.y+yDisplacement
         outsideWall = xDisplacement == PITCH_WIDTH || yDisplacement == PITCH_LENGTH
         if outsideWall:
-            simulatedBall.bounce()
-        simulatedBall.currentPoint = Point(newX, newY )
+            self.bounce()
+        self.currentPoint = Point(newX, newY )
+        if self.currentSpeed < 0:
+            self.currentSpeed = 0
+            self.acceleration = 0
+
+    def get_kicked(self):
+        self.acceleration = -2
+
 
 
 def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot, enemyARot, enemyBRot, ballPoint, ballStat):
