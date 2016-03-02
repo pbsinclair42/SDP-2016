@@ -28,8 +28,8 @@ class CommsThread(object):
             "UNGRAB"       : chr(32 ),
             "FLUSH"        : chr(64 ),
 
-            "DONE"         : chr(111),
-            "ACK"          : chr(248),
+            "DONE"         : chr(250),
+            "ACK"          : chr(253),
             "RESEND"       : chr(252),
             "FULL"         : chr(254),
             "END"          : chr(255)
@@ -213,7 +213,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         try:
             comms = Serial(port=port, baudrate=baudrate)
             radio_connected = True
-        except Exception as e:
+        except Exception:
             print "Comms: Radio not connected. Trying again in 5 seconds;", str(e)
             radio_connected = False
             sleep(5)    
@@ -284,9 +284,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     comms.write(sequenced)
                     cmnd_list[cmd_index][-3] = 1
                     resend_time = time()
-                    print "Sending command: ", cmd_index, sequenced
-        except IndexError:
+                    print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
+        except IndexError as e:
             print "This fucked up --->", cmnd_list
+            print str(e)
         
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
         ack_count = check_ack_count(ack_count, cmnd_list)
@@ -298,19 +299,19 @@ def process_data(commands, data, comb_count, seq_num):
     cutoff_index, ack_count, end_count = 0, 0, 0
 
     for idx, item in enumerate(data):
-        if item == 248:
+        if item == 250:
             acknowledge_command(commands, 2)
             cutoff_index = idx
             ack_count += 1
-            if idx < len(data) - 1 and data[idx + 1] == 248:
+            if idx < len(data) - 1 and data[idx + 1] == 250:
                 ack_count-= 1
             else:
                 seq_num = flip_seq(seq_num)
-        elif item == 111:
+        elif item == 253:
             acknowledge_command(commands, 1)
             cutoff_index = idx
             end_count += 1
-            if idx < len(data) - 1 and data[idx + 1] == 111:
+            if idx < len(data) - 1 and data[idx + 1] == 253:
                 end_count-= 1
 
     del data[:cutoff_index + 1]
@@ -331,7 +332,11 @@ def flip_seq(seq):
         return 1
 
 def sequence_command(command, seq):
-    return [ord(chr(seq * 128 + command[0]))] + command[1:4]
+    sequence = ord(chr(seq * 128 + command[0]))
+    checksum = 0
+    for cmd_byte in [sequence, command[1], command[2]]:
+        checksum += sum([bit == '1' for bit in bin(cmd_byte)])
+    return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
 
 def check_ack_count(ack_count, cmnd_list):
     received = ack_count[0]
