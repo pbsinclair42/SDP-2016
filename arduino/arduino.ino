@@ -279,9 +279,10 @@ void loop() {
           commandOverflow++;
       }
       
-      Serial.write(CMD_DONE);
-      Serial.write(CMD_DONE);
-      Serial.write(CMD_DONE);
+    for (int i=0; i < 8; i++){
+        Serial.write(CMD_DONE);
+        delay(10);
+    }
       //delay(5000);
       
      }
@@ -301,9 +302,10 @@ void loop() {
     // add this in before and set state_end to 1
     if (millis() - serial_time > 5000 && command_index != 0){
 
-       Serial.write(CMD_DONE);
-       Serial.write(CMD_DONE);
-       Serial.write(CMD_DONE);
+       for (int i=0; i < 8; i++){
+            Serial.write(CMD_DONE);
+            delay(10);
+        }
        serial_time = millis();
 
     }
@@ -349,9 +351,11 @@ void Communications() {
                 (command_buffer[target_value - 1] == checksum)){
                 
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
-                Serial.write(CMD_ACK);
-                Serial.write(CMD_ACK);
-                Serial.write(CMD_ACK);
+                for (int i=0; i < 8; i++){
+                    Serial.write(CMD_ACK);
+                    delay(10);
+                }
+
                 //Serial.write(command_index / 4);
                 //Serial.write(buffer_index / 4);
                 //Serial.write(command_buffer[target_value - 4]);
@@ -381,10 +385,11 @@ void Communications() {
                     garbage = Serial.read();
                     //Serial.write(garbage);
                 }
-                if (bad_commands >= 50){
-                    Serial.write(CMD_ACK);
-                    Serial.write(CMD_ACK);
-                    Serial.write(CMD_ACK);
+                if (bad_commands >= 30){
+                    for (int i=0; i < 8; i++){
+                        Serial.write(CMD_ACK);
+                        delay(10);
+                    }
                     bad_commands = 0;
                 }
             }
