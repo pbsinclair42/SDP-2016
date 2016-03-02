@@ -207,7 +207,7 @@ class Simulator(object):
 
         # if currently kicking
         elif currentAction['action']==SimulatorActions.kick:
-            # TODO if it'll keep kicking for this whole tick, the only potential change is that the ball starts moving
+            # if it'll keep kicking for this whole tick, the only potential change is that the ball starts moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
                 simulatedBall.get_kicked()
@@ -231,7 +231,7 @@ class Simulator(object):
                     simulatedBall.currentSpeed = 0
                     simulatedBall.acceleration = 0
                     simulatedBall.state = BallStatus.me
-            # if not, start the next action in the queue with the remaining time
+            # if not, start the next action in the queue with the remaining time TODO
             else:
                 self.grabbed=True
                 tickTimeLeft = TICK_TIME-currentAction['timeLeft']
@@ -268,7 +268,7 @@ class SimBall(Ball):
         self.direction = abs(360 - self.direction)
 
     def move(self):
-        if self.currentSpeed ==0 && self.acceleration ==0:
+        if self.currentSpeed ==0 & self.acceleration ==0:
             return
         self.currentSpeed = self.currentSpeed + self.acceleration*tickTimeLeft
         distanceTravelled = self.currentSpeed* tickTimeLeft
@@ -277,7 +277,7 @@ class SimBall(Ball):
         yDisplacement = -round(sin(angle)*distanceTravelled, 2)
         newX = self.currentPoint.x+xDisplacement
         newY = self.currentPoint.y+yDisplacement
-        outsideWall = xDisplacement == PITCH_WIDTH || yDisplacement == PITCH_LENGTH
+        outsideWall = xDisplacement == PITCH_WIDTH | yDisplacement == PITCH_LENGTH
         if outsideWall:
             self.bounce()
         self.currentPoint = Point(newX, newY )
