@@ -195,13 +195,15 @@ def executePlan():
                     # go to where its actually going
                     collectBall()
 
-
-
-    # if our plan is over, we've achieved our goal
+    # if our plan is over, we've probably achieved our goal
     if len(me.plan)==0:
-        me.goal = Goals.none
-        commsSystem.stop()
-        print"Stopped"+'\n'*50
+        # if our goal was to collect the ball and we haven't managed to do so, try again
+        if me.goal==Goals.collectBall and ball.status!=BallStatus.me:
+            collectBall()
+        else:
+            me.goal = Goals.none
+            commsSystem.stop()
+
 
 
 def tick():
@@ -223,5 +225,5 @@ updatePositions()
 from helperClasses import Point
 me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
 me.goal = Goals.collectBall'''
-
+updatePositions()
 tick()
