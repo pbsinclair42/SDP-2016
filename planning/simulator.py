@@ -16,9 +16,12 @@ simulatedRobots = [simulatedMe, simulatedAlly]+simulatedEnemies
 simulatedBall = Ball(name="simulatedBall")
 
 
+
+
 class Simulator(object):
 
     def __init__(self, debug=False):
+        # Actions queued to simulate.
         self.currentActionQueue=[]
         self.grabbed=True
         self.holdingBall=False
@@ -250,6 +253,28 @@ class Simulator(object):
                 self.lastCommandFinished +=1
                 # start the next action if it's queued
                 self.tick(tickTimeLeft)
+        ## move ball (v = u +at)
+        simulatedBall.move() 
+
+
+class SimBall(Ball):
+    def __init__(self, p=None, name =None):
+        super(SimBall, self).__init__(p, name)
+
+    def bounce():
+        self.direction = abs(360 - self.direction)
+    def move():
+        simulatedBall.currentSpeed = simulatedBall.currentSpeed + simulatedBall.acceleration*tickTimeLeft
+        distanceTravelled = simulatedBall.currentSpeed* tickTimeLeft
+        angle = simulatedBall.currentRotation
+        xDisplacement = round(cos(angle)*distanceTravelled, 2)
+        yDisplacement = -round(sin(angle)*distanceTravelled, 2)
+        newX = simulatedBall.currentPoint.x+xDisplacement
+        newY = simulatedBall.currentPoint.y+yDisplacement
+        outsideWall = xDisplacement == PITCH_WIDTH || yDisplacement == PITCH_LENGTH
+        if outsideWall:
+            simulatedBall.bounce()
+        simulatedBall.currentPoint = Point(newX, newY )
 
 
 def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot, enemyARot, enemyBRot, ballPoint, ballStat):
