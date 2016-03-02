@@ -218,6 +218,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)
     print "Radio On-line"
 
+    print comms.in_waiting
     # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
@@ -311,7 +312,9 @@ def process_data(commands, data, comb_count, seq_num):
             end_count += 1
             if idx < len(data) - 1 and data[idx + 1] == 253:
                 end_count-= 1
-
+            #else:
+            #    seq_num = flip_seq(seq_num)
+            
     del data[:cutoff_index + 1]
     return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
 

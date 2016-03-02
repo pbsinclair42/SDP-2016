@@ -303,7 +303,11 @@ void loop() {
     }
     // add this in before and set state_end to 1
     if (millis() - serial_time > 5000 && command_index != 0){
+        Serial.flush();
         Serial.write(CMD_DONE);
+        Serial.write(CMD_DONE);
+        Serial.write(CMD_DONE);
+        Serial.flush();
         serial_time = millis();
     }
 }
