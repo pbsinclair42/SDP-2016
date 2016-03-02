@@ -6,7 +6,7 @@ from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
 from actions import moveToPoint, turnToDirection
-from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
+from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass
 import visionAPI
 from CommsAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
 from simulator import Simulator
@@ -57,9 +57,9 @@ def makePlan():
         if not USING_SIMULATOR:
             commsSystem.restart()
         action = "0"
-        while action not in ['1','2','3','4','5','6', '7']:
+        while action not in ['1','2','3','4','5','6', '7', '8']:
             print("What action should I do now?")
-            action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Stop\n? ")
+            action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Receieve and pass (milestoney stuff)\n8. Stop\n? ")
         if action=="1":
             collectBall()
         elif action=="2":
@@ -72,6 +72,8 @@ def makePlan():
             blockPass()
         elif action =="6":
             guardGoal()
+        elif action == "7":
+            receiveAndPass()
         else:
             import sys
             sys.exit()
@@ -165,15 +167,6 @@ def executePlan():
             me.grabberState=0
             me.plan.pop(0)
 
-    elif currentAction == Actions.guardGoal:
-        if ball.moving == False:
-            turnToDirection(me.bearing(ball))
-        elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
-            executePlan()
-        elif ball.moving:# ball moving but not towards us
-            me.interceptObject(ball)
-            me.plan.pop(0)
-
     elif currentAction == Actions.receiveBall:
         if me.moving:
             print("Still doing stuff")
@@ -193,6 +186,7 @@ def executePlan():
                 # if it's not headed towards us, just try and fetch it
                 else:
                     # go to where its actually going
+                    grab()
                     collectBall()
 
     # if our plan is over, we've probably achieved our goal
@@ -203,7 +197,6 @@ def executePlan():
         else:
             me.goal = Goals.none
             commsSystem.stop()
-
 
 
 def tick():

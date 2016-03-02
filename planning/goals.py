@@ -82,7 +82,6 @@ def receiveAndPass():
                {'action':Actions.grab},
                {'action':Actions.rotateToAngle,'targetFunction': rotate2},
                {'action':Actions.kick,'targetFunction': kickToAlly}]
-               
 
 
 def passBall():
