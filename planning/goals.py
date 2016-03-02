@@ -78,7 +78,7 @@ def receiveAndPass():
 
     me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate1},
                {'action':Actions.ungrab},
-               {'action':Actions.receiveBall},
+               {'action':Actions.receiveBallForPass},
                {'action':Actions.grab},
                {'action':Actions.rotateToAngle,'targetFunction': rotate2},
                {'action':Actions.kick,'targetFunction': kickToAlly}]
