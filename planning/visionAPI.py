@@ -1,7 +1,7 @@
 from helperClasses import Point, BallStatus
 import sys
 import os
-from constants import ROOT_DIR, X_RATIO, Y_RATIO
+from constants import ROOT_DIR, X_RATIO, Y_RATIO, USING_SIMULATOR
 from cv2 import error as cv2Error
 from simulator import simulatedMe, simulatedAlly, simulatedEnemies, simulatedBall
 
@@ -18,7 +18,6 @@ camera = Camera()
 # check if the camera is connected
 try:
     frame = camera.get_frame_hack()
-    #raise cv2Error()
 except cv2Error:
     # if you can't get a frame from the camera, warn the user, but continue
     print
@@ -28,19 +27,24 @@ except cv2Error:
     print
     camera=None
 
+with open('conf.txt','r') as f:
+        context = f.readlines()
+        our_team_color = context[0].strip('\n')
+        num_of_pink = context[1].strip('\n')
+        ball_color = context[2].strip('\n')
+        if context[3] == "right":
+            ourGoal = rightGoalCenter
+            opponentGoal = leftGoalCenter
+        else:
+            ourGoal = leftGoalCenter
+            opponentGoal = rightGoalCenter
+
+print(USING_SIMULATOR)
+if USING_SIMULATOR:
+    camera=None
+
 # if we managed to connect to the camera, set up the robot variables
 if camera!=None:
-    with open('conf.txt','r') as f:
-            context = f.readlines()
-            our_team_color = context[0].strip('\n')
-            num_of_pink = context[1].strip('\n')
-            ball_color = context[2].strip('\n')
-            if context[3] == "right":
-                ourGoal = rightGoalCenter
-                opponentGoal = leftGoalCenter
-            else:
-                ourGoal = leftGoalCenter
-                opponentGoal = rightGoalCenter
 
     #create our trackers:
     robotTracker = RobotTracker(our_team_color, int(num_of_pink))

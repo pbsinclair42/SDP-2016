@@ -99,4 +99,4 @@ class Actions(Enum):
     ungrab = 4
     kick = 5
     guardGoal = 6
-    waitForBall = 7
+    receiveBall = 7

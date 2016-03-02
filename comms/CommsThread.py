@@ -28,8 +28,8 @@ class CommsThread(object):
             "UNGRAB"       : chr(32 ),
             "FLUSH"        : chr(64 ),
 
-            "DONE"         : chr(111),
-            "ACK"          : chr(248),
+            "DONE"         : chr(250),
+            "ACK"          : chr(253),
             "RESEND"       : chr(252),
             "FULL"         : chr(254),
             "END"          : chr(255)
@@ -171,6 +171,7 @@ class CommsThread(object):
         """
             stop communications process until a new command has been issued
         """
+        print 15 * "STOP WAS CALLED"
         self.process_event.clear()
         '''
     def current_cmd(self):
@@ -189,6 +190,10 @@ class CommsThread(object):
             Return a report of sent commands and currently-buffered data
         """
         self.parent_pipe_in.send("rprt")
+
+    def restart(self):
+        self.process_event.set()
+        self.parent_pipe_in.send("restart");
 
     def am_i_done(self):
         while self.parent_pipe_out.poll():
@@ -212,12 +217,13 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         try:
             comms = Serial(port=port, baudrate=baudrate)
             radio_connected = True
-        except Exception as e:
+        except Exception:
             print "Comms: Radio not connected. Trying again in 5 seconds;", str(e)
             radio_connected = False
             sleep(5)
     print "Radio On-line"
 
+    print comms.in_waiting
     # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
@@ -258,6 +264,11 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
+            elif pipe_data == "restart":
+                print "Restarting"
+                while comms.in_waiting:
+                    x = comms.read(1)
+        print event.is_set()
         print 80 * "-"
          # parse all incoming comms
         while comms.in_waiting:
@@ -283,32 +294,37 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     comms.write(sequenced)
                     cmnd_list[cmd_index][-3] = 1
                     resend_time = time()
-                    print "Sending command: ", cmd_index, sequenced
-        except IndexError:
+                    print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
+        except IndexError as e:
             print "This fucked up --->", cmnd_list
+            print str(e)
+        
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
         ack_count = check_ack_count(ack_count, cmnd_list)
         pipe_out.send(ack_count)
+        sleep(0.3)
 
 def process_data(commands, data, comb_count, seq_num):
     cutoff_index, ack_count, end_count = 0, 0, 0
 
     for idx, item in enumerate(data):
-        if item == 248:
+        if item == 250:
             acknowledge_command(commands, 2)
             cutoff_index = idx
             ack_count += 1
-            if idx < len(data) - 1 and data[idx + 1] == 248:
+            if idx < len(data) - 1 and data[idx + 1] == 250:
                 ack_count-= 1
             else:
                 seq_num = flip_seq(seq_num)
-        elif item == 111:
+        elif item == 253:
             acknowledge_command(commands, 1)
             cutoff_index = idx
             end_count += 1
-            if idx < len(data) - 1 and data[idx + 1] == 111:
+            if idx < len(data) - 1 and data[idx + 1] == 253:
                 end_count-= 1
-
+            #else:
+            #    seq_num = flip_seq(seq_num)
+            
     del data[:cutoff_index + 1]
     return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
 
@@ -327,7 +343,11 @@ def flip_seq(seq):
         return 1
 
 def sequence_command(command, seq):
-    return [ord(chr(seq * 128 + command[0]))] + command[1:4]
+    sequence = ord(chr(seq * 128 + command[0]))
+    checksum = 0
+    for cmd_byte in [sequence, command[1], command[2]]:
+        checksum += sum([bit == '1' for bit in bin(cmd_byte)])
+    return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
 
 def check_ack_count(ack_count, cmnd_list):
     received = ack_count[0]
@@ -340,7 +360,8 @@ def check_ack_count(ack_count, cmnd_list):
         print 80 * "*"
         print 80 * "="
         acknowledge_command(cmnd_list, 2)
-        return (finished, finished)
+        return (received, received)
+        #return ack_count
     else:
         return ack_count
 

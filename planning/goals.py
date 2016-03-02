@@ -18,10 +18,11 @@ def collectBall():
     # function to calculate where to move to before ungrabbing
     def ungrabHere():
         # work out where we expect to find the ball
-        expectedBallPosition = interceptObject(ball)
+        # TODO: replace with interceptObject(ball)?
+        expectedBallPosition = ball.currentPoint
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
-        distanceAway = ROBOT_WIDTH/2 + UNGRAB_DISTANCE
+        distanceAway = ROBOT_WIDTH + UNGRAB_DISTANCE
         xDisplacement = round(cos(bearingAway)*distanceAway, 2)
         yDisplacement = -round(sin(bearingAway)*distanceAway, 2)
         return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
@@ -30,7 +31,8 @@ def collectBall():
     # function to calculate where to move to before grabbing
     def grabHere():
         # work out where we expect to find the ball
-        expectedBallPosition = interceptObject(ball)
+        # TODO: replace with interceptObject(ball)?
+        expectedBallPosition = ball.currentPoint
         # our target is just before that
         bearingAway = expectedBallPosition.bearing(me.currentPoint)
         distanceAway = ROBOT_WIDTH + GRAB_DISTANCE
@@ -81,7 +83,7 @@ def receivePass():
 
     me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate},
                {'action':Actions.ungrab},
-               {'action':Actions.waitForBall},
+               {'action':Actions.receiveBall},
                {'action':Actions.grab}]
 
 def blockPass():
@@ -102,7 +104,7 @@ def blockPass():
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':blockHere},
                {'action':Actions.rotateToAngle, 'targetFunction':rotate},
                {'action':Actions.ungrab},
-               {'action':Actions.waitForBall},
+               {'action':Actions.receiveBall},
                {'action':Actions.grab}]
 
 def guardGoal():
@@ -120,5 +122,5 @@ def guardGoal():
 
     me.plan = [{'action':Actions.moveToPoint,'targetFunction':gotoGoal},
                {'action':Actions.rotateToAngle,'targetFunction':rotate},
-               {'action':Actions.guardGoal}
-               ]
+               {'action':Actions.receiveBall},
+               {'action':Actions.grab}]

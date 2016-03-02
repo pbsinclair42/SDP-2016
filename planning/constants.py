@@ -35,6 +35,10 @@ BOX_LENGTH = 75
 BALL_DIAMETER = 4.9
 BALL_RADIUS = BALL_DIAMETER/2.0
 ROBOT_WIDTH = 6
+
+# the distance from the ball that a robot needs to be before we assume it's got it (centimeters)
+BALL_OWNERSHIP_DISTANCE = 20
+
 # how close to a target point you need to be to count as equal, give or take normal vision inaccuracy (centimeters)
 POINT_ACCURACY = 3
 # how close to a target angle you need to be to count as equal, give or take normal vision inaccuracy (degrees)
@@ -44,10 +48,11 @@ ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (degrees)
 ITLL_DO_ANGLE = 10
 
+
+
+USING_SIMULATOR=False
 # get whether we're using the simulator or the real world from the config file
 with open('conf.txt','r') as f:
     simConfig = f.readlines()[4]
-    if simConfig.lower() == 'true':
+    if simConfig.lower().strip() == 'true':
         USING_SIMULATOR=True
-    else:
-        USING_SIMULATOR=False

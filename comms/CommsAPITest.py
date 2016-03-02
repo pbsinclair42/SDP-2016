@@ -71,7 +71,7 @@ if __name__ == "__main__":
     """
         Big test based on random data
     """
-
+    i = 0
     while True:
         # delay of up to 5 sec
         if commsSystem.am_i_done():
@@ -81,3 +81,6 @@ if __name__ == "__main__":
             pos = random.choice([1, -1])
 
             move(displ, angle * pos)
+            i += 1
+            if i == 15:
+                commsSystem.stop()

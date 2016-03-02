@@ -21,19 +21,26 @@ def updatePositions():
         robots[i].update(details[i][0])
         robots[i].updateRotation(details[i][1])
     # get the info on the ball from the vision system and update the system's beliefs about the ball
-    ball.update(visionAPI.getBallCoords())
+    currentBallCoords = visionAPI.getBallCoords()
+    ball.update(currentBallCoords)
     ball.status = visionAPI.getBallStatus()
+
     #update who has the ball - workaround until vision can tell us
-    """if ball is not None:#if ball exists in vision
-        if ball.distance(enemies[0]) < 5:
-           ball.status = 2
-        elif ball.distance(enemies[1]) <5:
-           ball.status = 3
-        elif ball.distance(ally)<5:
-           ball.status = 1
-        elif ball.distance(me)<5 and me.grabberState == 0:
-            ball.status = 0
-    """
+    try:
+        if ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
+           ball.status = BallStatus.enemyA
+        elif ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
+           ball.status = BallStatus.enemyB
+        elif ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
+           ball.status = BallStatus.ally
+        elif ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabberState == 0:
+            ball.status = BallStatus.me
+        # if we can't see it, assume it's the same, otherwise if it's far enough from everything, it's free
+        elif currentBallCoords!=None:
+            ball.status = BallStatus.free
+    except (TypeError, AttributeError):
+        print("Location of some objects unknown")
+    print(ball.status)
     # check if the last command we sent to the robot has finished
     #newCommandFinished = me.lastCommandFinished != commsSystem.current_cmd()
     #if newCommandFinished:
@@ -47,6 +54,8 @@ def updatePositions():
 def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
+        if not USING_SIMULATOR:
+            commsSystem.restart()
         action = "0"
         while action not in ['1','2','3','4','5','6', '7']:
             print("What action should I do now?")
@@ -96,21 +105,7 @@ def executePlan():
             # send the command to turn to the angle we actually should be at
             else:
                 turnToDirection(targetAngle)
-    elif currentAction == Actions.guardGoal:
-        if ball.moving == False:
-            turnToDirection(me.bearing(ball))
-        elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
-            executePlan()
-        elif ball.moving:# ball moving but not towards us
-            me.interceptObject(ball)
-            me.plan.pop(0)
-    elif currentAction == Actions.waitForBall:
-        if ball.distance(me) >5:
-            print "Not Got Ball Yet"
-            executePlan()
-        else:
-            print "I've Got The Ball"
-            me.plan.pop(0)
+
     elif currentAction==Actions.moveToPoint:
         # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
@@ -159,7 +154,7 @@ def executePlan():
             print("Still doing stuff")
         else:
             ungrab()
-            me.grabberSate=1
+            me.grabberState=1
             me.plan.pop(0)
 
     elif currentAction==Actions.grab:
@@ -168,12 +163,45 @@ def executePlan():
         else:
             grab()
             me.grabberState=0
-            "I tries to grab the ball"
             me.plan.pop(0)
+
+    elif currentAction == Actions.guardGoal:
+        if ball.moving == False:
+            turnToDirection(me.bearing(ball))
+        elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
+            executePlan()
+        elif ball.moving:# ball moving but not towards us
+            me.interceptObject(ball)
+            me.plan.pop(0)
+
+    elif currentAction == Actions.receiveBall:
+        if me.moving:
+            print("Still doing stuff")
+        else:
+            # if another robot's still holding the ball, just wait
+            # TODO: maybe reposition if need be?
+            if ball.status!=BallStatus.free:
+                print("Ball's not been kicked yet lol")
+            # if the ball's been kicked, we hope to collect it
+            else:
+                # if it's headed towards us, stay where we are
+                if nearEnough(ball.direction, ball.bearing(me)):
+                    # if it's close enough, we're done
+                    if ball.distance(me)<ROBOT_WIDTH + GRAB_DISTANCE:
+                        me.plan.pop(0)
+                    # otherwise, just staying here is cool
+                # if it's not headed towards us, just try and fetch it
+                else:
+                    # go to where its actually going
+                    collectBall()
+
+
 
     # if our plan is over, we've achieved our goal
     if len(me.plan)==0:
         me.goal = Goals.none
+        commsSystem.stop()
+        print"Stopped"+'\n'*50
 
 
 def tick():
@@ -196,4 +224,4 @@ from helperClasses import Point
 me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
 me.goal = Goals.collectBall'''
 
-#tick()
+tick()

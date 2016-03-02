@@ -31,7 +31,7 @@ def turnToDirection(angle):
 
 
 def interceptObject(target):
-    return target.currentPoint
+    #return target.currentPoint
     if not isinstance(target,Moveable):
         raise TypeError("Moveable expected, " + point.__class__.__name__ + " found")
     # iteratively work out how long it would take to catch up to the object
