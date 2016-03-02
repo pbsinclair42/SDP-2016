@@ -83,7 +83,7 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
-byte 
+byte bad_commands = 0;
 
 // used for the millis function.
 unsigned long serial_time;
@@ -278,18 +278,15 @@ void loop() {
       if (command_index == 0){
           commandOverflow++;
       }
-      Serial.flush();
+      
       Serial.write(CMD_DONE);
       Serial.write(CMD_DONE);
       Serial.write(CMD_DONE);
-      Serial.write(command_index / 4);
-      Serial.write(buffer_index / 4);
-      Serial.flush();
       //delay(5000);
       
      }
-
-    if (millis() - idle_time > 3000){
+    /*
+    if (millis() - idle_time > 3000 && command_index != 0){
         Serial.write(rotMoveGrabMode);
         Serial.write(MasterState);
         Serial.write(SEQ_NUM);
@@ -300,15 +297,15 @@ void loop() {
         if (command_index != CMD_DONE && command_index != CMD_ACK){
             Serial.write(command_index);
         }
-    }
+    }*/
     // add this in before and set state_end to 1
     if (millis() - serial_time > 5000 && command_index != 0){
-        Serial.flush();
-        Serial.write(CMD_DONE);
-        Serial.write(CMD_DONE);
-        Serial.write(CMD_DONE);
-        Serial.flush();
-        serial_time = millis();
+
+       Serial.write(CMD_DONE);
+       Serial.write(CMD_DONE);
+       Serial.write(CMD_DONE);
+       serial_time = millis();
+
     }
 }
 
@@ -355,11 +352,11 @@ void Communications() {
                 Serial.write(CMD_ACK);
                 Serial.write(CMD_ACK);
                 Serial.write(CMD_ACK);
-                Serial.write(command_index / 4);
-                Serial.write(buffer_index / 4);
-                Serial.write(command_buffer[target_value - 4]);
-                Serial.write(command_buffer[target_value - 3]);
-                Serial.write(command_buffer[target_value - 2]);
+                //Serial.write(command_index / 4);
+                //Serial.write(buffer_index / 4);
+                //Serial.write(command_buffer[target_value - 4]);
+                //Serial.write(command_buffer[target_value - 3]);
+                //Serial.write(command_buffer[target_value - 2]);
                 //Serial.write(command_buffer[target_value - 1]);
                  
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
@@ -374,6 +371,7 @@ void Communications() {
             }
                 // report bad command
             else{
+                bad_commands += 1;
                 Serial.write(CMD_ERROR);
                 Serial.write(SEQ_NUM);
                 Serial.write(CMD_ERROR);
@@ -381,7 +379,13 @@ void Communications() {
                 buffer_index -= 4;
                 while(Serial.available()){
                     garbage = Serial.read();
-                    Serial.write(garbage);
+                    //Serial.write(garbage);
+                }
+                if (bad_commands >= 50){
+                    Serial.write(CMD_ACK);
+                    Serial.write(CMD_ACK);
+                    Serial.write(CMD_ACK);
+                    bad_commands = 0;
                 }
             }
         }

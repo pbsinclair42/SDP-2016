@@ -171,6 +171,7 @@ class CommsThread(object):
         """
             stop communications process until a new command has been issued
         """
+        print 15 * "STOP WAS CALLED"
         self.process_event.clear()
         '''
     def current_cmd(self):
@@ -189,6 +190,10 @@ class CommsThread(object):
             Return a report of sent commands and currently-buffered data
         """
         self.parent_pipe_in.send("rprt")
+
+    def restart(self):
+        self.process_event.set()
+        self.parent_pipe_in.send("restart");
 
     def am_i_done(self):
         while self.parent_pipe_out.poll():
@@ -259,6 +264,11 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
+            elif pipe_data == "restart":
+                print "Restarting"
+                while comms.in_waiting:
+                    x = comms.read(1)
+        print event.is_set()
         print 80 * "-"
          # parse all incoming comms
         while comms.in_waiting:
@@ -350,7 +360,8 @@ def check_ack_count(ack_count, cmnd_list):
         print 80 * "*"
         print 80 * "="
         acknowledge_command(cmnd_list, 2)
-        return (finished, finished)
+        return (received, received)
+        #return ack_count
     else:
         return ack_count
 

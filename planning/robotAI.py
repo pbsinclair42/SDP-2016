@@ -54,6 +54,8 @@ def updatePositions():
 def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
+        if not USING_SIMULATOR:
+            commsSystem.restart()
         action = "0"
         while action not in ['1','2','3','4','5','6', '7']:
             print("What action should I do now?")
@@ -198,6 +200,8 @@ def executePlan():
     # if our plan is over, we've achieved our goal
     if len(me.plan)==0:
         me.goal = Goals.none
+        commsSystem.stop()
+        print"Stopped"+'\n'*50
 
 
 def tick():
@@ -220,4 +224,4 @@ from helperClasses import Point
 me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
 me.goal = Goals.collectBall'''
 
-#tick()
+tick()
