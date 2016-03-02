@@ -1,5 +1,5 @@
 light_blue
-3
+1
 red
 left
 False
