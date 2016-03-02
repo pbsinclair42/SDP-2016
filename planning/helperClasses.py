@@ -88,7 +88,7 @@ class Goals(Enum):
     receivePass = 4
     blockPass = 5
     guardGoal = 6
-
+    receiveAndPass = 7
 
 class Actions(Enum):
     """An enum listing the possible actions our robot can take"""
