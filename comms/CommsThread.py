@@ -222,10 +222,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
 
-    resend_time = time()
-
-
-
     while True:
         event.wait()
         if pipe_in.poll():
@@ -240,6 +236,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             # non-command-inputs:
             elif pipe_data == "exit":
                 return
+
             # return index of command currently being performed
             elif pipe_data == "ccmd":
                 pipe_out.send(len(cmnd_list) == ack_count[1])
@@ -258,40 +255,39 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
-        print 80 * "-"
-         # parse all incoming comms
+        
+        # parse all incoming comms
         while comms.in_waiting:
             data = comms.read(1)
-            print "DATA +=", ord(data)
-            try:
-                data_buffer.append(ord(data))
-            except ValueError:
-                pass
-
+            # if last command isn't finished
+            if cmnd_list and all(cmnd_list[-1][-3:]):
+                print "Flushing: ", ord(data)
+            else:
+                data_buffer += [ord(data)]
+                print "DATA +=", ord(data)
+                
         # ensure data has been processed before attempting to send data
         ack_count, seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
 
-        try:
-            # if there are commands to send
-            if cmnd_list and not all(cmnd_list[-1][-3:-1]):
-                # get first un-sent command or un-acknowledged, but send
-                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+        # if there are commands to send
+        if cmnd_list and not all(cmnd_list[-1][-3:-1]):
+            # get first un-sent command or un-acknowledged, but send
+            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
 
-                # if the command is not acknowledged on time
-                if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
-                    sequenced = sequence_command(cmd_to_send[:4], seq_num)
+            # if the command is not acknowledged on time
+            if cmd_to_send[-2] == 0:
+                sequenced = sequence_command(cmd_to_send[:4], seq_num)
+                for command_byte in sequenced:
                     comms.write(sequenced)
-                    cmnd_list[cmd_index][-3] = 1
-                    resend_time = time()
-                    print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
-        except IndexError as e:
-            print "This fucked up --->", cmnd_list
-            print str(e)
+                    sleep(0.05)
+                cmnd_list[cmd_index][-3] = 1
+                print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
         
         print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
-        ack_count = check_ack_count(ack_count, cmnd_list)
+        print cmnd_list
+        ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-3] for command in cmnd_list]) )
         pipe_out.send(ack_count)
-        sleep(0.3)
+        sleep(0.08)
 
 def process_data(commands, data, comb_count, seq_num):
     cutoff_index, ack_count, end_count = 0, 0, 0
@@ -346,7 +342,7 @@ def check_ack_count(ack_count, cmnd_list):
         print x, "Show this to Krassy", x
         print 80 * "*"
         print 80 * "="
-        acknowledge_command(cmnd_list, 2)
+        acknowledge_command(cmnd_list, 1)
         #return (finished, finished)
         return ack_count
     else:
