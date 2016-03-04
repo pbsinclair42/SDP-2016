@@ -59,7 +59,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 
 // Comms Tuning Parameters
 #define RESPONSE_COUNT 3 // how many bytes to respond with, for ACK and FIN
-#define RESPONSE_PERIOD 25 // how many milliseconds to wait between responses
+#define RESPONSE_PERIOD 10 // how many milliseconds to wait between responses
 byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 
 // utils
@@ -85,7 +85,7 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
-byte bad_commands = 0;
+byte invalid_commands = 0;
 
 // used for the millis function.
 unsigned long serial_time; 
@@ -190,8 +190,8 @@ void setup() {
 
 void loop() {
   Communications();
-  // get sensor data at each time-step
-  //pollAccComp();
+  
+  pollAccComp();
   int state_end = 0;
   MasterState = MasterState & 127;
   
@@ -294,20 +294,14 @@ void loop() {
     // FIN flags were lost
     if (millis() - re_ack_time > 1000 && command_index != 0 && command_index != buffer_index){
 
-       for (int i=0; i < 8; i++){
-            Serial.write(CMD_FIN) ;
-            delay(10);
+       for (int i=0; i < RESPONSE_COUNT; i++){
+            Serial.write(CMD_FIN);
+            delay(RESPONSE_PERIOD);
         }
        re_ack_time = millis();
 
     }
 }
-
-/* 
-SerialEvent occurs whenever a new data comes in the
-hardware serial RX. This routine is run between each
-time loop() runs.
-*/
 
 void Communications() {
     // for targetting buffer checks so as not to do buffer[0 - 1]
@@ -326,7 +320,6 @@ void Communications() {
         
         // read command
         command_buffer[buffer_index++] = Serial.read();
-        Serial.write(command_buffer[buffer_index - 1]);
         if (buffer_index % 4 == 0){
             
             // acknowledge proper command
@@ -338,19 +331,24 @@ void Communications() {
 
             checksum = byte(calculateChecksum(target_value));
 
-            // check for SEQ number and checksum
+            // check for SEQ number and checksum to find if command is valid
             if (((command_buffer[target_value - 4] & 128) == 128 * SEQ_NUM) && 
                 (command_buffer[target_value - 1] == checksum)){
                 
+                invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
+                
+                // Acknowledge receipt of cammand
                 for (int i=0; i < RESPONSE_COUNT; i++){
                     Serial.write(CMD_ACK);
                     delay(RESPONSE_PERIOD);
                 }
- 
+
+                // Cases for Atomic commands
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
                     restoreState();
-                } else if (command_buffer[target_value - 4] == CMD_STOP){
+                } 
+                else if (command_buffer[target_value - 4] == CMD_STOP){
                     motorAllStop();
                     rotMoveGrabMode = 0;
                     MasterState = 0;
@@ -361,25 +359,23 @@ void Communications() {
             // report bad command
             else{
                 // respond with sequence number to callee in case of bad command
-                bad_commands += 1;
-                Serial.write(SEQ_NUM);
-
+                invalid_commands += 1;
                 buffer_index -= 4;
                 while(Serial.available()){
                     garbage = Serial.read();
                     //Serial.write(garbage);
                 }
-                if (bad_commands >= 10){
+                if (invalid_commands >= 10){
                     for (int i=0; i < RESPONSE_COUNT; i++){
                         Serial.write(CMD_ACK);
                         delay(RESPONSE_PERIOD);
                     }
-                    bad_commands = 0;
+                    invalid_commands = 0;
                 }
             }
         }
-        else if (millis() - serial_time > 500){ // TODO: Break this only here;
-            //Serial.write("Time-Out");
+        // Time-out serial if reading is taking too long
+        else if (millis() - serial_time > 500){ 
             Serial.write(CMD_FULL);
             while(buffer_index %4 != 0) {
                 buffer_index--;
