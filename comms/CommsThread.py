@@ -207,7 +207,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     radio_connected = False
     ack_count = (0, 0)
     seq_num = 0
+    command_sleep_time = 0.05 # sleep time between sending each byte
+    process_sleep_time = 0.13 # sleep time for process
 
+    # perform setup
     while not radio_connected:
         try:
             comms = Serial(port=port, baudrate=baudrate)
@@ -242,11 +245,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 pipe_out.send(len(cmnd_list) == ack_count[1])
 
             elif pipe_data == "rprt":
-                print len(cmnd_list), "=?", ack_count
-                print "Commands:"
-                for item in cmnd_list:
-                    print item,
-                print "Data:"
+                print cmnd_list
                 print data_buffer
 
             elif pipe_data == "flush":
@@ -267,27 +266,28 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 print "DATA +=", ord(data)
                 
         # ensure data has been processed before attempting to send data
-        ack_count, seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
+        seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
 
         # if there are commands to send
         if cmnd_list and not all(cmnd_list[-1][-3:-1]):
             # get first un-sent command or un-acknowledged, but send
             cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
 
-            # if the command is not acknowledged on time
+            # if the command is not acknowledged
             if cmd_to_send[-2] == 0:
                 sequenced = sequence_command(cmd_to_send[:4], seq_num)
                 for command_byte in sequenced:
                     comms.write(sequenced)
-                    sleep(0.05)
+                    sleep(command_sleep_time)
                 cmnd_list[cmd_index][-3] = 1
                 print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
         
-        print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
-        print cmnd_list
-        ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-3] for command in cmnd_list]) )
+        #report to terminal and main process
+        ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
         pipe_out.send(ack_count)
-        sleep(0.08)
+        print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1], "Last CMD", cmnd_list[-1]
+        
+        sleep(process_sleep_time)
 
 def process_data(commands, data, comb_count, seq_num):
     cutoff_index, ack_count, end_count = 0, 0, 0
@@ -309,15 +309,29 @@ def process_data(commands, data, comb_count, seq_num):
                 end_count-= 1
 
     del data[:cutoff_index + 1]
-    return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
+    return seq_num
 
 
 def acknowledge_command(commands, flag):
     assert flag == 1 or flag == 2
-    for item in commands:
-        if item[-flag] == 0:
-            item[-flag] = 1
-            return
+    terget_idx, target_command = None, None
+
+    # get the last sent command
+    for command in commands:
+        if command[-3] == 1:
+            target_command = command
+        else:
+            break 
+    
+    try:
+        target_command[-flag] = 1
+    except IndexError:
+        pass
+
+    return
+
+
+
 
 def flip_seq(seq):
     if seq == 1:
@@ -332,21 +346,7 @@ def sequence_command(command, seq):
         checksum += sum([bit == '1' for bit in bin(cmd_byte)])
     return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
 
-def check_ack_count(ack_count, cmnd_list):
-    received = ack_count[0]
-    finished = ack_count[1]
-    if finished > received:
-        print 80 * "="
-        print 80 * "*"
-        x = ((80 - len("Show this to Krassy!")) / 2 - 4) * " "
-        print x, "Show this to Krassy", x
-        print 80 * "*"
-        print 80 * "="
-        acknowledge_command(cmnd_list, 1)
-        #return (finished, finished)
-        return ack_count
-    else:
-        return ack_count
+
 
 if __name__ == "__main__":
     c = CommsThread()
