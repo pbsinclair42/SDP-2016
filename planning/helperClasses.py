@@ -98,3 +98,5 @@ class Actions(Enum):
     grab = 3
     ungrab = 4
     kick = 5
+    guardGoal = 6
+    receiveBall = 7

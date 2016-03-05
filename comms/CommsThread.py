@@ -14,10 +14,12 @@ class CommsThread(object):
         """
             Initialize firware API and start the communications parallel process
         """
+        self.ack_counts = (0, 0)
+        self.commands = 0
         self.command_list = []
         self.command_dict = {
-            "ROT_MOVE_POS" : chr(1  ),
-            "ROT_MOVE_NEG" : chr(129),
+            "ROT_MOVE_POS" : chr(3  ),
+            "ROT_MOVE_NEG" : chr(15),
             "HOL_MOVE_POS" : chr(2  ),
             "HOL_MOVE_NEG" : chr(130),
             "KICK"         : chr(4  ),
@@ -25,8 +27,9 @@ class CommsThread(object):
             "GRAB"         : chr(16 ),
             "UNGRAB"       : chr(32 ),
             "FLUSH"        : chr(64 ),
-            "DONE"         : chr(111),
-            "ACK"          : chr(248),
+
+            "DONE"         : chr(250),
+            "ACK"          : chr(253),
             "RESEND"       : chr(252),
             "FULL"         : chr(254),
             "END"          : chr(255)
@@ -45,10 +48,11 @@ class CommsThread(object):
             Convenience function to send-in a command, as a tuple to reduce
             data corruption possibility. Command flags are added on receipt
         """
+        self.commands += 1
         self.parent_pipe_in.send((command,))
         self.process_event.set()
         print "Queue-ing:", [ord(item) for item in command]
-    
+
     def move(self, distance, degrees=0):
         """
             A movement-only function for distance up-to 255 cm
@@ -56,7 +60,7 @@ class CommsThread(object):
         assert distance >= 255, "Distance should not be longer than 255"
         if degrees:
             self.rot_move(distance, degrees)
-        
+
         else:
             # add extra commands
             while distance > 255:
@@ -65,25 +69,25 @@ class CommsThread(object):
 
             command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(distance) + self.command_dict["END"]
             self.queue_command(command)
-    
+
     def rotate(self, degrees, distance=0):
         """
             A rotation-only function for angles up-to 255 deg
         """
         assert degrees <= 255 and degrees >= -255, "Degrees should be in range of [-255, 255]"
-        
+
         if distance:
             self.rot_move(distance, degrees)
-        
+
         else:
             if degrees >= 0:
                 command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(0) + self.command_dict["END"]
-            
+
             else:
                 command = self.command_dict["ROT_MOVE_NEG"] + chr((-1 * degrees)) + chr(0) + self.command_dict["END"]
-            
+
             self.queue_command(command)
-    
+
     def rot_move(self, degrees, distance):
         """
             Perform movement and/or rotation for any degrees and any distance.
@@ -157,6 +161,8 @@ class CommsThread(object):
         """
             flush comms and arduino buffers
         """
+        self.commands = 0
+        self.ack_counts = (0, 0)
         self.queue_command("flush");
         command = self.command_dict["FLUSH"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
@@ -166,140 +172,226 @@ class CommsThread(object):
             stop communications process until a new command has been issued
         """
         self.process_event.clear()
-
+        '''
     def current_cmd(self):
         """
-            get current command 
+            get current command
         """
-        self.parent_pipe_in.send("ccmd")
-        while not self.parent_pipe_out.poll():
-            pass
-        return self.parent_pipe_out.recv()
 
+
+        self.parent_pipe_in.send("ccmd")
+        while self.parent_pipe_out.poll():
+            self.x = self.parent_pipe_out.recv()
+        return self.x
+        '''
     def report(self):
         """
             Return a report of sent commands and currently-buffered data
         """
         self.parent_pipe_in.send("rprt")
 
+    def am_i_done(self):
+        while self.parent_pipe_out.poll():
+            self.ack_counts = self.parent_pipe_out.recv()
+        if self.ack_counts[0] == self.commands and self.ack_counts[1] == self.commands:
+            #print self.ack_counts, self.commands
+            return True
+        else:
+            return False
+
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
-    
 
     cmnd_list = []
     data_buffer = []
     radio_connected = False
     ack_count = (0, 0)
-    
-    
+    seq_num = 0
+    command_sleep_time = 0.05 # sleep time between sending each byte
+    process_sleep_time = 0.13 # sleep time for process
+
+    # perform setup
     while not radio_connected:
         try:
             comms = Serial(port=port, baudrate=baudrate)
             radio_connected = True
-        except Exception as e:
+        except Exception:
             print "Comms: Radio not connected. Trying again in 5 seconds;", str(e)
             radio_connected = False
-            sleep(5)    
+            sleep(5)
     print "Radio On-line"
-    
+
     # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
-
-    resend_time = time()
-    
-
 
     while True:
         event.wait()
         if pipe_in.poll():
             pipe_data = pipe_in.recv()
-            
+
             if isinstance(pipe_data, tuple):
                 # get a tuple to reduce risk of data damage,
                 # then turn to a list to support mutability
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
                 cmnd_list.append([ord(item) for item in pipe_data[0]] + [0, 0 ,0])
-            
+
             # non-command-inputs:
             elif pipe_data == "exit":
                 return
+
             # return index of command currently being performed
             elif pipe_data == "ccmd":
-                pipe_out.send(ack_count[1])
+                pipe_out.send(len(cmnd_list) == ack_count[1])
 
             elif pipe_data == "rprt":
-                print len(cmnd_list), "=?", ack_count
-                print "Commands:"
-                for item in cmnd_list:
-                    print item,
-                print "Data:"
+                print cmnd_list
                 print data_buffer
-            
+
             elif pipe_data == "flush":
                 cmnd_list = []
                 data_buffer = []
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
-
-         # parse all incoming comms
+        
+        # parse all incoming comms
         while comms.in_waiting:
             data = comms.read(1)
-            try:
-                data_buffer.append(ord(data))
-            except ValueError:
-                pass
-
+            # if last command isn't finished
+            if cmnd_list and all(cmnd_list[-1][-3:]):
+                print "Flushing: ", ord(data)
+            else:
+                data_buffer += [ord(data)]
+                print "DATA +=", ord(data)
+                
         # ensure data has been processed before attempting to send data
-        ack_count = process_data(cmnd_list, data_buffer, ack_count)
-        
+        seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
+
         # if there are commands to send
-        if not all(cmnd_list[-1][-3:-1]):
+        if cmnd_list and not all(cmnd_list[-1][-3:-1]):
             # get first un-sent command or un-acknowledged, but send
             cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
-            
-            # if the command is not acknowledged on time
-            if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
-                comms.write(cmd_to_send[:4])
-                cmnd_list[cmd_index][-3] = 1
-                resend_time = time()
-                print "Sending command: ", cmd_index, cmnd_list[cmd_index]
-        
-        sleep(0.5)
 
-def process_data(commands, data, comb_count):
+            # if the command is not acknowledged
+            if cmd_to_send[-2] == 0:
+                sequenced = sequence_command(cmd_to_send[:4], seq_num)
+                for command_byte in sequenced:
+                    comms.write(sequenced)
+                    sleep(command_sleep_time)
+                cmnd_list[cmd_index][-3] = 1
+                print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
+        
+        #report to terminal and main process
+        ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
+        pipe_out.send(ack_count)
+        print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1], "Last CMD", cmnd_list[-1]
+        
+        sleep(process_sleep_time)
+
+def process_data(commands, data, comb_count, seq_num):
     cutoff_index, ack_count, end_count = 0, 0, 0
+
     for idx, item in enumerate(data):
-        if item == 248:
+        if item == 250:
             acknowledge_command(commands, 2)
             cutoff_index = idx
             ack_count += 1
-        elif item == 111:
+            if idx < len(data) - 1 and data[idx + 1] == 250:
+                ack_count-= 1
+            else:
+                seq_num = flip_seq(seq_num)
+        elif item == 253:
             acknowledge_command(commands, 1)
             cutoff_index = idx
             end_count += 1
+            if idx < len(data) - 1 and data[idx + 1] == 253:
+                end_count-= 1
+
     del data[:cutoff_index + 1]
-    return (comb_count[0] + ack_count, comb_count[1] + end_count)
-    
+    return seq_num
+
 
 def acknowledge_command(commands, flag):
     assert flag == 1 or flag == 2
-    for item in commands:
-        if item[-flag] == 0:
-            item[-flag] = 1
-            return
+    terget_idx, target_command = None, None
+
+    # get the last sent command
+    for command in commands:
+        if command[-3] == 1:
+            target_command = command
+        else:
+            break 
+    
+    try:
+        target_command[-flag] = 1
+    except IndexError:
+        pass
+
+    return
+
+
+
+
+def flip_seq(seq):
+    if seq == 1:
+        return 0
+    else:
+        return 1
+
+def sequence_command(command, seq):
+    sequence = ord(chr(seq * 128 + command[0]))
+    checksum = 0
+    for cmd_byte in [sequence, command[1], command[2]]:
+        checksum += sum([bit == '1' for bit in bin(cmd_byte)])
+    return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
+
+
 
 if __name__ == "__main__":
     c = CommsThread()
 
-    
-    #c.rot_move(-400, 400)
-    #c.move(100)
-    c.grab()
-    c.ungrab()
-    c.kick(255)
+    c.rotate(30)
+
+    """
+    # 15 x 30 degrees = 90
+    c.rotate(30)
+    sleep(1)
+    for i in range(0, 5):
+        c.rotate(15)
+        sleep(1)
+
+    sleep(5)
+
+    # 3 x 30 = 90
+    for i in range(0, 3):
+        c.rotate(30)
+        sleep(1)
+
+    sleep(5)
+
+    # 4 x 45 = 180
+    for i in range(0, 4):
+        c.rotate(45)
+        sleep(1)
+
+    sleep(5)
+    # 4 x 90 = 360
+    for i in range(0, 4):
+        c.rotate(90)
+        sleep(1)
+
+    # 3 x 120 = 360
+    for i in range (0, 3):
+        c.rotate(120)
+        sleep(1)
+
+    sleep(5)
+
+    # 2 x 180 = 360
+    c.rotate(180)
+    c.rotate(180)
+
     sleep(20)
     c.report()
-    sleep(2)
-    c.exit()
+    c.exit()"""

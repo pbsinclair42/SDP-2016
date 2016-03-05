@@ -1,4 +1,5 @@
 import sys
+import time
 import os
 from constants import ROOT_DIR
 from globalObjects import me
@@ -30,8 +31,8 @@ def turn(x):
         commsSystem.rotateneg(0, abs(x))
     else:
         commsSystem.rotate(0, abs(x))
+    me.moving=True
     print("Turning "+str(abs(x))+" degrees "+("clockwise" if x<=0 else "anticlockwise"))
-
 
 def move(distance, angle):
     """Moves `distance` cm at a direction of `angle` degrees"""
@@ -51,7 +52,8 @@ def move(distance, angle):
         commsSystem.rotate(distance, abs(angle))
     elif angle<=0:
         commsSystem.rotateneg(distance, abs(angle))
-    print("Moving "+str(distance)+"cm at an angle of "+str(angle)+" degrees")
+    me.moving=True
+    print("Turning "+str(angle)+" degrees then moving "+str(distance)+"cm")
 
 
 def kick(distance):
@@ -62,26 +64,26 @@ def kick(distance):
         print("Max distance is 255cm")
         distance=0 if distance<0 else 255
     commsSystem.kick(distance)
+    me.moving=True
     print("Kicking ball "+str(distance)+"cm")
 
 
 def grab():
     """Attempts to grab the ball"""
     commsSystem.grab()
+    me.moving=True
     print("Grabbing ball")
-
 
 def ungrab():
     """Attempts to ungrab the ball"""
     commsSystem.ungrab()
+    me.moving=True
     print("Opening claw")
-
 
 def stop():
     """Stops all motors"""
     commsSystem.stop()
     print("Stopping all motors")
-
 
 def flush():
     """Clears all commands and stops all motors"""

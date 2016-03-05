@@ -5,12 +5,10 @@
 #include "Accelerometer_Compass_LSM303D.h"
 /***
 IMPORTANT: PLEASE READ BEFORE EDITING:
-
     If editing file:
         1. push to master only working code that doesn't break it;
         2. follow the standard reasonably;
         3. read the comments before-hand.
-
 ***/
 
 // Motor Definitions
@@ -43,34 +41,41 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 
 
 // COMMS API Byte Definitions
-#define CMD_ROTMOVE    B00000001 // Buffered: MSB 1 performs CCW rotation
-#define CMD_ROTMOVECCW B10000001 // Buffered: MSB 1 performs CCW rotation
+#define CMD_ROTMOVE    B00000011 // Buffered: MSB 1 performs CCW rotation
+#define CMD_ROTMOVECCW B00001111 // Buffered: MSB 1 performs CCW rotation
 #define CMD_HOLMOVE    B00000010 // Buffered: NOT YET IMPLEMENTED
 #define CMD_KICK       B00000100 // Buffered
 #define CMD_STOP       B00001000 // Buffered
 #define CMD_GRAB       B00010000 // Buffered
 #define CMD_UNGRAB     B00100000 // Buffered
 #define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
-#define CMD_END        B11111111 // Buffered
-#define CMD_DONE       B01101111 // Sent when command is finished
+/* Sent by Arduino*/
+//define CMD_END        B11111101 // Buffered
 #define CMD_ERROR      B11111111 // Sent for errors
 #define CMD_FULL       B11111110 // Sent if buffer is full
 #define CMD_RESEND     B11111100 // if all commands haven't been received in 500 miliseconds
-#define CMD_ACK        B11111000 // Sent after command has been received
+#define CMD_ACK        B11111010 // Sent after command has been received
+#define CMD_FIN        B11111101 // Sent when command is finished
 
+// Comms Tuning Parameters
+#define RESPONSE_COUNT 3 // how many bytes to respond with, for ACK and FIN
+#define RESPONSE_PERIOD 10 // how many milliseconds to wait between responses
+byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 
 // utils
 #define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
+
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
 // serialEvent functions which both support reading serial while moving and
 // rotary-encoder-based motion, plus sensor data-gathering
 
-byte MasterState = 0; 
+byte MasterState = 0;
 byte finishGrabbing = 0;
+byte rotMoveGrabMode = 0;
 
 // positions of wheels based on rotary encoder values
 int positions[ROTARY_COUNT] = {0};
@@ -80,14 +85,14 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
+byte invalid_commands = 0;
 
-
-unsigned long serial_time; // used for the millis function.
+// used for the millis function.
+unsigned long serial_time; 
 unsigned long command_time;
-
-
+unsigned long idle_time;
+unsigned long re_ack_time;
 // rotation parameters
-byte rotMoveGrabMode = 0;
 int rotaryTarget;
 int rotaryBias;
 
@@ -102,13 +107,14 @@ int rotary_target;
 int motion_target;
 int holono_target;
 
+// accelerometer variables
 float accel_targetx = 0;
 float accel_targety = 0;
 
 float accel_offsetx = 0;
 float accel_offsety = 0;
 
-// accelerometer/compass targets
+// compass targets
 float start_angle;
 float target_angle;
 float previous_gyro;
@@ -119,6 +125,21 @@ int accel[3];               // we'll store the raw acceleration values here
 int mag[3];                 // raw magnetometer values stored here
 float realAccel[3];         // calculated acceleration values here
 float heading, titleHeading;
+
+int calculateChecksum(int target_value){
+    int i, j, check = 0;
+    for (i = target_value - 4; i < target_value - 1; i++){
+        check += (command_buffer[i] & 1);
+        check += (command_buffer[i] & 2)   >> 1;
+        check += (command_buffer[i] & 4)   >> 2;
+        check += (command_buffer[i] & 8)   >> 3;
+        check += (command_buffer[i] & 16)  >> 4;
+        check += (command_buffer[i] & 32)  >> 5;
+        check += (command_buffer[i] & 64)  >> 6;
+        check += (command_buffer[i] & 128) >> 7;
+    }
+    return 255 - check;
+}
 
 
 // Main Functions: Setup, Loop and SerialEvent
@@ -135,13 +156,12 @@ void setup() {
     rotMoveGrabMode = 0;
     bufferOverflow = 0;
     commandOverflow = 0;
+    idle_time = millis();
 
+    /*********** Uncomment for Sensors *****************
     // initialize Accelerometer/Compass sensor
     char init = 0;
     init = Lsm303d.initI2C();
-    if (init == 0){
-        Serial.println("Sensor is found");
-    }
     
     // get initial Accelerometer/Compass Data
     Lsm303d.getAccel(accel);
@@ -162,30 +182,44 @@ void setup() {
     // remember offset gyro-values
     accel_offsetx = realAccel[0];
     accel_offsety = realAccel[1];
-    
+    *********** Uncomment for Sensors END **************/
+
     /* Custom commands can be initialized below */
-    
-    //for (int i = 0; i < 6; i ++)
-    //    motorForward(i, 255);
     
   }
 
 void loop() {
-  // get sensor data at each time-step
-  pollAccComp();
-  //Serial.println(titleHeading);
-  //delay(1000);
-  int state_end = 0;
+  // Communication FSM part
+  Communications();
   
+  // Sensor FSM part
+  pollAccComp();
+  
+  // Action FSM part
+  int state_end = 0;
+  MasterState = MasterState & 127;
+  
+  if (MasterState != IDLE_STATE){
+      re_ack_time = millis();
+  }
+
   // Switch statement for the FSM state
   switch(MasterState){
         
         case IDLE_STATE:
+            // very strange issue fix
+            if (command_index > buffer_index && commandOverflow == bufferOverflow){
+                command_index = buffer_index;
+            }
+            // check whether circular buffer contains a valid command
             if ((command_index != buffer_index && command_index + 4 <= buffer_index && commandOverflow == bufferOverflow) || 
-                 commandOverflow < bufferOverflow){
+                 commandOverflow < bufferOverflow) {
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
-          }
+                command_time = millis(); // for time-out
+
+            }
+
             break;
         
 
@@ -235,79 +269,129 @@ void loop() {
 
         default:
             Serial.write(CMD_ERROR);
+            Serial.write(CMD_ERROR);
+            Serial.write(CMD_ERROR);
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
-        }
-    
-    if (state_end){
+    }
+
+  
+  if (state_end){
         MasterState = IDLE_STATE;
         command_index += 4;
-        
+      
         // check for circular buffer end
         if (command_index == 0){
             commandOverflow++;
         }
-        Serial.write(CMD_DONE);
-        delay(5000);
-        
+
+        // respond with FIN
+        for (int i=0; i < RESPONSE_COUNT; i++){
+            Serial.write(CMD_FIN) ;
+            delay(RESPONSE_PERIOD);
         }
+        
+        // make not of respond time
+        re_ack_time = millis();
+
+      
     }
 
-/* 
-SerialEvent occurs whenever a new data comes in the
-hardware serial RX. This routine is run between each
-time loop() runs.
-*/
+    // check if idle and not received a command within a second. Then, its likely that all
+    // FIN flags were lost
+    if (millis() - re_ack_time > 1500 && command_index != 0 && command_index != buffer_index){
 
-void serialEvent() {
-    int target_value; // for targetting buffer checks so as not to do buffer[0 - 1]
+       for (int i=0; i < RESPONSE_COUNT; i++){
+            Serial.write(CMD_FIN);
+            delay(RESPONSE_PERIOD);
+        }
+       re_ack_time = millis();
+
+    }
+}
+
+void Communications() {
+    // for targetting buffer checks so as not to do buffer[0 - 1]
+    int target_value;
+    byte checksum = 0;
+    char garbage;
+    
+    // to make sure Serial reading can get interrupted
     serial_time = millis();
+
     while (Serial.available()) {
         // note overflow to maintain circular buffer
         if (buffer_index == 255){
             bufferOverflow++;
         }
+        
         // read command
         command_buffer[buffer_index++] = Serial.read();
-        
         if (buffer_index % 4 == 0){
+            
             // acknowledge proper command
             if (buffer_index == 0){
                 target_value = 256;
             } else {
                 target_value = buffer_index;
             }
-         
-            if (command_buffer[target_value - 1] == CMD_END){
-                Serial.write(CMD_ACK);
-                Serial.write(command_buffer[target_value - 4]);
-                Serial.write(command_buffer[target_value - 3]);
-                Serial.write(command_buffer[target_value - 2]);
-                Serial.write(command_buffer[target_value - 1]);
+
+            checksum = byte(calculateChecksum(target_value));
+
+            // check for SEQ number and checksum to find if command is valid
+            if (((command_buffer[target_value - 4] & 128) == 128 * SEQ_NUM) && 
+                (command_buffer[target_value - 1] == checksum)){
                 
+                invalid_commands = 0;
+                SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
+                
+                // Acknowledge receipt of cammand
+                for (int i=0; i < RESPONSE_COUNT; i++){
+                    Serial.write(CMD_ACK);
+                    delay(RESPONSE_PERIOD);
+                }
+                Serial.write(command_index);
+                Serial.write(buffer_index);
+
+                // Cases for Atomic commands
+                if (command_buffer[target_value - 4] == CMD_FLUSH){
+                    restoreState();
+                }
+                else if (command_buffer[target_value - 4] == CMD_STOP){
+                    motorAllStop();
+                    rotMoveGrabMode = 0;
+                    MasterState = 0;
+                    bufferOverflow = 0;
+                    commandOverflow = 0;
+                }    
             }
-            // report bad command
+            // report invalid command
             else{
-                //Serial.write("Bad Command");
-                Serial.write(CMD_ERROR);
+                invalid_commands += 1;
                 buffer_index = target_value - 4;
-            }
-            
-            if (command_buffer[target_value - 4] == CMD_FLUSH){
-                restoreState();
-            } else if (command_buffer[target_value - 4] == CMD_STOP){
-                motorAllStop();
-                rotMoveGrabMode = 0;
-                MasterState = 0;
-                bufferOverflow = 0;
-                commandOverflow = 0;
-            }
+                
+                if (buffer_index == 252){
+                    bufferOverflow -= 1;
+                }
 
-
-        } else if (millis() - serial_time > 500){ // TODO: Break this only here;
-            //Serial.write("Time-Out");
-            Serial.write(CMD_ERROR);
+                while(Serial.available()){
+                    garbage = Serial.read();
+                    //Serial.write(garbage);
+                }
+                
+                if (invalid_commands >= 10){
+                    for (int i=0; i < RESPONSE_COUNT; i++){
+                        Serial.write(CMD_ACK);
+                        delay(RESPONSE_PERIOD);
+                    }
+                    invalid_commands = 0;
+                }
+            }
+        }
+        // Time-out serial if reading is taking too long
+        else if (millis() - serial_time > 500){ 
+            Serial.write(CMD_FULL);
             while(buffer_index %4 != 0) {
                 buffer_index--;
             }
@@ -351,26 +435,24 @@ void restoreState(){
     motorAllStop();
 }
 
-
 int rotMoveStep(){
     // values for target calculation
     int left;
     byte degrees, centimeters;
-
 
     switch(rotMoveGrabMode){
 
         // calculate rotation target and start rotating
         case 0 :
             degrees = command_buffer[command_index + 1];
-            left = (MasterState >> 7); // left becomes MSB of master state/current command
+            left = (MasterState >> 3) & 127; // left becomes MSB of master state/current command
             left = left == 0 ? 1 : -1;
-            
+
             if (!degrees){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-            
+            rotMoveGrabMode = 1;
             // calculate target based on piece-wise linear approximation for
             // know values of 30, 45, 60, 90, 120, 180 degrees
             rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);  
@@ -381,26 +463,24 @@ int rotMoveStep(){
             updateMotorPositions(positions);
             rotaryBias = positions[0] + positions[1] + positions[2];
 
-            start_angle = titleHeading;
-            target_angle = float(degrees);
+            // *uncomment for using compass
+            //start_angle = titleHeading;
+            //target_angle = float(degrees);
 
             if (left == 1)
                 rotateLeft();
             else
                 rotateRight();
             
-            rotMoveGrabMode = 1;
             return 0;
         
         // chck whether to stop during rotation;
         case 1 :
-            left = MasterState >> 7; // left becomes MSB of master state/current command
+            left = (MasterState >> 3) & 127; // left becomes MSB of master state/current command
             left = left == 0 ? 1 : -1;
             if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
                 updateMotorPositions(positions);
                 rotMoveGrabMode = 1;
-                // accel_targetx += realAccel[0];
-                // accel_targety += realAccel[1];
             }
             else{
                 // delay to make sure motor actions are not being performed too quckly
@@ -409,24 +489,13 @@ int rotMoveStep(){
                 delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
-                //Serial.println();
-                //Serial.println();
-                //Serial.println();
-                //Serial.println(accel_targetx);
-                //Serial.println(accel_targety);
-                //Serial.println(titleHeading);
-                //Serial.println(start_angle);
-                //Serial.println();
-                //accel_targetx = 0;
-                //accel_targety = 0;
-                // TODO: Add dynamic calibration system feedback calculation here;
             }
             return 0;
         
         // calculate movement target and start moving forward
         case 2 :
             centimeters = command_buffer[command_index + 2];
-            
+            command_time = millis();
             if (centimeters == 0){
                 rotMoveGrabMode = 0;
                 return 1;
@@ -442,6 +511,13 @@ int rotMoveStep(){
 
         // perform movement
         case 3 :
+            centimeters = command_buffer[command_index + 2];
+            if ((millis() - command_time > 1500) && centimeters < 35){
+                motorAllStop();
+                restoreMotorPositions(positions);
+                rotMoveGrabMode = 0;
+                return 1;
+            }
             if (-1 * positions[MOTOR_LFT] < rotaryTarget && positions[MOTOR_RGT] < rotaryTarget){
                 updateMotorPositions(positions);
                 return 0;
@@ -614,11 +690,11 @@ float calculateRotaryTarget(float x3){
         x1 = 0.75;
         x2 = 30;
         y1 = 0;
-        y2 = 1.55;
+        y2 = 1.7;
     } else if (x3 <= 45){
         x1 = 30;
         x2 = 45;
-        y1 = 1.55;
+        y1 = 1.7;
         y2 = 1.75;
     } else if (x3 <= 60){
         x1 = 45;
@@ -648,7 +724,7 @@ float calculateRotaryTarget(float x3){
 
 
 // basic test functions for sanity!
-void fullTest(){
+void fullMotorTest(){
     // Performs a test of all basic motions.
     // Each is executed in 5 seconds.
     // Subject to battery power, the robot should end up
@@ -749,14 +825,3 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -18,7 +18,11 @@ class Camera(object):
         Returns the frame if available, otherwise returns None.
         """
         status, frame = self.capture.read()
+<<<<<<< HEAD
         #frame = cv2.imread('pitch.png')
+=======
+        #frame = cv2.imread('pitch0.png')
+>>>>>>> 19818b8f1011f6aa2734194c136948bb1bb5c37a
         frame = step(frame, self.pitch)
         return frame
 

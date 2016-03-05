@@ -6,7 +6,7 @@ from helperFunctions import sin, cos
 class Moveable(object):
     """An object in the game that can move (ie robot or ball)"""
     #TODO: walls
-    _HISTORY_SIZE = 10
+    _HISTORY_SIZE = 3
 
     def __init__(self, p=None):
         if p==None:
@@ -62,6 +62,7 @@ class Moveable(object):
             # calculate and save the new speed
             try:
                 newSpeed=self.pointHistory[0].distance(self.pointHistory[-1])/(len(self.pointHistory)-1)
+                newSpeed = round(newSpeed, 2)
                 self.speedHistory.append(newSpeed)
                 self.currentSpeed = newSpeed
                 # only store a max of _HISTORY_SIZE-1 points in the history
@@ -72,7 +73,8 @@ class Moveable(object):
 
             # calculate and save the new acceleration
             try:
-                self.acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
+                acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
+                self.acceleration = round(acceleration, 3)
             except (ZeroDivisionError, IndexError):
                 # if we don't have enough data to calculate an acceleration (not enough speeds recorded), wait for now
                 pass
@@ -158,6 +160,7 @@ class Robot(Moveable):
         self.plan=[]
         # if we've told the robot to move or rotate and haven't noticed it stop doing so
         self.moving = False
+        self.grabberState = 0
 
     def updateRotation(self, rotation):
         """Update the rotation with a new value
