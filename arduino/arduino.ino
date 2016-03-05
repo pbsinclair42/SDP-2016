@@ -372,7 +372,7 @@ void Communications() {
                 buffer_index = target_value - 4;
                 
                 if (buffer_index == 252){
-                    bufferOverflow -= 1
+                    bufferOverflow -= 1;
                 }
 
                 while(Serial.available()){
