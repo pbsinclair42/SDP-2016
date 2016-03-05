@@ -375,7 +375,6 @@ void Communications() {
                     bufferOverflow -= 1
                 }
 
-
                 while(Serial.available()){
                     garbage = Serial.read();
                     //Serial.write(garbage);
