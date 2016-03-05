@@ -189,12 +189,20 @@ void setup() {
   }
 
 void loop() {
+  // Communication FSM part
   Communications();
   
+  // Sensor FSM part
   pollAccComp();
+  
+  // Action FSM part
   int state_end = 0;
   MasterState = MasterState & 127;
   
+  if (MasterState != IDLE_STATE){
+      re_ack_time = millis();
+  }
+
   // Switch statement for the FSM state
   switch(MasterState){
         
@@ -292,7 +300,7 @@ void loop() {
 
     // check if idle and not received a command within a second. Then, its likely that all
     // FIN flags were lost
-    if (millis() - re_ack_time > 1000 && command_index != 0 && command_index != buffer_index){
+    if (millis() - re_ack_time > 1500 && command_index != 0 && command_index != buffer_index){
 
        for (int i=0; i < RESPONSE_COUNT; i++){
             Serial.write(CMD_FIN);
@@ -343,6 +351,8 @@ void Communications() {
                     Serial.write(CMD_ACK);
                     delay(RESPONSE_PERIOD);
                 }
+                Serial.write(command_index);
+                Serial.write(buffer_index);
 
                 // Cases for Atomic commands
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
@@ -356,7 +366,7 @@ void Communications() {
                     commandOverflow = 0;
                 }    
             }
-            // report bad command
+            // report invalid command
             else{
                 // respond with sequence number to callee in case of bad command
                 invalid_commands += 1;
