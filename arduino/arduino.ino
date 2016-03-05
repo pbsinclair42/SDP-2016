@@ -357,7 +357,7 @@ void Communications() {
                 // Cases for Atomic commands
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
                     restoreState();
-                } 
+                }
                 else if (command_buffer[target_value - 4] == CMD_STOP){
                     motorAllStop();
                     rotMoveGrabMode = 0;
@@ -370,6 +370,12 @@ void Communications() {
             else{
                 invalid_commands += 1;
                 buffer_index = target_value - 4;
+                
+                if (buffer_index == 252){
+                    bufferOverflow -= 1
+                }
+
+
                 while(Serial.available()){
                     garbage = Serial.read();
                     //Serial.write(garbage);
