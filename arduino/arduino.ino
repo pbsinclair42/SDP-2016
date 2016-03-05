@@ -379,6 +379,7 @@ void Communications() {
                     garbage = Serial.read();
                     //Serial.write(garbage);
                 }
+                
                 if (invalid_commands >= 10){
                     for (int i=0; i < RESPONSE_COUNT; i++){
                         Serial.write(CMD_ACK);
