@@ -368,9 +368,8 @@ void Communications() {
             }
             // report invalid command
             else{
-                // respond with sequence number to callee in case of bad command
                 invalid_commands += 1;
-                buffer_index -= 4;
+                buffer_index = target_value - 4;
                 while(Serial.available()){
                     garbage = Serial.read();
                     //Serial.write(garbage);
