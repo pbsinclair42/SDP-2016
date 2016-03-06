@@ -4,6 +4,79 @@ from moveables import Moveable, Ball
 from helperClasses import Point
 from CommsAPI import turn, move
 
+def kick():
+    if me.moving:
+        print("Still doing stuff")
+    else:
+        kickDistance = me.plan[0]['targetFunction']()
+        kick(kickDistance)
+        me.plan.pop(0)
+
+def ungrab():
+    if me.moving:
+        print("Still doing stuff")
+    else:
+        ungrab()
+        me.grabberState=1
+        me.plan.pop(0)
+
+def grab():
+    if me.moving:
+        print("Still doing stuff")
+    else:
+        grab()
+        me.grabberState=0
+        me.plan.pop(0)
+
+def guardGoal():
+    if ball.moving == False:
+        turnToDirection(me.bearing(ball))
+    elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
+        executePlan()
+    elif ball.moving:# ball moving but not towards us
+        me.interceptObject(ball)
+        me.plan.pop(0)
+
+def recieveBall():
+    if me.moving:
+        print("Still doing stuff")
+    else:
+        # if another robot's still holding the ball, just wait
+            # TODO: maybe reposition if need be?
+        if ball.status!=BallStatus.free:
+                print("Ball's not been kicked yet lol")
+            # if the ball's been kicked, we hope to collect it
+        else:
+            # if it's headed towards us, stay where we are
+            if nearEnough(ball.direction, ball.bearing(me)):
+                    # if it's close enough, we're done
+                if ball.distance(me)<ROBOT_WIDTH + GRAB_DISTANCE:
+                    me.plan.pop(0)
+                    # otherwise, just staying here is cool
+                # if it's not headed towards us, just try and fetch it
+            else:
+                # go to where its actually going
+                collectBall()
+
+def rotateToAngle():
+    if me.moving:
+        # TODO: add in some kind of checker/corrector
+        print("Still doing stuff")
+    else:
+        #calculate the angle we're aming for
+        targetAngle = me.plan[0]['targetFunction']()
+         # if we're at a close enough angle, we're done
+        if nearEnough(me.currentRotation, targetAngle):
+            print("Done!")
+            me.plan.pop(0)
+            # start on the next bit of the plan
+            executePlan()
+
+        # so if we're not currently turning and we're not yet facing the right directin,
+        # send the command to turn to the angle we actually should be at
+    else:
+        turnToDirection(targetAngle)
+
 
 def moveToPoint(point):
     if not isinstance(point,Point):
