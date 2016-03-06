@@ -20,3 +20,5 @@ rightGoalCenter=Point(PITCH_LENGTH-30,PITCH_WIDTH/2)
 
 ourGoal = rightGoalCenter
 opponentGoal = leftGoalCenter
+#which role we are playing
+position = None
