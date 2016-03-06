@@ -92,15 +92,14 @@ unsigned long serial_time;
 unsigned long command_time;
 unsigned long idle_time;
 unsigned long re_ack_time;
+
 // rotation parameters
 int rotaryTarget;
 int rotaryBias;
 
-
 // circular buffer counters
 byte bufferOverflow = 0;
 byte commandOverflow = 0;
-
 
 // targets for rotary encoders
 int rotary_target;
@@ -111,40 +110,19 @@ int holono_target;
 float accel_targetx = 0;
 float accel_targety = 0;
 
-float accel_offsetx = 0;
-float accel_offsety = 0;
-
 // compass targets
 float target_angle;
 float angle_difference;
-float previous_gyro;
 
-
-// Accelerometer/Compass value
-int mag_min_x;
-int mag_max_x;
-int mag_min_y;
-int mag_max_y;
-int accel[3];               // we'll store the raw acceleration values here
-int mag[3];                 // raw magnetometer values stored here
-float realAccel[3];         // calculated acceleration values here
-float heading, titleHeading;
-
-int calculateChecksum(int target_value){
-    int i, j, check = 0;
-    for (i = target_value - 4; i < target_value - 1; i++){
-        check += (command_buffer[i] & 1);
-        check += (command_buffer[i] & 2)   >> 1;
-        check += (command_buffer[i] & 4)   >> 2;
-        check += (command_buffer[i] & 8)   >> 3;
-        check += (command_buffer[i] & 16)  >> 4;
-        check += (command_buffer[i] & 32)  >> 5;
-        check += (command_buffer[i] & 64)  >> 6;
-        check += (command_buffer[i] & 128) >> 7;
-    }
-    return 255 - check;
-}
-
+// Accelerometer/Magnetometer values
+int mag_min_x; // for caliration
+int mag_max_x; // for caliration
+int mag_min_y; // for caliration
+int mag_max_y; // for caliration
+int accel[3];                // we'll store the raw acceleration values here
+int mag[3];                  // raw magnetometer values stored here
+float realAccel[3];          // calculated acceleration values here
+float heading, titleHeading; // compass values stored here
 
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
@@ -355,6 +333,23 @@ void loop() {
 
     }
 }
+
+
+int calculateChecksum(int target_value){
+    int i, j, check = 0;
+    for (i = target_value - 4; i < target_value - 1; i++){
+        check += (command_buffer[i] & 1);
+        check += (command_buffer[i] & 2)   >> 1;
+        check += (command_buffer[i] & 4)   >> 2;
+        check += (command_buffer[i] & 8)   >> 3;
+        check += (command_buffer[i] & 16)  >> 4;
+        check += (command_buffer[i] & 32)  >> 5;
+        check += (command_buffer[i] & 64)  >> 6;
+        check += (command_buffer[i] & 128) >> 7;
+    }
+    return 255 - check;
+}
+
 
 void Communications() {
     // for targetting buffer checks so as not to do buffer[0 - 1]
@@ -868,15 +863,15 @@ void testLeftBackward() {
 }
 
 void rotateRight() {
-    motorBackward(MOTOR_LFT, (POWER_LFT * 1) / 2);
-    motorBackward(MOTOR_RGT, (POWER_RGT * 1) / 2);
-    motorBackward(MOTOR_BCK, (POWER_BCK * 1) / 2);    
+    motorBackward(MOTOR_LFT, (int)(POWER_LFT * 0.7));
+    motorBackward(MOTOR_RGT, (int)(POWER_RGT * 0.7));
+    motorBackward(MOTOR_BCK, (int)(POWER_BCK * 0.7));    
 }
 
 void rotateLeft() {
-    motorForward(MOTOR_LFT, (POWER_LFT * 1) / 2);
-    motorForward(MOTOR_RGT, (POWER_RGT * 1) / 2);
-    motorForward(MOTOR_BCK, (POWER_BCK * 1) / 2);    
+    motorForward(MOTOR_LFT, (int)(POWER_LFT * 0.7));
+    motorForward(MOTOR_RGT, (int)(POWER_RGT * 0.7));
+    motorForward(MOTOR_BCK, (int)(POWER_BCK * 0.7));    
 }
 
 void testRightForward() {
@@ -915,7 +910,6 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
-
 
 
 
