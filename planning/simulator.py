@@ -16,8 +16,6 @@ simulatedRobots = [simulatedMe, simulatedAlly]+simulatedEnemies
 simulatedBall = Ball(name="simulatedBall")
 
 
-
-
 class Simulator(object):
 
     def __init__(self, debug=False):
@@ -39,15 +37,18 @@ class Simulator(object):
         # TODO
         pass
 
+
     # move holonomically at an angle of `degrees` clockwise and a distance of `distance` cm
     def holoneg(self,degrees,distance):
         checkValid(degrees,distance)
         # TODO
         pass
 
+
     # stop all motors
     def stop(self):
         self.currentActionQueue=[]
+
 
     # rotate `degrees` degrees anticlockwise, then move `distance` cm
     def rotate(self,distance,degrees):
@@ -59,6 +60,7 @@ class Simulator(object):
             self.currentActionQueue.append({'action': SimulatorActions.moveForwards, 'amount': distance, 'timeLeft': distance/MAX_SPEED})
             self.lastCommandSent+=1
 
+
     # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
         checkValid(degrees,distance)
@@ -68,6 +70,7 @@ class Simulator(object):
         if distance>0:
             self.currentActionQueue.append({'action': SimulatorActions.moveForwards, 'amount': distance, 'timeLeft': distance/MAX_SPEED})
             self.lastCommandSent+=1
+
 
     def rot_move(self, degrees, distance):
         """
@@ -79,12 +82,12 @@ class Simulator(object):
 
         # add positive offset
         while degrees > 255:
-            self.rotate(255)
+            self.rotate(0,255)
             degrees -= 255
 
         # add negative offset
         while degrees < -255:
-            self.rotateneg(255)
+            self.rotateneg(0,255)
             degrees += 255
 
         # calculate movement offset
@@ -100,8 +103,9 @@ class Simulator(object):
 
         # issue movement offset command
         while offset > 0:
-            self.move(255);
+            self.rotate(255,0);
             offset -= 255
+
 
     # kick with power `distance`
     def kick(self,distance):
@@ -113,9 +117,11 @@ class Simulator(object):
         self.currentActionQueue.append({'action': SimulatorActions.grab, 'timeLeft': GRAB_TIME})
         self.lastCommandSent+=1
 
+
     # cancel previous command and any queued commands
     def flush(self):
         self.currentActionQueue=[]
+
 
     # grab the ball
     # ensure the grabber is opened before calling!
@@ -124,14 +130,15 @@ class Simulator(object):
         self.lastCommandSent+=1
 
 
-
     # open the grabber, ready to grab
     def ungrab(self):
         self.currentActionQueue.append({'action': SimulatorActions.ungrab, 'timeLeft': UNGRAB_TIME})
         self.lastCommandSent+=1
 
+
     def am_i_done(self):
         return self.lastCommandSent==self.lastCommandFinished
+
 
     def tick(self, tickTimeLeft=TICK_TIME):
         '''Update the status of our robot and the ball based on our recent actions
@@ -139,6 +146,7 @@ class Simulator(object):
         tickTimeLeft:   the time remaining before the next tick, TICK_TIME by default
                         or slightly less than this if an action finishes halfway through a tick
                         and this gets called again on the remaining time'''
+
         try:
             currentAction = self.currentActionQueue[0]
         except IndexError:
@@ -212,7 +220,7 @@ class Simulator(object):
             # if it'll keep kicking for this whole tick, the only potential change is that the ball starts moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
-                simulatedBall.get_kicked()
+                #simulatedBall.get_kicked()
 
             # if not, start the next action in the queue with the remaining time
             else:
@@ -229,7 +237,7 @@ class Simulator(object):
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
                 # if the ball is close enough stop the ball and toggle 'holding ball' state
-                simulatedBall.get_grabbed(simulatedMe)
+                #simulatedBall.get_grabbed(simulatedMe)
             # if not, start the next action in the queue with the remaining time TODO
             else:
                 self.grabbed=True
@@ -258,7 +266,7 @@ class Simulator(object):
         
 
         ## move ball (v = u +at)
-        simulatedBall.move() 
+        # simulatedBall.move() 
 
 
 class SimBall(Ball):
