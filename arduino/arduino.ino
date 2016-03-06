@@ -43,7 +43,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 // COMMS API Byte Definitions
 #define CMD_ROTMOVE    B00000011 // Buffered: MSB 1 performs CCW rotation
 #define CMD_ROTMOVECCW B00001111 // Buffered: MSB 1 performs CCW rotation
-#define CMD_HOLMOVE    B00000010 // Buffered: NOT YET IMPLEMENTED
+#define CMD_HOLMOVE    B00000010 // Buffered
 #define CMD_KICK       B00000100 // Buffered
 #define CMD_STOP       B00001000 // Buffered
 #define CMD_GRAB       B00010000 // Buffered
@@ -115,12 +115,13 @@ float accel_offsetx = 0;
 float accel_offsety = 0;
 
 // compass targets
-float start_angle;
 float target_angle;
+float angle_difference;
 float previous_gyro;
 
 
-// Accelerometer/Compass values
+// Accelerometer/Compass value
+int mag_offset[3];
 int accel[3];               // we'll store the raw acceleration values here
 int mag[3];                 // raw magnetometer values stored here
 float realAccel[3];         // calculated acceleration values here
@@ -158,10 +159,11 @@ void setup() {
     commandOverflow = 0;
     idle_time = millis();
 
-    /*********** Uncomment for Sensors *****************
+    // ********** Uncomment for Sensors *****************
     // initialize Accelerometer/Compass sensor
     char init = 0;
     init = Lsm303d.initI2C();
+    
     
     // get initial Accelerometer/Compass Data
     Lsm303d.getAccel(accel);
@@ -179,13 +181,20 @@ void setup() {
     // tilt-compensated angl
     titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
     
-    // remember offset gyro-values
+    // remember offset values
     accel_offsetx = realAccel[0];
     accel_offsety = realAccel[1];
-    *********** Uncomment for Sensors END **************/
+    for (int i = 0; i < 3; i++){
+        mag_offset[i] = mag[i];
+    }
+    //*********** Uncomment for Sensors END **************/
 
     /* Custom commands can be initialized below */
-    
+    command_buffer[0] = CMD_HOLMOVE;
+    command_buffer[1] = 0;
+    command_buffer[2] = 0;
+    command_buffer[3] = 255;
+    buffer_index = 4;
   }
 
 void loop() {
@@ -193,12 +202,25 @@ void loop() {
   Communications();
   
   // Sensor FSM part
+  /*
   pollAccComp();
+  Serial.println("==========");
+  Serial.print("M1: ");
+  Serial.println(mag[0]);
+  Serial.print("M2: ");
+  Serial.println(mag[1]);
+  Serial.print("M3: ");
+  Serial.println(mag[2]);
+  Serial.println("Headings");
+  Serial.println(titleHeading);
+  Serial.println(heading);
+  delay(1000);
   
+  */
   // Action FSM part
   int state_end = 0;
   MasterState = MasterState & 127;
-  
+
   if (MasterState != IDLE_STATE){
       re_ack_time = millis();
   }
@@ -413,10 +435,11 @@ void pollAccComp(){
     
     // wait for the magnetometer readings to be ready
     if(Lsm303d.isMagReady()){
-
         // get the magnetometer values, store them in mag
         Lsm303d.getMag(mag);
-        
+        //for (int i = 0; i < 3; i++){
+        //  mag[i] -= mag_offset[i];
+        //}
         // angle between X and north
         heading = Lsm303d.getHeading(mag);
         
@@ -464,9 +487,12 @@ int rotMoveStep(){
             rotaryBias = positions[0] + positions[1] + positions[2];
 
             // *uncomment for using compass
-            //start_angle = titleHeading;
-            //target_angle = float(degrees);
-
+            target_angle = normalize_angle(titleHeading - (float(degrees) * left));
+            Serial.print("S: ");
+            Serial.println(titleHeading);
+            Serial.print("T: ");
+            Serial.println(target_angle);
+            
             if (left == 1)
                 rotateLeft();
             else
@@ -478,17 +504,27 @@ int rotMoveStep(){
         case 1 :
             left = (MasterState >> 3) & 127; // left becomes MSB of master state/current command
             left = left == 0 ? 1 : -1;
+            /*
             if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
                 updateMotorPositions(positions);
                 rotMoveGrabMode = 1;
             }
-            else{
-                // delay to make sure motor actions are not being performed too quckly
-                // to ensure data sent to motors is not corrupted
+            */
+            angle_difference = calculateAngleDifference(titleHeading, target_angle);
+            Serial.print("D: ");
+            Serial.println(angle_difference);
+            if (angle_difference < 10){
                 motorAllStop();
                 delay(50);
                 restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
+            }
+            
+            else{
+                // delay to make sure motor actions are not being performed too quckly
+                // to ensure data sent to motors is not corrupted
+                updateMotorPositions(positions);
+                rotMoveGrabMode = 1;
             }
             return 0;
         
@@ -552,10 +588,23 @@ int holoMoveStep(){
     float m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy;
     float m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy;
     
-    m1_val *= 255;
-    m2_val *= 255;
-    m3_val *= 255;
-
+    float scale_factor = fmax(abs(m1_val), abs(m2_val));
+    scale_factor = 1 / fmax(scale_factor, abs(m3_val));
+    
+    // scale up to 1
+    m1_val *= scale_factor;
+    m2_val *= scale_factor;
+    m3_val *= scale_factor;
+    
+    //scale up to 255
+    
+    m1_val *= POWER_RGT;
+    m2_val *= POWER_LFT;
+    m3_val *= POWER_BCK;
+    Serial.println(int(m1_val));
+    Serial.println(int(m2_val));
+    Serial.println(int(m3_val));
+    
     if (m1_val > 0)
         motorForward(1, byte(m1_val));
     else
@@ -722,6 +771,23 @@ float calculateRotaryTarget(float x3){
     return y1 + (y2 - y1) * ((x3 - x1) / (x2 - x1));
 }
 
+float normalize_angle(float angle){
+    if (angle > 360)
+        angle -= 360;
+    
+    else if (angle < 0)
+        angle += 360;
+    
+    return angle;
+}
+
+int calculateAngleDifference(float current_angle, float target_angle){
+    int phi = abs(int(target_angle - current_angle)) % 360;
+    if (phi > 180)
+        return 360 - phi;
+    else
+        return phi;
+}
 
 // basic test functions for sanity!
 void fullMotorTest(){
@@ -825,3 +891,7 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
+
+
+
