@@ -121,7 +121,10 @@ float previous_gyro;
 
 
 // Accelerometer/Compass value
-int mag_offset[3];
+int mag_min_x;
+int mag_max_x;
+int mag_min_y;
+int mag_max_y;
 int accel[3];               // we'll store the raw acceleration values here
 int mag[3];                 // raw magnetometer values stored here
 float realAccel[3];         // calculated acceleration values here
@@ -184,17 +187,21 @@ void setup() {
     // remember offset values
     accel_offsetx = realAccel[0];
     accel_offsety = realAccel[1];
-    for (int i = 0; i < 3; i++){
-        mag_offset[i] = mag[i];
-    }
+    //for (int i = 0; i < 3; i++){
+    //    mag_offset[i] = mag[i];
+    //}
+    mag_min_x = mag[0];
+    mag_max_x = mag[0];
+    mag_min_y = mag[1];
+    mag_max_y = mag[1];
     //*********** Uncomment for Sensors END **************/
 
     /* Custom commands can be initialized below */
-    command_buffer[0] = CMD_HOLMOVE;
-    command_buffer[1] = 0;
-    command_buffer[2] = 0;
-    command_buffer[3] = 255;
-    buffer_index = 4;
+    //command_buffer[0] = CMD_HOLMOVE;
+    //command_buffer[1] = 0;
+    //command_buffer[2] = 0;
+    //command_buffer[3] = 255;
+    //buffer_index = 4;
   }
 
 void loop() {
@@ -202,23 +209,39 @@ void loop() {
   Communications();
   
   // Sensor FSM part
-  /*
-  pollAccComp();
-  Serial.println("==========");
-  Serial.print("M1: ");
-  Serial.println(mag[0]);
-  Serial.print("M2: ");
-  Serial.println(mag[1]);
-  Serial.print("M3: ");
-  Serial.println(mag[2]);
-  Serial.println("Headings");
-  Serial.println(titleHeading);
-  Serial.println(heading);
-  delay(1000);
   
-  */
+  pollAccComp();
+  /*
+  if (mag[0] > mag_max_x){
+      mag_max_x = mag[0];
+  }
+  if (mag[0] < mag_min_x){
+      mag_min_x = mag[0];
+  }
+  if (mag[1] > mag_max_y){
+      mag_max_y = mag[1];
+  }
+  if (mag[1] < mag_min_y){
+      mag_min_y = mag[1];
+  }
+
+ if (millis() - idle_time > 5000){
+    idle_time = millis();
+    Serial.print("MIN X: ");
+    Serial.println(mag_min_x);
+    Serial.print("MAX X: ");
+    Serial.println(mag_max_x);
+    Serial.print("MIN Y: ");
+    Serial.println(mag_min_y);
+    Serial.print("MAX Y: ");
+    Serial.println(mag_max_y);
+    
+ }*/
+  
   // Action FSM part
   int state_end = 0;
+
+  // remove SEQ from command
   MasterState = MasterState & 127;
 
   if (MasterState != IDLE_STATE){
@@ -437,6 +460,8 @@ void pollAccComp(){
     if(Lsm303d.isMagReady()){
         // get the magnetometer values, store them in mag
         Lsm303d.getMag(mag);
+          mag[0] += 1325;
+          mag[1] += 2617;
         //for (int i = 0; i < 3; i++){
         //  mag[i] -= mag_offset[i];
         //}
@@ -510,10 +535,9 @@ int rotMoveStep(){
                 rotMoveGrabMode = 1;
             }
             */
-            angle_difference = calculateAngleDifference(titleHeading, target_angle);
-            Serial.print("D: ");
-            Serial.println(angle_difference);
-            if (angle_difference < 10){
+            angle_difference = calculateAngleDifference(heading, target_angle);
+            degrees = command_buffer[command_index + 1];
+            if (angle_difference < degrees / 3){
                 motorAllStop();
                 delay(50);
                 restoreMotorPositions(positions);
@@ -844,15 +868,15 @@ void testLeftBackward() {
 }
 
 void rotateRight() {
-    motorBackward(MOTOR_LFT, POWER_LFT * 1);
-    motorBackward(MOTOR_RGT, POWER_RGT * 1);
-    motorBackward(MOTOR_BCK, POWER_BCK * 1);    
+    motorBackward(MOTOR_LFT, (POWER_LFT * 1) / 2);
+    motorBackward(MOTOR_RGT, (POWER_RGT * 1) / 2);
+    motorBackward(MOTOR_BCK, (POWER_BCK * 1) / 2);    
 }
 
 void rotateLeft() {
-    motorForward(MOTOR_LFT, POWER_LFT * 1);
-    motorForward(MOTOR_RGT, POWER_RGT * 1);
-    motorForward(MOTOR_BCK, POWER_BCK * 1);    
+    motorForward(MOTOR_LFT, (POWER_LFT * 1) / 2);
+    motorForward(MOTOR_RGT, (POWER_RGT * 1) / 2);
+    motorForward(MOTOR_BCK, (POWER_BCK * 1) / 2);    
 }
 
 void testRightForward() {
