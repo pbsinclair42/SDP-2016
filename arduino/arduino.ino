@@ -181,33 +181,7 @@ void loop() {
   // Sensor FSM part
   
   pollAccComp();
-  
-  /* 
-  if (mag[0] > mag_max_x){
-      mag_max_x = mag[0];
-  }
-  if (mag[0] < mag_min_x){
-      mag_min_x = mag[0];
-  }
-  if (mag[1] > mag_max_y){
-      mag_max_y = mag[1];
-  }
-  if (mag[1] < mag_min_y){
-      mag_min_y = mag[1];
-  }
-
- if (millis() - idle_time > 5000){
-    idle_time = millis();
-    Serial.print("MIN X: ");
-    Serial.println(mag_min_x);
-    Serial.print("MAX X: ");
-    Serial.println(mag_max_x);
-    Serial.print("MIN Y: ");
-    Serial.println(mag_min_y);
-    Serial.print("MAX Y: ");
-    Serial.println(mag_max_y);
-    
- }*/
+  //calibrateCompass(); // if wanting to do per-pitch calibration
   
   // Action FSM part
   int state_end = 0;
@@ -792,6 +766,34 @@ int calculateAngleDifference(float current_angle, float target_angle){
         return 360 - phi;
     else
         return phi;
+}
+
+void calibrateCompass(){ 
+  if (mag[0] > mag_max_x){
+      mag_max_x = mag[0];
+  }
+  if (mag[0] < mag_min_x){
+      mag_min_x = mag[0];
+  }
+  if (mag[1] > mag_max_y){
+      mag_max_y = mag[1];
+  }
+  if (mag[1] < mag_min_y){
+      mag_min_y = mag[1];
+  }
+
+ if (millis() - idle_time > 5000){
+    idle_time = millis();
+    Serial.print("MIN X: ");
+    Serial.println(mag_min_x);
+    Serial.print("MAX X: ");
+    Serial.println(mag_max_x);
+    Serial.print("MIN Y: ");
+    Serial.println(mag_min_y);
+    Serial.print("MAX Y: ");
+    Serial.println(mag_max_y);
+    
+ }
 }
 
 // basic test functions for sanity!
