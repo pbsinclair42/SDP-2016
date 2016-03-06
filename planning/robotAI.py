@@ -5,7 +5,7 @@ from constants import *
 from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
-from actions import moveToPoint, turnToDirection
+from actions import *
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass
 import visionAPI
 from CommsAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
@@ -88,26 +88,7 @@ def executePlan():
         return
 
     if currentAction==Actions.rotateToAngle:
-        # if we've already started moving and haven't stopped yet, just keep going.  Why not.
-        if me.moving:
-            # TODO: add in some kind of checker/corrector
-            print("Still doing stuff")
-        else:
-            # calculate what angle we're aiming for
-            targetAngle = me.plan[0]['targetFunction']()
-
-            # if we're at a close enough angle, we're done
-            if nearEnough(me.currentRotation, targetAngle):
-                print("Done!")
-                me.plan.pop(0)
-                # start on the next bit of the plan
-                executePlan()
-
-            # so if we're not currently turning and we're not yet facing the right directin,
-            # send the command to turn to the angle we actually should be at
-            else:
-                turnToDirection(targetAngle)
-
+       rotateToAngle()
     elif currentAction==Actions.moveToPoint:
         # if we've already started moving and haven't stopped yet, just keep going.  Why not.
         if me.moving:
@@ -144,52 +125,17 @@ def executePlan():
                 moveToPoint(targetPoint)
 
     elif currentAction==Actions.kick:
-        if me.moving:
-            print("Still doing stuff")
-        else:
-            kickDistance = me.plan[0]['targetFunction']()
-            kick(kickDistance)
-            me.plan.pop(0)
-
+        kick()
     elif currentAction==Actions.ungrab:
-        if me.moving:
-            print("Still doing stuff")
-        else:
-            ungrab()
-            me.grabberState=1
-            me.plan.pop(0)
-
+        ungrab()
     elif currentAction==Actions.grab:
-        if me.moving:
-            print("Still doing stuff")
-        else:
-            grab()
-            me.grabberState=0
-            me.plan.pop(0)
-
+        grab()
+    elif currentAction == Actions.guardGoal:
+        guardGoal()
     elif currentAction == Actions.receiveBall:
-        if me.moving:
-            print("Still doing stuff")
-        else:
-            # if another robot's still holding the ball, just wait
-            # TODO: maybe reposition if need be?
-            if ball.status!=BallStatus.free:
-                print("Ball's not been kicked yet lol")
-            # if the ball's been kicked, we hope to collect it
-            else:
-                # if it's headed towards us, stay where we are
-                if nearEnough(ball.direction, ball.bearing(me)):
-                    # if it's close enough, we're done
-                    if ball.distance(me)<ROBOT_WIDTH + GRAB_DISTANCE:
-                        me.plan.pop(0)
-                    # otherwise, just staying here is cool
-                # if it's not headed towards us, just try and fetch it
-                else:
-                    # go to where its actually going
-                    grab()
-                    collectBall()
+        recieveBall()
 
-    # if our plan is over, we've finished our goal
+    # if our plan is over, we've achieved our goal
     if len(me.plan)==0:
         me.goal = Goals.none
 

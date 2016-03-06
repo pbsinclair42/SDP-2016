@@ -212,7 +212,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     radio_connected = False
     ack_count = (0, 0)
     seq_num = 0
+    command_sleep_time = 0.05 # sleep time between sending each byte
+    process_sleep_time = 0.13 # sleep time for process
 
+    # perform setup
     while not radio_connected:
         try:
             comms = Serial(port=port, baudrate=baudrate)
@@ -228,10 +231,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
 
-    resend_time = time()
-
-
-
     while True:
         event.wait()
         if pipe_in.poll():
@@ -246,16 +245,13 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             # non-command-inputs:
             elif pipe_data == "exit":
                 return
+
             # return index of command currently being performed
             elif pipe_data == "ccmd":
                 pipe_out.send(len(cmnd_list) == ack_count[1])
 
             elif pipe_data == "rprt":
-                print len(cmnd_list), "=?", ack_count
-                print "Commands:"
-                for item in cmnd_list:
-                    print item,
-                print "Data:"
+                print cmnd_list
                 print data_buffer
 
             elif pipe_data == "flush":
@@ -264,33 +260,27 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
-            elif pipe_data == "restart":
-                print "Restarting"
-                while comms.in_waiting:
-                    x = comms.read(1)
-        print event.is_set()
-        print 80 * "-"
-         # parse all incoming comms
         while comms.in_waiting:
             data = comms.read(1)
-            print "DATA +=", ord(data)
-            try:
-                data_buffer.append(ord(data))
-            except ValueError:
-                pass
+            # if last command isn't finished
+            if cmnd_list and all(cmnd_list[-1][-3:]):
+                print "Flushing: ", ord(data)
+            else:
+                data_buffer += [ord(data)]
+                print "DATA +=", ord(data)
 
         # ensure data has been processed before attempting to send data
-        ack_count, seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
+        seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
 
-        try:
-            # if there are commands to send
-            if cmnd_list and not all(cmnd_list[-1][-3:-1]):
-                # get first un-sent command or un-acknowledged, but send
-                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+        # if there are commands to send
+        if cmnd_list and not all(cmnd_list[-1][-3:-1]):
+            # get first un-sent command or un-acknowledged, but send
+            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
 
-                # if the command is not acknowledged on time
-                if cmd_to_send[-2] == 0 or time() - resend_time > 1.5:
-                    sequenced = sequence_command(cmd_to_send[:4], seq_num)
+            # if the command is not acknowledged
+            if cmd_to_send[-2] == 0:
+                sequenced = sequence_command(cmd_to_send[:4], seq_num)
+                for command_byte in sequenced:
                     comms.write(sequenced)
                     cmnd_list[cmd_index][-3] = 1
                     resend_time = time()
@@ -326,15 +316,29 @@ def process_data(commands, data, comb_count, seq_num):
             #    seq_num = flip_seq(seq_num)
 
     del data[:cutoff_index + 1]
-    return (comb_count[0] + ack_count, comb_count[1] + end_count), seq_num
+    return seq_num
 
 
 def acknowledge_command(commands, flag):
     assert flag == 1 or flag == 2
-    for item in commands:
-        if item[-flag] == 0:
-            item[-flag] = 1
-            return
+    terget_idx, target_command = None, None
+
+    # get the last sent command
+    for command in commands:
+        if command[-3] == 1:
+            target_command = command
+        else:
+            break
+
+    try:
+        target_command[-flag] = 1
+    except IndexError:
+        pass
+
+    return
+
+
+
 
 def flip_seq(seq):
     if seq == 1:

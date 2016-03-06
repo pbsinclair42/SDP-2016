@@ -5,12 +5,10 @@
 #include "Accelerometer_Compass_LSM303D.h"
 /***
 IMPORTANT: PLEASE READ BEFORE EDITING:
-
     If editing file:
         1. push to master only working code that doesn't break it;
         2. follow the standard reasonably;
         3. read the comments before-hand.
-
 ***/
 
 // Motor Definitions
@@ -53,18 +51,22 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
 /* Sent by Arduino*/
 //define CMD_END        B11111101 // Buffered
-#define CMD_DONE       B11111101 // Sent when command is finished
 #define CMD_ERROR      B11111111 // Sent for errors
 #define CMD_FULL       B11111110 // Sent if buffer is full
 #define CMD_RESEND     B11111100 // if all commands haven't been received in 500 miliseconds
 #define CMD_ACK        B11111010 // Sent after command has been received
+#define CMD_FIN        B11111101 // Sent when command is finished
 
+// Comms Tuning Parameters
+#define RESPONSE_COUNT 3 // how many bytes to respond with, for ACK and FIN
+#define RESPONSE_PERIOD 10 // how many milliseconds to wait between responses
+byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 
 // utils
 #define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
-byte SEQ_NUM = 0;
+
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -83,13 +85,13 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
-byte bad_commands = 0;
+byte invalid_commands = 0;
 
 // used for the millis function.
-unsigned long serial_time;
-unsigned long serial_deriv; 
+unsigned long serial_time; 
 unsigned long command_time;
 unsigned long idle_time;
+unsigned long re_ack_time;
 // rotation parameters
 int rotaryTarget;
 int rotaryBias;
@@ -127,9 +129,6 @@ float heading, titleHeading;
 int calculateChecksum(int target_value){
     int i, j, check = 0;
     for (i = target_value - 4; i < target_value - 1; i++){
-        //for (j = 0; j < 8; j++){
-        //    check += bitRead(command_buffer[i], j);
-        //}
         check += (command_buffer[i] & 1);
         check += (command_buffer[i] & 2)   >> 1;
         check += (command_buffer[i] & 4)   >> 2;
@@ -190,12 +189,20 @@ void setup() {
   }
 
 void loop() {
+  // Communication FSM part
   Communications();
-  // get sensor data at each time-step
-  //pollAccComp();
+  
+  // Sensor FSM part
+  pollAccComp();
+  
+  // Action FSM part
   int state_end = 0;
   MasterState = MasterState & 127;
   
+  if (MasterState != IDLE_STATE){
+      re_ack_time = millis();
+  }
+
   // Switch statement for the FSM state
   switch(MasterState){
         
@@ -267,13 +274,14 @@ void loop() {
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
-        }
+    }
 
   
   if (state_end){
-      MasterState = IDLE_STATE;
-      command_index += 4;
+        MasterState = IDLE_STATE;
+        command_index += 4;
       
+
       // check for circular buffer end
       if (command_index == 0){
           commandOverflow++;
@@ -294,10 +302,32 @@ void loop() {
         idle_time = millis();
         if (buffer_index != CMD_DONE && buffer_index != CMD_ACK){
             Serial.write(buffer_index);
+>>>>>>> 3bc9f0689053105af0ec1eae06a0488ad3041058
         }
-        if (command_index != CMD_DONE && command_index != CMD_ACK){
-            Serial.write(command_index);
+
+        // respond with FIN
+        for (int i=0; i < RESPONSE_COUNT; i++){
+            Serial.write(CMD_FIN) ;
+            delay(RESPONSE_PERIOD);
         }
+<<<<<<< HEAD
+        
+        // make not of respond time
+        re_ack_time = millis();
+
+      
+    }
+
+    // check if idle and not received a command within a second. Then, its likely that all
+    // FIN flags were lost
+    if (millis() - re_ack_time > 1500 && command_index != 0 && command_index != buffer_index){
+
+       for (int i=0; i < RESPONSE_COUNT; i++){
+            Serial.write(CMD_FIN);
+            delay(RESPONSE_PERIOD);
+        }
+       re_ack_time = millis();
+=======
     }*/
     // add this in before and set state_end to 1
     if (millis() - serial_time > 5000 && command_index != 0){
@@ -311,22 +341,16 @@ void loop() {
     }
 }
 
-/* 
-SerialEvent occurs whenever a new data comes in the
-hardware serial RX. This routine is run between each
-time loop() runs.
-*/
-
 void Communications() {
     // for targetting buffer checks so as not to do buffer[0 - 1]
     int target_value;
     byte checksum = 0;
     char garbage;
-    // to make sure Serial reading can get interrupted
     
-    serial_deriv = millis();
+    // to make sure Serial reading can get interrupted
+    serial_time = millis();
+
     while (Serial.available()) {
-        serial_time = millis();
         // note overflow to maintain circular buffer
         if (buffer_index == 255){
             bufferOverflow++;
@@ -334,7 +358,6 @@ void Communications() {
         
         // read command
         command_buffer[buffer_index++] = Serial.read();
-        Serial.write(command_buffer[buffer_index - 1]);
         if (buffer_index % 4 == 0){
             
             // acknowledge proper command
@@ -346,10 +369,11 @@ void Communications() {
 
             checksum = byte(calculateChecksum(target_value));
 
-            // check for SEQ number and checksum
+            // check for SEQ number and checksum to find if command is valid
             if (((command_buffer[target_value - 4] & 128) == 128 * SEQ_NUM) && 
                 (command_buffer[target_value - 1] == checksum)){
                 
+                invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
                 for (int i=0; i < 8; i++){
                     Serial.write(CMD_ACK);
@@ -365,7 +389,8 @@ void Communications() {
                  
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
                     restoreState();
-                } else if (command_buffer[target_value - 4] == CMD_STOP){
+                }
+                else if (command_buffer[target_value - 4] == CMD_STOP){
                     motorAllStop();
                     rotMoveGrabMode = 0;
                     MasterState = 0;
@@ -373,14 +398,15 @@ void Communications() {
                     commandOverflow = 0;
                 }    
             }
-                // report bad command
+            // report invalid command
             else{
-                bad_commands += 1;
-                Serial.write(CMD_ERROR);
-                Serial.write(SEQ_NUM);
-                Serial.write(CMD_ERROR);
+                invalid_commands += 1;
+                buffer_index = target_value - 4;
+                
+                if (buffer_index == 252){
+                    bufferOverflow -= 1;
+                }
 
-                buffer_index -= 4;
                 while(Serial.available()){
                     garbage = Serial.read();
                     //Serial.write(garbage);
@@ -394,8 +420,8 @@ void Communications() {
                 }
             }
         }
-        else if (millis() - serial_deriv > 500){ // TODO: Break this only here;
-            //Serial.write("Time-Out");
+        // Time-out serial if reading is taking too long
+        else if (millis() - serial_time > 500){ 
             Serial.write(CMD_FULL);
             while(buffer_index %4 != 0) {
                 buffer_index--;
