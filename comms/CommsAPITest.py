@@ -71,13 +71,8 @@ if __name__ == "__main__":
     """
         Big test based on random data
     """
-
     while True:
-        # delay of up to 5 sec
         if commsSystem.am_i_done():
-        #angle of up to 100 degrees
-            angle = random.random() * 100;
-            displ = random.random() * 30;
-            pos = random.choice([1, -1])
-
-            move(displ, angle * pos)
+            move(0, 45);
+            time.sleep(5)
+            print "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK"
