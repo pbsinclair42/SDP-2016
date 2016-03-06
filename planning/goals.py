@@ -62,6 +62,27 @@ def shoot():
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
                 {'action':Actions.kick, 'targetFunction':distanceToKick}]
 
+def receiveAndPass():
+    me.goal = Goals.receiveAndPass
+
+    """Stop bad people from scoring and pass ball to ally"""
+    def rotate1():
+        """rotate into position"""
+        return me.bearing(ball)
+
+    def rotate2():
+        return me.bearing(ally)
+
+    def kickToAlly():
+        return 255#me.distance(ally)
+
+    me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate1},
+               {'action':Actions.ungrab},
+               {'action':Actions.receiveBall},
+               {'action':Actions.grab},
+               {'action':Actions.rotateToAngle,'targetFunction': rotate2},
+               {'action':Actions.kick,'targetFunction': kickToAlly}]
+
 
 def passBall():
 
@@ -70,7 +91,7 @@ def passBall():
         return me.bearing(ally)
 
     def kickToAlly():
-        return me.distance(ally)
+        return 255#me.distance(ally)
 
     me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': rotate},
                 {'action':Actions.kick,'targetFunction': kickToAlly}]

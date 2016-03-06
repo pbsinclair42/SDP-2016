@@ -6,7 +6,7 @@ from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals, Actions
 from helperFunctions import essentiallyEqual, nearEnough
 from actions import *
-from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
+from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass
 import visionAPI
 from CommsAPI import grab, ungrab, turn, kick, flush, stop, commsSystem
 from simulator import Simulator
@@ -54,10 +54,12 @@ def updatePositions():
 def makePlan():
     """Decide what to do based on the system's current beliefs about the state of play"""
     if me.goal == Goals.none:
+        if not USING_SIMULATOR:
+            commsSystem.restart()
         action = "0"
-        while action not in ['1','2','3','4','5','6', '7']:
+        while action not in ['1','2','3','4','5','6', '7', '8']:
             print("What action should I do now?")
-            action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Stop\n? ")
+            action = raw_input("1. Collect ball\n1b. Collect ball using hardware\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Receieve and pass (milestoney stuff)\n8. Stop\n? ")
         if action=="1":
             collectBall()
         elif action=="2":
@@ -70,6 +72,8 @@ def makePlan():
             blockPass()
         elif action =="6":
             guardGoal()
+        elif action == "7":
+            receiveAndPass()
         else:
             import sys
             sys.exit()
@@ -133,8 +137,14 @@ def executePlan():
 
 
     # if our plan is over, we've achieved our goal
+
     if len(me.plan)==0:
-        me.goal = Goals.none
+        # if our goal was to collect the ball and we haven't managed to do so, try again
+        if me.goal==Goals.collectBall and ball.status!=BallStatus.me:
+            collectBall()
+        else:
+            me.goal = Goals.none
+            commsSystem.stop()
 
 
 def tick():
@@ -156,5 +166,5 @@ updatePositions()
 from helperClasses import Point
 me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
 me.goal = Goals.collectBall'''
-
-#tick()
+updatePositions()
+tick()

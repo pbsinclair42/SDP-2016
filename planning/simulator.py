@@ -1,7 +1,7 @@
 from enum import Enum
 from constants import *
 from helperClasses import Point, BallStatus
-from helperFunctions import sin, cos
+from helperFunctions import sin, cos, nearEnough
 from moveables import Robot, Ball
 
 # our supreme robot
@@ -16,9 +16,12 @@ simulatedRobots = [simulatedMe, simulatedAlly]+simulatedEnemies
 simulatedBall = Ball(name="simulatedBall")
 
 
+
+
 class Simulator(object):
 
     def __init__(self, debug=False):
+        # Actions queued to simulate.
         self.currentActionQueue=[]
         self.grabbed=True
         self.holdingBall=False
@@ -120,6 +123,8 @@ class Simulator(object):
         self.currentActionQueue.append({'action': SimulatorActions.grab, 'timeLeft': GRAB_TIME})
         self.lastCommandSent+=1
 
+
+
     # open the grabber, ready to grab
     def ungrab(self):
         self.currentActionQueue.append({'action': SimulatorActions.ungrab, 'timeLeft': UNGRAB_TIME})
@@ -207,7 +212,7 @@ class Simulator(object):
             # if it'll keep kicking for this whole tick, the only potential change is that the ball starts moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
-                # TODO start the ball moving at the appropriate point
+                simulatedBall.get_kicked()
 
             # if not, start the next action in the queue with the remaining time
             else:
@@ -223,9 +228,9 @@ class Simulator(object):
             # if it'll keep grabbing for this whole tick, the only potential change is that the ball stops moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
-                # TODO potentially stop the ball and toggle 'holding ball' state
-
-            # if not, start the next action in the queue with the remaining time
+                # if the ball is close enough stop the ball and toggle 'holding ball' state
+                simulatedBall.get_grabbed(simulatedMe)
+            # if not, start the next action in the queue with the remaining time TODO
             else:
                 self.grabbed=True
                 tickTimeLeft = TICK_TIME-currentAction['timeLeft']
@@ -250,7 +255,58 @@ class Simulator(object):
                 self.lastCommandFinished +=1
                 # start the next action if it's queued
                 self.tick(tickTimeLeft)
+        
 
+        ## move ball (v = u +at)
+        simulatedBall.move() 
+
+
+class SimBall(Ball):
+    def __init__(self, p=None, name =None):
+        super(SimBall, self).__init__(p, name)
+
+    def bounce(self, topWall,  leftWall, rightWall, bottomWall):
+        if topWall | bottomWall:
+            self.direction = - self.direction
+        else:
+            self.direction = (180 - self.direction) % 180
+         
+
+    def move(self):
+        if self.currentSpeed ==0 & self.acceleration ==0:
+            return
+        self.currentSpeed = self.currentSpeed + self.acceleration*tickTimeLeft
+        distanceTravelled = self.currentSpeed* tickTimeLeft
+        angle = self.currentRotation
+        xDisplacement = round(cos(angle)*distanceTravelled, 2)
+        yDisplacement = -round(sin(angle)*distanceTravelled, 2)
+        newX = self.currentPoint.x+xDisplacement
+        newY = self.currentPoint.y+yDisplacement
+        topWall = xDisplacement == PITCH_WIDTH 
+        leftWall = xDisplacement ==0
+        rightWall = yDisplacement == PITCH_LENGTH
+        bottomWall = yDisplacement ==0
+        if topWall | leftWall | rightWall | bottomWall:
+            self.bounce(topWall,  leftWall, rightWall, bottomWall)
+        self.currentPoint = Point(newX, newY )
+        if self.currentSpeed < 0:
+            self.currentSpeed = 0
+            self.acceleration = 0
+
+    def get_kicked(self):
+        self.acceleration = -2
+
+    def get_grabbed(self, robot):
+        willBounce = random.sample([0,0,1,1,0,0,0], 1)[0]
+        if nearEnough(robot.currentPoint, self.currentPoint):
+            if willBounce:
+                print("oh no, the ball bounced off the robot!")
+                self.direction = robot.direction - 15
+                self.currentSpeed = 0
+                self.acceleration = -0.15
+            else:
+                self.acceleration = 0
+                self.state = BallStatus.me
 
 def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot, enemyARot, enemyBRot, ballPoint, ballStat):
     '''Reset the status of all robots and the ball'''
@@ -287,3 +343,4 @@ class SimulatorActions(Enum):
     kick = 3
     ungrab = 4
     grab = 5
+

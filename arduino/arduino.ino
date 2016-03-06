@@ -281,9 +281,28 @@ void loop() {
         MasterState = IDLE_STATE;
         command_index += 4;
       
-        // check for circular buffer end
-        if (command_index == 0){
-            commandOverflow++;
+
+      // check for circular buffer end
+      if (command_index == 0){
+          commandOverflow++;
+      }
+      
+    for (int i=0; i < 8; i++){
+        Serial.write(CMD_DONE);
+        delay(10);
+    }
+      //delay(5000);
+      
+     }
+    /*
+    if (millis() - idle_time > 3000 && command_index != 0){
+        Serial.write(rotMoveGrabMode);
+        Serial.write(MasterState);
+        Serial.write(SEQ_NUM);
+        idle_time = millis();
+        if (buffer_index != CMD_DONE && buffer_index != CMD_ACK){
+            Serial.write(buffer_index);
+>>>>>>> 3bc9f0689053105af0ec1eae06a0488ad3041058
         }
 
         // respond with FIN
@@ -291,6 +310,7 @@ void loop() {
             Serial.write(CMD_FIN) ;
             delay(RESPONSE_PERIOD);
         }
+<<<<<<< HEAD
         
         // make not of respond time
         re_ack_time = millis();
@@ -307,6 +327,16 @@ void loop() {
             delay(RESPONSE_PERIOD);
         }
        re_ack_time = millis();
+=======
+    }*/
+    // add this in before and set state_end to 1
+    if (millis() - serial_time > 5000 && command_index != 0){
+
+       for (int i=0; i < 8; i++){
+            Serial.write(CMD_DONE);
+            delay(10);
+        }
+       serial_time = millis();
 
     }
 }
@@ -345,16 +375,18 @@ void Communications() {
                 
                 invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
-                
-                // Acknowledge receipt of cammand
-                for (int i=0; i < RESPONSE_COUNT; i++){
+                for (int i=0; i < 8; i++){
                     Serial.write(CMD_ACK);
-                    delay(RESPONSE_PERIOD);
+                    delay(10);
                 }
-                Serial.write(command_index);
-                Serial.write(buffer_index);
 
-                // Cases for Atomic commands
+                //Serial.write(command_index / 4);
+                //Serial.write(buffer_index / 4);
+                //Serial.write(command_buffer[target_value - 4]);
+                //Serial.write(command_buffer[target_value - 3]);
+                //Serial.write(command_buffer[target_value - 2]);
+                //Serial.write(command_buffer[target_value - 1]);
+                 
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
                     restoreState();
                 }
@@ -379,13 +411,12 @@ void Communications() {
                     garbage = Serial.read();
                     //Serial.write(garbage);
                 }
-                
-                if (invalid_commands >= 10){
-                    for (int i=0; i < RESPONSE_COUNT; i++){
+                if (bad_commands >= 30){
+                    for (int i=0; i < 8; i++){
                         Serial.write(CMD_ACK);
-                        delay(RESPONSE_PERIOD);
+                        delay(10);
                     }
-                    invalid_commands = 0;
+                    bad_commands = 0;
                 }
             }
         }
