@@ -140,7 +140,6 @@ void setup() {
     commandOverflow = 0;
     idle_time = millis();
 
-    // ********** Uncomment for Sensors *****************
     // initialize Accelerometer/Compass sensor
     char init = 0;
     init = Lsm303d.initI2C();
@@ -162,18 +161,11 @@ void setup() {
     // tilt-compensated angl
     titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
     
-    // remember offset values
-    accel_offsetx = realAccel[0];
-    accel_offsety = realAccel[1];
-    //for (int i = 0; i < 3; i++){
-    //    mag_offset[i] = mag[i];
-    //}
     mag_min_x = mag[0];
     mag_max_x = mag[0];
     mag_min_y = mag[1];
     mag_max_y = mag[1];
-    //*********** Uncomment for Sensors END **************/
-
+    
     /* Custom commands can be initialized below */
     //command_buffer[0] = CMD_HOLMOVE;
     //command_buffer[1] = 0;
@@ -189,7 +181,8 @@ void loop() {
   // Sensor FSM part
   
   pollAccComp();
-  /*
+  
+  /* 
   if (mag[0] > mag_max_x){
       mag_max_x = mag[0];
   }
@@ -448,10 +441,9 @@ void pollAccComp(){
         {
             realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
         }
-    //realAccel[0] -= accel_offsetx;
-    //realAccel[1] -= accel_offsety;
     
     // wait for the magnetometer readings to be ready
+    // if they're not - get them at next main loop
     if(Lsm303d.isMagReady()){
         // get the magnetometer values, store them in mag
         Lsm303d.getMag(mag);
@@ -524,15 +516,11 @@ int rotMoveStep(){
         case 1 :
             left = (MasterState >> 3) & 127; // left becomes MSB of master state/current command
             left = left == 0 ? 1 : -1;
-            /*
-            if (left * (positions[MOTOR_LFT] + positions[MOTOR_RGT] + positions[MOTOR_BCK]) < rotaryTarget + left * rotaryBias){
-                updateMotorPositions(positions);
-                rotMoveGrabMode = 1;
-            }
-            */
+            
             angle_difference = calculateAngleDifference(heading, target_angle);
             degrees = command_buffer[command_index + 1];
-            if (angle_difference < degrees / 3){
+            
+            if (angle_difference < 10){
                 motorAllStop();
                 delay(50);
                 restoreMotorPositions(positions);
@@ -545,6 +533,7 @@ int rotMoveStep(){
                 updateMotorPositions(positions);
                 rotMoveGrabMode = 1;
             }
+
             return 0;
         
         // calculate movement target and start moving forward
@@ -616,14 +605,11 @@ int holoMoveStep(){
     m3_val *= scale_factor;
     
     //scale up to 255
-    
     m1_val *= POWER_RGT;
     m2_val *= POWER_LFT;
     m3_val *= POWER_BCK;
-    Serial.println(int(m1_val));
-    Serial.println(int(m2_val));
-    Serial.println(int(m3_val));
     
+    // turn motors
     if (m1_val > 0)
         motorForward(1, byte(m1_val));
     else
