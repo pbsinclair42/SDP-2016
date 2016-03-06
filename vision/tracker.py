@@ -5,15 +5,19 @@ from socket import gethostname
 import numpy as np
 import cv2
 import math
-from colorsHSV import *
-
-# get computer name
-computer_name = gethostname().split('.')[0]
+from tools import *
 
 adjustments = {}
 adjustments['blur'] = (11,11) # needs to be parametrized .. TODO
+color_range = get_colors() #for PITHC=0
 
 class Tracker():
+
+    def denoiseMask(self, mask):
+        kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        po = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        po = cv2.morphologyEx(po, cv2.MORPH_OPEN, kernel)
+        return po
 
     def getContours(self, frame, color, adjustments):
 
@@ -22,13 +26,14 @@ class Tracker():
         hsv_frame = cv2.cvtColor(blurred_frame, cv2.COLOR_BGR2HSV)
 
         if color == 'red':
-            red_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'red')][0], color_range[(computer_name,'red')][1])
-            maroon_mask = cv2.inRange(hsv_frame, color_range[(computer_name,'maroon')][0], color_range[(computer_name,'maroon')][1])
+            red_mask = cv2.inRange(hsv_frame, color_range['red']['min'], color_range['red']['max'])
+            maroon_mask = cv2.inRange(hsv_frame, color_range['maroon']['min'], color_range['maroon']['max'])
             mask = cv2.bitwise_or(red_mask, maroon_mask)
-        else:    
-            mask = cv2.inRange(hsv_frame, color_range[(computer_name,color)][0], color_range[(computer_name,color)][1])
+        else:
+            mask = cv2.inRange(hsv_frame, color_range[color]['min'], color_range[color]['max'])
 
-        _, threshold = cv2.threshold(mask, 127, 255, 0)
+        _, threshold = cv2.threshold(self.denoiseMask(mask), 127, 255, 0)
+
         _, contours, _ = cv2.findContours(threshold, 1, 2)
 
         return self.removeUselessContours(contours)
@@ -98,7 +103,7 @@ class Tracker():
         dx = ( point_1[0] - point_2[0] )
         dy = ( point_1[1] - point_2[1] )
 
-        return dx * dx + dy * dy 
+        return dx * dx + dy * dy
 
 
     def meanPoint(self, points):
@@ -140,18 +145,14 @@ class Tracker():
         y_new = x * math.sin(angle) + y * math.cos(angle)
 
         return [x_new, y_new]
-    
-    @staticmethod
-    def transformCoordstoDecartes( inputTuple ):
-        if inputTuple==None:
-            return None
-        return ( inputTuple[0] - 320, 240 - inputTuple[1] )
 
     @staticmethod
-    def transformCoordstoCV( inputTuple ):
-        if inputTuple==None:
-            return None
-        return ( inputTuple[0] + 320, 240 - inputTuple[1] )
+    def transformCoordstoDecartes( (x, y) ):
+        return ( x - 320, 240 - y )
+
+    @staticmethod
+    def transformCoordstoCV( (x, y) ) :
+        return ( x + 320, 240 - y )
 
 
 class BallTracker(Tracker):
@@ -187,10 +188,10 @@ class RobotTracker(Tracker):
         if num_of_pink == 1:
             self.num_pink['pink_robot'] = 4 - num_of_pink
             self.num_pink['green_robot'] = num_of_pink
-        else:    
+        else:
             self.num_pink['pink_robot'] = num_of_pink
             self.num_pink['green_robot'] = 4 - num_of_pink
- 
+
 
     # Gets the coordinates of the robot on a particular SIDE (us or opponent) and for a particular POSITION (attacker or defender)
     def getRobotCoordinates(self, frame, side, position):
@@ -225,7 +226,7 @@ class RobotTracker(Tracker):
 
         if self.num_pink[position] == 3:
 
-            green_contours = self.getContours(frame, 'bright_green', adjustments)
+            green_contours = self.getContours(frame, 'green', adjustments)
             pink_contours = self.getContours(frame, 'pink', adjustments)
 
             if green_contours == []:
@@ -273,20 +274,20 @@ class RobotTracker(Tracker):
 
 
     def opponent_green_coordinates(self, frame):
-        
+
         return self.getRobotCoordinates(frame, 'opponent', 'green_robot')
 
 
     def opponent_pink_coordinates(self, frame):
-        
+
         return self.getRobotCoordinates(frame, 'opponent', 'pink_robot')
 
 
     def our_green_coordinates(self, frame):
-        
+
         return self.getRobotCoordinates(frame, 'us', 'green_robot')
 
 
     def our_pink_coordinates(self, frame):
-        
-        return self.getRobotCoordinates(frame, 'us', 'pink_robot')   
+
+        return self.getRobotCoordinates(frame, 'us', 'pink_robot')

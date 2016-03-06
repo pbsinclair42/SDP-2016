@@ -1,0 +1,122 @@
+{
+    "1": {
+        "goal_right": {
+            "top": [
+                618, 
+                176
+            ], 
+            "bottom": [
+                620, 
+                297
+            ]
+        }, 
+        "defending_left": {
+            "top": [
+                190, 
+                114
+            ], 
+            "bottom": [
+                188, 
+                367
+            ]
+        }, 
+        "defending_right": {
+            "top": [
+                462, 
+                114
+            ], 
+            "bottom": [
+                464, 
+                368
+            ]
+        }, 
+        "goal_left": {
+            "top": [
+                38, 
+                181
+            ], 
+            "bottom": [
+                37, 
+                304
+            ]
+        }, 
+        "pitch": {
+            "top_right": [
+                617, 
+                10
+            ], 
+            "bottom_left": [
+                34, 
+                466
+            ], 
+            "bottom_right": [
+                617, 
+                464
+            ], 
+            "top_left": [
+                39, 
+                14
+            ]
+        }
+    }, 
+    "0": {
+        "goal_right": {
+            "top": [
+                0, 
+                0
+            ], 
+            "bottom": [
+                0, 
+                0
+            ]
+        }, 
+        "defending_left": {
+            "top": [
+                0, 
+                0
+            ], 
+            "bottom": [
+                0, 
+                0
+            ]
+        }, 
+        "defending_right": {
+            "top": [
+                0, 
+                0
+            ], 
+            "bottom": [
+                0, 
+                0
+            ]
+        }, 
+        "goal_left": {
+            "top": [
+                0, 
+                0
+            ], 
+            "bottom": [
+                0, 
+                0
+            ]
+        }, 
+        "pitch": {
+            "top_right": [
+                680, 
+                0
+            ], 
+            "bottom_left": [
+                0, 
+                0
+            ], 
+            "bottom_right": [
+                0, 
+                0
+            ], 
+            "top_left": [
+                0, 
+                0
+            ]
+        }
+    }
+}

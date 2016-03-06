@@ -3,9 +3,6 @@ from camera import Camera
 import math
 
 
-c = Camera()
-
-frame = c.get_frame()
 
 colors = {}
 colors['yellow'] = (0,255,255)
@@ -19,8 +16,11 @@ colors['blue'] = (255,0,0)
 print "\nPossible team colors: yellow/light_blue\n"
 our_team_color = raw_input("Specify your team colour: ")
 num_of_pink = raw_input("Specify the number of pink dots on your robot: ")
-ball_color = raw_input("Specify ball color: ")
+ball_color =  raw_input("Specify ball color: ")
+pitch =  raw_input("Enter pitch number (0/1) :")
 
+c = Camera(pitch)
+frame = c.get_frame()
 # create our robot as object:
 our_robot = RobotTracker(our_team_color, int(num_of_pink))
 ball = BallTracker(ball_color)
@@ -54,7 +54,7 @@ while True:
     if k == 27:
         break
     frame = c.get_frame()
-  
+    #frame = cv2.imread('pitch.png')
     # get robot orientations and centers, also get ball coordinates
     ball_center = ball.getBallCoordinates(frame)
     our_orientation, our_robot_center = our_robot.getRobotOrientation(frame, 'us', our_robot_color)

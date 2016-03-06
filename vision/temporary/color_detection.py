@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../')
+#sys.path.insert(0, '../')
 from camera import Camera
 from calibrate import step
 import math
@@ -61,7 +61,7 @@ while(1):
 	maroon_mask = cv2.inRange(hsv, color_range[(computer_name, 'maroon')][0], color_range[(computer_name, 'maroon')][1])
 	red = cv2.bitwise_or(red_mask, maroon_mask)
 	haha = cv2.bitwise_or(green_mask, cyan_mask)
-	'''
+	
 	cv2.imshow('red', red)
 	cv2.imshow('pink_mask', pink_mask)
 	cv2.imshow('green_mask', green_mask)
@@ -69,7 +69,7 @@ while(1):
 	cv2.imshow('cyan_mask', cyan_mask)
 	cv2.imshow('blue_mask', blue_mask)
 	cv2.imshow('yellow_mask', yellow_mask)
-'''
+
 	yellow_ret, yellow_thresh = cv2.threshold(yellow_mask,127,255,cv2.THRESH_BINARY)
 	pink_ret, pink_thresh = cv2.threshold(pink_mask,127,255,cv2.THRESH_BINARY)
 	green_ret, green_thresh = cv2.threshold(green_mask,127,255,cv2.THRESH_BINARY)
@@ -102,8 +102,8 @@ while(1):
 
 		center = (int(x),int(y))
 		radius = int(radius)
-		#if radius >= 2:
-			#cv2.circle(frame,center,7,(0,0,255),2)
+		if radius >= 2:
+			cv2.circle(frame,center,7,(0,0,255),2)
 
 	for i in range(0, len(blue_contours)):
 		cnt = blue_contours[i]
@@ -119,8 +119,8 @@ while(1):
 
 		center = (int(x),int(y))
 		radius = int(radius)
-		#if radius >= 2:
-			#cv2.circle(frame,center,7,(255,0,0),2)
+		if radius >= 2:
+			cv2.circle(frame,center,7,(255,0,0),2)
 			
 	for i in range(0, len(pink_contours)):
 		cnt = pink_contours[i]
@@ -137,8 +137,8 @@ while(1):
 		center = (int(x),int(y))
 		pink_balls.append(center)
 		radius = int(radius)
-		#if radius >= 2:
-			#cv2.circle(frame,center,radius,(147,20,255),2)
+		if radius >= 2:
+			cv2.circle(frame,center,radius,(147,20,255),2)
 		
 	for i in range(0, len(green_contours)):
 		cnt = green_contours[i]
@@ -155,8 +155,8 @@ while(1):
 		center = (int(x),int(y))
 		green_balls.append(center)
 		radius = int(radius)
-		#if radius >= 2:
-			#cv2.circle(frame,center,radius,(0,255,0),2)
+		if radius >= 2:
+			cv2.circle(frame,center,radius,(0,255,0),2)
 	
 	for i in range(0, len(cyan_contours)):
 		cnt = cyan_contours[i]
@@ -172,8 +172,8 @@ while(1):
 
 		center = (int(x),int(y))
 		radius = int(radius)
-		#if radius >= 2:
-			#cv2.circle(frame,center,7,(255,255,0),2)
+		if radius >= 2:
+			cv2.circle(frame,center,7,(255,255,0),2)
 
 	for i in range(0, len(yellow_contours)):
 		cnt = yellow_contours[i]
@@ -185,18 +185,6 @@ while(1):
 		cx = int(M['m10']/M['m00'])
 		cy = int(M['m01']/M['m00'])
 
-		'''
-		print "-----------------------"
-		#---------this is for detecting top plate-----------
-		x,y,w,h = cv2.boundingRect(cnt)
-		print x, y, w, h
-		#yellow_mask = cv2.rectangle(yellow_mask,(x,y),(100,100),(0,255,0),2)
-		rect = cv2.minAreaRect(cnt)
-		box = cv2.boxPoints(rect)
-		box = np.int0(box)
-		#mask = cv2.drawContours(mask,[box],0,(0,0,255),2)
-		cv2.rectangle(frame, (x-10,y-10),(x+w+5,y+h+5),(0,255,0),2)
-		'''
 		num_of_pink = 0
 		num_of_green = 0
 		(x,y),radius = cv2.minEnclosingCircle(cnt)
@@ -216,21 +204,11 @@ while(1):
 		if num_of_pink < 2 and num_of_green > 1:
 			cv2.putText(frame,'OUR',(center[0]-15, center[1]+30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, 220)
 			cv2.putText(frame,'ATTACKER',(center[0]-30, center[1]+40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, 220)
-		#if radius >= 2:	
-			#cv2.circle(frame,center,20,(90,0,0),2)	
+		if radius >= 2:	
+			cv2.circle(frame,center,20,(90,0,0),2)	
 
-	
-	#cv2.circle(frame,(320,240),5,(0,0,0),2)	
-    # Bitwise-AND mask  and original image
-	#res = cv2.bitwise_and(frame,frame, mask= mask)
-	#cv2.imshow('hsv', hsv) 
-	#cv2.imshow('blurred lines', blur)
 	cv2.imshow('frame',frame)
-	cv2.imwrite('frame.png', frame)
-	#cv2.imwrite('transform.png', frame)
-	#cv2.imwrite('b.png', frame)
-	#cv2.imshow('mask',mask)
-	#cv2.imshow('res',res)
+
 	
 	k = cv2.waitKey(5) & 0xFF
 	if k == 27:

@@ -4,6 +4,7 @@ from constants import PITCH_WIDTH, GOAL_WIDTH, PITCH_LENGTH
 
 # our supreme robot
 me = Robot(name="me")
+me.lastCommandFinished=-1
 # Team 3's robot
 ally = Robot(name="ally")
 # the two robots we're against

@@ -6,7 +6,7 @@ from helperFunctions import sin, cos
 class Moveable(object):
     """An object in the game that can move (ie robot or ball)"""
     #TODO: walls
-    _HISTORY_SIZE = 10
+    _HISTORY_SIZE = 3
 
     def __init__(self, p=None):
         if p==None:
@@ -43,30 +43,38 @@ class Moveable(object):
             print("Lost position of "+(self.name if self.name!=None else "moveable"))
         # if we've yet to find the robot, don't bother updating anything
         if newPoint!=None:
+            # save the old point
+            if self.currentPoint!=None:
+                self.pointHistory.append(self.currentPoint)
             # save the new position
             self.currentPoint = newPoint
-            self.pointHistory.append(newPoint)
             # only store a max of _HISTORY_SIZE points in the history
             if len(self.pointHistory)>self._HISTORY_SIZE:
                 self.pointHistory.pop(0)
 
-            # calculate and save the current direction
-            self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
+            try:
+                # calculate and save the current direction
+                self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
+            except IndexError:
+                # if we don't have enough information to calculate a direction, wait for now
+                pass
 
             # calculate and save the new speed
             try:
                 newSpeed=self.pointHistory[0].distance(self.pointHistory[-1])/(len(self.pointHistory)-1)
+                newSpeed = round(newSpeed, 2)
                 self.speedHistory.append(newSpeed)
                 self.currentSpeed = newSpeed
                 # only store a max of _HISTORY_SIZE-1 points in the history
                 if len(self.speedHistory) > self._HISTORY_SIZE-1:
                     self.speedHistory.pop(0)
-            except ZeroDivisionError:
+            except (ZeroDivisionError, IndexError):
                 pass
 
             # calculate and save the new acceleration
             try:
-                self.acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
+                acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
+                self.acceleration = round(acceleration, 3)
             except (ZeroDivisionError, IndexError):
                 # if we don't have enough data to calculate an acceleration (not enough speeds recorded), wait for now
                 pass
@@ -152,6 +160,7 @@ class Robot(Moveable):
         self.plan=[]
         # if we've told the robot to move or rotate and haven't noticed it stop doing so
         self.moving = False
+        self.grabberState = 0
 
     def updateRotation(self, rotation):
         """Update the rotation with a new value

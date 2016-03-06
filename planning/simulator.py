@@ -22,7 +22,13 @@ class Simulator(object):
         self.currentActionQueue=[]
         self.grabbed=True
         self.holdingBall=False
-        simulatedStart(Point(50,50), Point(200,25), Point(166,211), Point(52,102), 15, 38, 150, -62, Point(60,60), BallStatus.free)
+        self.lastCommandFinished = 0
+        self.lastCommandSent = 0
+        simulatedStart(Point(50,50), Point(200,25), Point(166,211), Point(52,102), 15, 38, 150, -62, Point(100,100), BallStatus.free)
+        # since we're using a simulator, set the fact that we know where we are exactly at all times
+        POINT_ACCURACY = 0.1
+        ANGLE_ACCURACY = 0.1
+
 
     # move holonomically at an angle of `degrees` anticlockwise and a distance of `distance` cm
     def holo(self,degrees,distance):
@@ -45,23 +51,64 @@ class Simulator(object):
         checkValid(degrees,distance)
         if degrees>0:
             self.currentActionQueue.append({'action': SimulatorActions.rotate, 'amount': degrees, 'timeLeft': degrees/MAX_ROT_SPEED})
+            self.lastCommandSent+=1
         if distance>0:
             self.currentActionQueue.append({'action': SimulatorActions.moveForwards, 'amount': distance, 'timeLeft': distance/MAX_SPEED})
+            self.lastCommandSent+=1
 
     # rotate `degrees` degrees clockwise, then move `distance` cm
     def rotateneg(self,distance,degrees):
         checkValid(degrees,distance)
         if degrees>0:
             self.currentActionQueue.append({'action': SimulatorActions.rotate, 'amount': -degrees, 'timeLeft': degrees/MAX_ROT_SPEED})
+            self.lastCommandSent+=1
         if distance>0:
             self.currentActionQueue.append({'action': SimulatorActions.moveForwards, 'amount': distance, 'timeLeft': distance/MAX_SPEED})
+            self.lastCommandSent+=1
+
+    def rot_move(self, degrees, distance):
+        """
+            Perform movement and/or rotation for any degrees and any distance.
+            Assumes both are passed as integers
+        """
+
+        offset = 0
+
+        # add positive offset
+        while degrees > 255:
+            self.rotate(255)
+            degrees -= 255
+
+        # add negative offset
+        while degrees < -255:
+            self.rotateneg(255)
+            degrees += 255
+
+        # calculate movement offset
+        while distance > 255:
+            offset += 255
+            distance -= 255
+
+        # issue main command
+        if degrees >= 0:
+            self.rotate(int(distance),int(degrees))
+        else:
+            self.rotateneg(int(distance),-int(degrees))
+
+        # issue movement offset command
+        while offset > 0:
+            self.move(255);
+            offset -= 255
 
     # kick with power `distance`
     def kick(self,distance):
         checkValid(distance)
         self.currentActionQueue.append({'action': SimulatorActions.ungrab, 'timeLeft': UNGRAB_TIME})
+        self.lastCommandSent+=1
         self.currentActionQueue.append({'action': SimulatorActions.kick, 'amount': distance, 'timeLeft': KICK_TIME})
+        self.lastCommandSent+=1
         self.currentActionQueue.append({'action': SimulatorActions.grab, 'timeLeft': GRAB_TIME})
+        self.lastCommandSent+=1
 
     # cancel previous command and any queued commands
     def flush(self):
@@ -71,10 +118,15 @@ class Simulator(object):
     # ensure the grabber is opened before calling!
     def grab(self):
         self.currentActionQueue.append({'action': SimulatorActions.grab, 'timeLeft': GRAB_TIME})
+        self.lastCommandSent+=1
 
     # open the grabber, ready to grab
     def ungrab(self):
         self.currentActionQueue.append({'action': SimulatorActions.ungrab, 'timeLeft': UNGRAB_TIME})
+        self.lastCommandSent+=1
+
+    def am_i_done(self):
+        return self.lastCommandSent==self.lastCommandFinished
 
     def tick(self, tickTimeLeft=TICK_TIME):
         '''Update the status of our robot and the ball based on our recent actions
@@ -95,20 +147,22 @@ class Simulator(object):
                 distanceTravelled = MAX_SPEED*TICK_TIME
                 angle = simulatedMe.currentRotation
                 xDisplacement = round(cos(angle)*distanceTravelled, 2)
-                yDisplacement = round(sin(angle)*distanceTravelled, 2)
+                yDisplacement = -round(sin(angle)*distanceTravelled, 2)
                 simulatedMe.currentPoint = Point(simulatedMe.currentPoint.x+xDisplacement, simulatedMe.currentPoint.y+yDisplacement)
-                return
             # if not, move the simulated robot forwards the lesser amount, then start the next action in the queue with the remaining time
             else:
                 tickTimeLeft = TICK_TIME-currentAction['timeLeft']
                 distanceTravelled = MAX_SPEED*currentAction['timeLeft']
                 angle = simulatedMe.currentRotation
                 xDisplacement = round(cos(angle)*distanceTravelled, 2)
-                yDisplacement = round(sin(angle)*distanceTravelled, 2)
+                yDisplacement = -round(sin(angle)*distanceTravelled, 2)
                 simulatedMe.currentPoint = Point(simulatedMe.currentPoint.x+xDisplacement, simulatedMe.currentPoint.y+yDisplacement)
+                # report that we've finished executing this command
                 self.currentActionQueue.pop(0)
+                self.lastCommandFinished +=1
+                # start the next action if it's queued
                 self.tick(tickTimeLeft)
-                return
+
         # if currently rotating
         elif currentAction['action']==SimulatorActions.rotate:
             # if it'll keep going for this whole tick, turn the simulated robot forwards the appropriate amount
@@ -126,7 +180,7 @@ class Simulator(object):
                     simulatedMe.currentRotation+=360
                 elif simulatedMe.currentRotation>180:
                     simulatedMe.currentRotation-=360
-                return
+
             # if not, move the simulated robot forwards the lesser amount, then start the next action in the queue with the remaining time
             else:
                 # calculate how far to turn
@@ -142,49 +196,60 @@ class Simulator(object):
                     simulatedMe.currentRotation+=360
                 elif simulatedMe.currentRotation>180:
                     simulatedMe.currentRotation-=360
+                # report that we've finished executing this command
                 self.currentActionQueue.pop(0)
+                self.lastCommandFinished +=1
+                # start the next action if it's queued
                 self.tick(tickTimeLeft)
-                return
+
         # if currently kicking
         elif currentAction['action']==SimulatorActions.kick:
             # if it'll keep kicking for this whole tick, the only potential change is that the ball starts moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
                 # TODO start the ball moving at the appropriate point
-                return
+
             # if not, start the next action in the queue with the remaining time
             else:
                 tickTimeLeft = TICK_TIME-currentAction['timeLeft']
+                # report that we've finished executing this command
                 self.currentActionQueue.pop(0)
+                self.lastCommandFinished +=1
+                # start the next action if it's queued
                 self.tick(tickTimeLeft)
-                return
+
         # if currently grabbing
         elif currentAction['action']==SimulatorActions.grab:
             # if it'll keep grabbing for this whole tick, the only potential change is that the ball stops moving
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
                 # TODO potentially stop the ball and toggle 'holding ball' state
-                return
+
             # if not, start the next action in the queue with the remaining time
             else:
                 self.grabbed=True
                 tickTimeLeft = TICK_TIME-currentAction['timeLeft']
+                # report that we've finished executing this command
                 self.currentActionQueue.pop(0)
+                self.lastCommandFinished +=1
+                # start the next action if it's queued
                 self.tick(tickTimeLeft)
-                return
+
         # if currently ungrabbing
         elif currentAction['action']==SimulatorActions.ungrab:
             # if it'll keep grabbing for this whole tick, nothing changes
             if TICK_TIME<currentAction['timeLeft']:
                 currentAction['timeLeft']-=TICK_TIME
-                return
+
             # if not, start the next action in the queue with the remaining time
             else:
                 self.grabbed=False
                 tickTimeLeft = TICK_TIME-currentAction['timeLeft']
+                # report that we've finished executing this command
                 self.currentActionQueue.pop(0)
+                self.lastCommandFinished +=1
+                # start the next action if it's queued
                 self.tick(tickTimeLeft)
-                return
 
 
 def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot, enemyARot, enemyBRot, ballPoint, ballStat):

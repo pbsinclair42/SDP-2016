@@ -1,8 +1,8 @@
 from constants import *
 from globalObjects import *
-from moveables import Moveable
+from moveables import Moveable, Ball
 from helperClasses import Point
-from arduinoAPI import turn, move
+from CommsAPI import turn, move
 
 
 def moveToPoint(point):
@@ -20,8 +20,7 @@ def moveToPoint(point):
 
 
 def turnToDirection(angle):
-    angleToMove = me.currentRotation-angle
-    print("Angle to move:",angleToMove)
+    angleToMove = angle-me.currentRotation
     # ensure the angle is between -180 and 80
     if angleToMove < -180:
         angleToMove+=360
@@ -32,6 +31,7 @@ def turnToDirection(angle):
 
 
 def interceptObject(target):
+    #return target.currentPoint
     if not isinstance(target,Moveable):
         raise TypeError("Moveable expected, " + point.__class__.__name__ + " found")
     # iteratively work out how long it would take to catch up to the object
@@ -48,3 +48,5 @@ def interceptObject(target):
     # if it would take more than 10 seconds to catch up, don't bother trying
     print("Can't catch up")
     return None
+
+
