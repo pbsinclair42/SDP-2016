@@ -57,7 +57,7 @@ class CommsThread(object):
         """
             A movement-only function for distance up-to 255 cm
         """
-        assert distance >= 255, "Distance should not be longer than 255"
+        assert distance <= 255, "Distance should not be longer than 255"
         if degrees:
             self.rot_move(distance, degrees)
 
