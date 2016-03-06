@@ -189,14 +189,9 @@ def executePlan():
                     grab()
                     collectBall()
 
-    # if our plan is over, we've probably achieved our goal
+    # if our plan is over, we've finished our goal
     if len(me.plan)==0:
-        # if our goal was to collect the ball and we haven't managed to do so, try again
-        if me.goal==Goals.collectBall and ball.status!=BallStatus.me:
-            collectBall()
-        else:
-            me.goal = Goals.none
-            commsSystem.stop()
+        me.goal = Goals.none
 
 
 def tick():
