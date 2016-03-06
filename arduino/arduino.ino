@@ -66,6 +66,8 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
+#define MAG_OFFSET_X 1325
+#define MAG_OFFSET_Y 2617
 
 
 // *** Globals ***
@@ -421,8 +423,9 @@ void pollAccComp(){
     if(Lsm303d.isMagReady()){
         // get the magnetometer values, store them in mag
         Lsm303d.getMag(mag);
-          mag[0] += 1325;
-          mag[1] += 2617;
+        // uncomment during calibration
+        mag[0] += MAG_OFFSET_X;
+        mag[1] += MAG_OFFSET_Y;
         //for (int i = 0; i < 3; i++){
         //  mag[i] -= mag_offset[i];
         //}
@@ -462,22 +465,18 @@ int rotMoveStep(){
                 return 0;
             }
             rotMoveGrabMode = 1;
+
+            /** Use bottom commented-out code for rotary stuff */
             // calculate target based on piece-wise linear approximation for
             // know values of 30, 45, 60, 90, 120, 180 degrees
-            rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);  
-            
+            //rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);  
             // restore and update motor positions to account for initial bias
             // based on wheels & rotary encoders;
-            restoreMotorPositions(positions);
-            updateMotorPositions(positions);
-            rotaryBias = positions[0] + positions[1] + positions[2];
+            //restoreMotorPositions(positions);
+            //updateMotorPositions(positions);
+            //rotaryBias = positions[0] + positions[1] + positions[2];
 
-            // *uncomment for using compass
             target_angle = normalize_angle(titleHeading - (float(degrees) * left));
-            Serial.print("S: ");
-            Serial.println(titleHeading);
-            Serial.print("T: ");
-            Serial.println(target_angle);
             
             if (left == 1)
                 rotateLeft();
@@ -497,7 +496,6 @@ int rotMoveStep(){
             if (angle_difference < 10){
                 motorAllStop();
                 delay(50);
-                restoreMotorPositions(positions);
                 rotMoveGrabMode = 2;
             }
             
@@ -792,6 +790,10 @@ void calibrateCompass(){
     Serial.println(mag_min_y);
     Serial.print("MAX Y: ");
     Serial.println(mag_max_y);
+    Serial.print("BIAS_X: ");
+    Serial.println(-0.5 * (mag_max_x + mag_min_x));
+    Serial.print("BIAS_Y: ");
+    Serial.println(-0.5 * (mag_max_y + mag_min_y));
     
  }
 }
