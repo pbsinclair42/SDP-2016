@@ -73,6 +73,6 @@ if __name__ == "__main__":
     """
     while True:
         if commsSystem.am_i_done():
-            move(0, 45);
+            move(0, -45);
             time.sleep(5)
             print "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK"
