@@ -1,94 +1,147 @@
 from constants import *
-from globalObjects import *
+from globalObjects import me, ally, enemies, robots, ball
 from moveables import Moveable, Ball
-from helperClasses import Point
-from helperFunctions import *
-from CommsAPI import turn, move
+from helperClasses import Point, Actions, Goals, BallStatus
+from helperFunctions import nearEnough
+from CommsAPI import turn, move, grab, ungrab, kick
 
-def kick():
-    if me.moving:
-        print("Still doing stuff")
-    else:
-        kickDistance = me.plan[0]['targetFunction']()
-        kick(kickDistance)
-        me.plan.pop(0)
 
-def ungrab():
-    if me.moving:
-        print("Still doing stuff")
-    else:
-        ungrab()
-        me.grabberState=1
-        me.plan.pop(0)
+def executePlan():
+    """Check whether the action you're currently performing has finished and move to the next action if so"""
+    try:
+        currentAction = me.plan[0]['action']
+    except IndexError:
+        print("No actions to execute")
+        return
 
-def grab():
-    if me.moving:
-        print("Still doing stuff")
-    else:
-        grab()
-        me.grabberState=0
-        me.plan.pop(0)
-
-def guardGoal():
-    if ball.moving == False:
-        turnToDirection(me.bearing(ball))
-    elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)):# ballcoming towardsa us:
-        executePlan()
-    elif ball.moving:# ball moving but not towards us
-        me.interceptObject(ball)
-        me.plan.pop(0)
-
-def recieveBall():
-    if me.moving:
-        print("Still doing stuff")
-    else:
-        # if another robot's still holding the ball, just wait
-            # TODO: maybe reposition if need be?
-        if ball.status!=BallStatus.free:
-                print("Ball's not been kicked yet lol")
-            # if the ball's been kicked, we hope to collect it
+    if currentAction==Actions.rotateToAngle:
+        if me.moving:
+            # TODO: add in some kind of checker/corrector
+            print("Still doing stuff")
         else:
-            # if it's headed towards us, stay where we are
-            if nearEnough(ball.direction, ball.bearing(me)):
-                    # if it's close enough, we're done
-                if ball.distance(me)<ROBOT_WIDTH + GRAB_DISTANCE:
-                    me.plan.pop(0)
-                    # otherwise, just staying here is cool
-                # if it's not headed towards us, just try and fetch it
+            #calculate the angle we're aming for
+            targetAngle = me.plan[0]['targetFunction']()
+             # if we're at a close enough angle, we're done
+            if nearEnough(me.currentRotation, targetAngle):
+                print("Done!")
+                me.plan.pop(0)
+                # start on the next bit of the plan
+                executePlan()
+
+            # so if we're not currently turning and we're not yet facing the right directin,
+            # send the command to turn to the angle we actually should be at
             else:
-                # go to where its actually going
-                collectBall()
+                turnToDirection(targetAngle)
 
-def rotateToAngle():
-    if me.moving:
-        # TODO: add in some kind of checker/corrector
-        print("Still doing stuff")
-    else:
-        #calculate the angle we're aming for
-        targetAngle = me.plan[0]['targetFunction']()
-         # if we're at a close enough angle, we're done
-        if nearEnough(me.currentRotation, targetAngle):
-            print("Done!")
-            me.plan.pop(0)
-            # start on the next bit of the plan
-            executePlan()
-
-        # so if we're not currently turning and we're not yet facing the right directin,
-        # send the command to turn to the angle we actually should be at
+    elif currentAction==Actions.moveToPoint:
+        # if we've already started moving and haven't stopped yet, just keep going.  Why not.
+        if me.moving:
+            # TODO: add in some kind of checker/corrector
+            print("Still doing stuff")
         else:
-            turnToDirection(targetAngle)
+            # calculate where we're headed
+            targetPoint = me.plan[0]['targetFunction']()
+
+            # if we're close enough, we're done
+            if nearEnough(me.currentPoint, targetPoint):
+                me.plan.pop(0)
+                # start on the next bit of the plan
+                executePlan()
+
+            elif not nearEnough(me.currentRotation, me.bearing(targetPoint)):
+                # if we're not facing the right direction, add a step to the plan to face the right way first
+                def targetAngle():
+                    '''Return the angle between us and the point we're headed to in the next step of the plan'''
+                    # get the index of this action
+                    i = me.plan.index({'action':Actions.rotateToAngle, 'targetFunction':targetAngle})
+                    # the target point is the position we're going to in the next action
+                    targetPoint = me.plan[i+1]['targetFunction']()
+                    # return the target angle (the bearing from us to the point we're headed to)
+                    return me.bearing(targetPoint)
+                # add the rotation step to the plan
+                me.plan.insert(0,{'action':Actions.rotateToAngle,'targetFunction':targetAngle})
+                # start carrying out this step this tick
+                executePlan()
+
+            # so if we're not currently moving, we're not yet close enough and we're facing the right way,
+            # send the command to start moving
+            else:
+                moveToPoint(targetPoint)
+
+    elif currentAction==Actions.kick:
+        if me.moving:
+            print("Still doing stuff")
+        else:
+            kickDistance = me.plan[0]['targetFunction']()
+            kick(kickDistance)
+            me.plan.pop(0)
+
+    elif currentAction==Actions.ungrab:
+        if me.moving:
+            print("Still doing stuff")
+        else:
+            ungrab()
+            me.grabbed=False
+            me.plan.pop(0)
+
+    elif currentAction==Actions.grab:
+        if me.moving:
+            print("Still doing stuff")
+        else:
+            grab()
+            me.grabbed=True
+            me.plan.pop(0)
+
+    elif currentAction == Actions.guardGoal:
+        if ball.moving == False:
+            turnToDirection(me.bearing(ball))
+        elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)): # ballcoming towardsa us:
+            executePlan()
+        elif ball.moving:# ball moving but not towards us
+            me.interceptObject(ball)
+            me.plan.pop(0)
+
+    elif currentAction == Actions.receiveBall:
+        if me.moving:
+            print("Still doing stuff")
+        else:
+            # if another robot's still holding the ball, just wait
+                # TODO: maybe reposition if need be?
+            if ball.status!=BallStatus.free:
+                    print("Ball's not been kicked yet lol")
+                # if the ball's been kicked, we hope to collect it
+            else:
+                # if it's headed towards us, stay where we are
+                if nearEnough(ball.direction, ball.bearing(me)):
+                        # if it's close enough, we're done
+                    if ball.distance(me)<ROBOT_WIDTH + GRAB_DISTANCE:
+                        me.plan.pop(0)
+                        # otherwise, just staying here is cool
+                    # if it's not headed towards us, just try and fetch it
+                else:
+                    # go to where its actually going
+                    collectBall()
+
+    # if our plan is over, we've achieved our goal
+    if len(me.plan)==0:
+        me.goal = Goals.none
 
 
 def moveToPoint(point):
-    if position == 'attacker':
-        if outGoal == rightGoalCenter:
-            if(Point.x <= 30 or (Point.y <= 180 and Point.y >=40)):#check these values w/ real pitch
-                print("It's in the Goal Box, we Can't go there")
-        else:
-            if(Point.x <= (PITCH_LENGTH-30) or (Point.y <= 180 and Point.y >=40)):#check these values w/ real pitch
-                print("It's in the Goal Box, we Can't go there")
     if not isinstance(point,Point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
+
+    '''
+    # ensure the attacker doesn't go into the goal
+    if position == 'attacker':
+        if outGoal == rightGoalCenter:
+            if(point.x <= 30 or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+        else:
+            if(point.x <= (PITCH_LENGTH-30) or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+    '''
+
     distance = point.distance(me.currentPoint)
     angle = me.bearing(point) - me.currentRotation
     # ensure the angle is between -180 and 180
@@ -129,5 +182,3 @@ def interceptObject(target):
     # if it would take more than 10 seconds to catch up, don't bother trying
     print("Can't catch up")
     return None
-
-
