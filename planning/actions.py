@@ -2,6 +2,7 @@ from constants import *
 from globalObjects import *
 from moveables import Moveable, Ball
 from helperClasses import Point
+from helperFunctions import *
 from CommsAPI import turn, move
 
 def kick():
@@ -74,8 +75,8 @@ def rotateToAngle():
 
         # so if we're not currently turning and we're not yet facing the right directin,
         # send the command to turn to the angle we actually should be at
-    else:
-        turnToDirection(targetAngle)
+        else:
+            turnToDirection(targetAngle)
 
 
 def moveToPoint(point):

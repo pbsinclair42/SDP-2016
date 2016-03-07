@@ -221,7 +221,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             comms = Serial(port=port, baudrate=baudrate)
             radio_connected = True
         except Exception:
-            print "Comms: Radio not connected. Trying again in 5 seconds;", str(e)
+            print "Comms: Radio not connected. Trying again in 5 seconds;"
             radio_connected = False
             sleep(5)
     print "Radio On-line"
@@ -273,18 +273,19 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
 
         # if there are commands to send
-        if cmnd_list and not all(cmnd_list[-1][-3:-1]):
+        try:
+            if cmnd_list and not all(cmnd_list[-1][-3:-1]):
             # get first un-sent command or un-acknowledged, but send
-            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
 
             # if the command is not acknowledged
-            if cmd_to_send[-2] == 0:
-                sequenced = sequence_command(cmd_to_send[:4], seq_num)
-                for command_byte in sequenced:
-                    comms.write(sequenced)
-                    cmnd_list[cmd_index][-3] = 1
-                    resend_time = time()
-                    print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
+                if cmd_to_send[-2] == 0:
+                    sequenced = sequence_command(cmd_to_send[:4], seq_num)
+                    for command_byte in sequenced:
+                        comms.write(sequenced)
+                        cmnd_list[cmd_index][-3] = 1
+                        resend_time = time()
+                        print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
         except IndexError as e:
             print "This fucked up --->", cmnd_list
             print str(e)
