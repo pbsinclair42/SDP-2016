@@ -3,4 +3,4 @@ light_blue
 red
 left
 False
-defender
+attacker

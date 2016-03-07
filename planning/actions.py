@@ -80,6 +80,13 @@ def rotateToAngle():
 
 
 def moveToPoint(point):
+    if position == 'attacker':
+        if outGoal == rightGoalCenter:
+            if(Point.x <= 30 or (Point.y <= 180 and Point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+        else:
+            if(Point.x <= (PITCH_LENGTH-30) or (Point.y <= 180 and Point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
     if not isinstance(point,Point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
     distance = point.distance(me.currentPoint)
