@@ -18,7 +18,7 @@ KICK_TIME = 1.0
 # the time taken for the robot to ungrab, kick, unkick, and grab (seconds)
 FULL_KICK_TIME = GRAB_TIME+KICK_TIME+UNGRAB_TIME
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
-GRAB_DISTANCE = 8.0
+GRAB_DISTANCE = 6.0
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
 UNGRAB_DISTANCE = 20.0
 # the number of centimeters per pixel in the x (length) direction

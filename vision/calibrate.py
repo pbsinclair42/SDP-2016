@@ -14,8 +14,8 @@ ROWS = 480
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 # enable access to the json file from any directory in SDP
-absPathToJson = PATH+"/config/undistort.json"
 
+absPathToJson = PATH+"/config/undistort.json"
 
 pitches = util.read_json(absPathToJson)
 
@@ -50,6 +50,7 @@ def undistort(frame, pitch_num=0):
 
 ''' Rotate '''
 def warp(frame,pitch=0):
+
     if pitch == 0:
         return frame
     else:
@@ -65,6 +66,7 @@ def perspective(frame, pitch=0):
         pts2 = np.float32([[0,0],[0,480],[640,480],[640,0]])
         M = cv2.getPerspectiveTransform(pts1,pts2)
         dst = cv2.warpPerspective(frame,M,(640,480))
+
         return dst
 
 

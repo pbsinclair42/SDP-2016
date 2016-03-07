@@ -1,5 +1,4 @@
 import sys
-#sys.path.insert(0, '../')
 from camera import Camera
 from calibrate import step
 import math
@@ -9,7 +8,7 @@ import cv2
 from tools import *
 from socket import gethostname
 
-color_range = get_colors() #for PITHC=0
+color_range = get_colors()
 
 def nothing(x):
     pass
