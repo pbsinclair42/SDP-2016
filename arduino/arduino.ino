@@ -66,8 +66,8 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
-#define MAG_OFFSET_X 1325
-#define MAG_OFFSET_Y 2617
+#define MAG_OFFSET_X 312
+#define MAG_OFFSET_Y 3605
 
 
 // *** Globals ***
@@ -169,12 +169,15 @@ void setup() {
     mag_max_y = mag[1];
     
     /* Custom commands can be initialized below */
-    //command_buffer[0] = CMD_HOLMOVE;
-    //command_buffer[1] = 0;
-    //command_buffer[2] = 0;
-    //command_buffer[3] = 255;
-    //buffer_index = 4;
+    command_buffer[0] = CMD_ROTMOVE;
+    command_buffer[1] = 90;
+    command_buffer[2] = 0;
+    command_buffer[3] = 255;
+    buffer_index = 4;
+    delay(300);
+    //rotateLeft();
   }
+  
 
 void loop() {
   // Communication FSM part
@@ -184,7 +187,11 @@ void loop() {
   
   pollAccComp();
   //calibrateCompass(); // if wanting to do per-pitch calibration
-  
+  if (millis() - idle_time < 3000){
+      Serial.println(sqrt(realAccel[0] * realAccel[0]  + realAccel[1] * realAccel[1]));
+      Serial.println(heading);
+  }
+  //delay(1000);
   // Action FSM part
   int state_end = 0;
 
@@ -495,7 +502,6 @@ int rotMoveStep(){
             
             if (angle_difference < 10){
                 motorAllStop();
-                delay(50);
                 rotMoveGrabMode = 2;
             }
             
@@ -544,6 +550,10 @@ int rotMoveStep(){
                 rotMoveGrabMode = 0;
                 return 1;
             }
+        // 
+        case 4: 
+
+
         default:
             return -1;
             break;       
@@ -780,7 +790,7 @@ void calibrateCompass(){
       mag_min_y = mag[1];
   }
 
- if (millis() - idle_time > 5000){
+  if (millis() - idle_time > 5000){
     idle_time = millis();
     Serial.print("MIN X: ");
     Serial.println(mag_min_x);
@@ -900,6 +910,7 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
 
 
 
