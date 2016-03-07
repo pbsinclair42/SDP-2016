@@ -74,8 +74,8 @@ def rotateToAngle():
 
         # so if we're not currently turning and we're not yet facing the right directin,
         # send the command to turn to the angle we actually should be at
-    else:
-        turnToDirection(targetAngle)
+        else:
+            turnToDirection(targetAngle)
 
 
 def moveToPoint(point):
