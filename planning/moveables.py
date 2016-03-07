@@ -29,12 +29,13 @@ class Moveable(object):
         """
         # if we've temporarily lost the object, assume it's in the same place
         if newPoint==None:
+            #TODO: assume it's moved on slightly
             newPoint=self.currentPoint
             print("Lost position of "+(self.name if self.name!=None else "moveable"))
         # if we've yet to find the robot, don't bother updating anything
         if newPoint!=None:
             # save the old point
-            if self.currentPoint!=None:
+            if self.currentPoint!=Point(-100,-100):
                 self.pointHistory.append(self.currentPoint)
             # save the new position
             self.currentPoint = newPoint
