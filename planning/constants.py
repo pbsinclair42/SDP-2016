@@ -2,7 +2,7 @@ from os.path import abspath
 # root directory
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP-2016/'
 # the number of seconds between updating the robot position
-TICK_TIME = 0.4
+TICK_TIME = 0.1
 # our robot's max speed (cm per second)
 MAX_SPEED = 25.0
 # our robot's rotational speed (degrees per second)
@@ -46,7 +46,7 @@ ANGLE_ACCURACY = 15
 # how close to a target point you need to be to count as 'close enough' for the sake of doing stuff (centimeters)
 ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (degrees)
-ITLL_DO_ANGLE = 10
+ITLL_DO_ANGLE = 15
 
 
 
