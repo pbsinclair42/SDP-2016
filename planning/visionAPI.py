@@ -39,7 +39,7 @@ with open('conf.txt','r') as f:
             ourGoal = leftGoalCenter
             opponentGoal = rightGoalCenter
         position = context[5].strip('\n')
-print(USING_SIMULATOR)
+        
 if USING_SIMULATOR:
     camera=None
 
