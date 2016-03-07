@@ -4,6 +4,8 @@ from moveables import Moveable, Ball
 from helperClasses import Point, Actions, Goals, BallStatus
 from helperFunctions import nearEnough
 from CommsAPI import turn, move, grab, ungrab, kick
+from robotAI import *
+from goals import *
 
 
 def executePlan():
@@ -131,16 +133,16 @@ def moveToPoint(point):
     if not isinstance(point,Point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
 
-    '''
+
     # ensure the attacker doesn't go into the goal
-    if position == 'attacker':
+    if me.position == 1:#attacker
         if outGoal == rightGoalCenter:
             if(point.x <= 30 or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
                 print("It's in the Goal Box, we Can't go there")
-        else:
+        else:#defender
             if(point.x <= (PITCH_LENGTH-30) or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
                 print("It's in the Goal Box, we Can't go there")
-    '''
+
 
     distance = point.distance(me.currentPoint)
     angle = me.bearing(point) - me.currentRotation

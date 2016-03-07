@@ -2,7 +2,7 @@ from constants import *
 from globalObjects import *
 from helperClasses import Point, Goals, Actions
 from helperFunctions import sin, cos
-from actions import interceptObject
+from actions import *
 
 """TODO
 Position to receive pass - Speak to Other Team About that

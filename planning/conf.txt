@@ -2,5 +2,5 @@ light_blue
 1
 red
 left
-False
-attacker
+True
+defender
