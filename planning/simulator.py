@@ -313,12 +313,10 @@ class Simulator(object):
                 self.lastCommandFinished +=1
                 # start the next action if it's queued
                 self.tick(tickTimeLeft)
-        
+
 
         ## move ball (v = u +at)
-        # simulatedBall.move() 
-
-
+        # simulatedBall.move()
 
 def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot, enemyARot, enemyBRot, ballPoint, ballStat):
     '''Reset the status of all robots and the ball'''
