@@ -2,6 +2,7 @@ from constants import *
 from globalObjects import *
 from moveables import Moveable, Ball
 from helperClasses import Point
+from helperFunctions import *
 from CommsAPI import turn, move
 
 def kick():

@@ -263,10 +263,10 @@ class Simulator(object):
                 self.lastCommandFinished +=1
                 # start the next action if it's queued
                 self.tick(tickTimeLeft)
-        
+
 
         ## move ball (v = u +at)
-        # simulatedBall.move() 
+        # simulatedBall.move()
 
 
 class SimBall(Ball):
@@ -278,7 +278,7 @@ class SimBall(Ball):
             self.direction = - self.direction
         else:
             self.direction = (180 - self.direction) % 180
-         
+
 
     def move(self):
         if self.currentSpeed ==0 & self.acceleration ==0:
@@ -290,7 +290,7 @@ class SimBall(Ball):
         yDisplacement = -round(sin(angle)*distanceTravelled, 2)
         newX = self.currentPoint.x+xDisplacement
         newY = self.currentPoint.y+yDisplacement
-        topWall = xDisplacement == PITCH_WIDTH 
+        topWall = xDisplacement == PITCH_WIDTH
         leftWall = xDisplacement ==0
         rightWall = yDisplacement == PITCH_LENGTH
         bottomWall = yDisplacement ==0
