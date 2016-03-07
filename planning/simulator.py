@@ -4,6 +4,55 @@ from helperClasses import Point, BallStatus
 from helperFunctions import sin, cos, nearEnough
 from moveables import Robot, Ball
 
+
+class SimBall(Ball):
+    def __init__(self, p=None, name =None):
+        super(SimBall, self).__init__(name)
+
+    def bounce(self, topWall,  leftWall, rightWall, bottomWall):
+        if topWall | bottomWall:
+            self.direction = - self.direction
+        else:
+            self.direction = (180 - self.direction) % 180
+         
+
+    def move(self):
+        if self.currentSpeed ==0 & self.acceleration ==0:
+            return
+        self.currentSpeed = self.currentSpeed + self.acceleration*tickTimeLeft
+        distanceTravelled = self.currentSpeed* tickTimeLeft
+        angle = self.currentRotation
+        xDisplacement = round(cos(angle)*distanceTravelled, 2)
+        yDisplacement = -round(sin(angle)*distanceTravelled, 2)
+        newX = self.currentPoint.x+xDisplacement
+        newY = self.currentPoint.y+yDisplacement
+        topWall = xDisplacement == PITCH_WIDTH 
+        leftWall = xDisplacement ==0
+        rightWall = yDisplacement == PITCH_LENGTH
+        bottomWall = yDisplacement ==0
+        if topWall | leftWall | rightWall | bottomWall:
+            self.bounce(topWall,  leftWall, rightWall, bottomWall)
+        self.currentPoint = Point(newX, newY )
+        if self.currentSpeed < 0:
+            self.currentSpeed = 0
+            self.acceleration = 0
+
+    def get_kicked(self):
+        self.acceleration = -2
+
+    def get_grabbed(self, robot):
+        willBounce = random.sample([0,0,1,1,0,0,0], 1)[0]
+        if nearEnough(robot.currentPoint, self.currentPoint):
+            if willBounce:
+                print("oh no, the ball bounced off the robot!")
+                self.direction = robot.direction - 15
+                self.currentSpeed = 0
+                self.acceleration = -0.15
+            else:
+                self.acceleration = 0
+                self.state = BallStatus.me
+
+
 # our supreme robot
 simulatedMe = Robot(name="simulatedMe")
 # Team 3's robot
@@ -13,8 +62,9 @@ simulatedEnemies = [Robot(name="simulatedPinkEnemy"), Robot(name="simulatedGreen
 # a list containing all robots on the field for convenience
 simulatedRobots = [simulatedMe, simulatedAlly]+simulatedEnemies
 # guess what this could possibly be
-simulatedBall = Ball(name="simulatedBall")
-
+b = Ball(name="simulatedBall")
+simulatedBall = SimBall(b)
+del b
 
 class Simulator(object):
 
@@ -263,58 +313,10 @@ class Simulator(object):
                 self.lastCommandFinished +=1
                 # start the next action if it's queued
                 self.tick(tickTimeLeft)
-        
+
 
         ## move ball (v = u +at)
-        # simulatedBall.move() 
-
-
-class SimBall(Ball):
-    def __init__(self, p=None, name =None):
-        super(SimBall, self).__init__(p, name)
-
-    def bounce(self, topWall,  leftWall, rightWall, bottomWall):
-        if topWall | bottomWall:
-            self.direction = - self.direction
-        else:
-            self.direction = (180 - self.direction) % 180
-         
-
-    def move(self):
-        if self.currentSpeed ==0 & self.acceleration ==0:
-            return
-        self.currentSpeed = self.currentSpeed + self.acceleration*tickTimeLeft
-        distanceTravelled = self.currentSpeed* tickTimeLeft
-        angle = self.currentRotation
-        xDisplacement = round(cos(angle)*distanceTravelled, 2)
-        yDisplacement = -round(sin(angle)*distanceTravelled, 2)
-        newX = self.currentPoint.x+xDisplacement
-        newY = self.currentPoint.y+yDisplacement
-        topWall = xDisplacement == PITCH_WIDTH 
-        leftWall = xDisplacement ==0
-        rightWall = yDisplacement == PITCH_LENGTH
-        bottomWall = yDisplacement ==0
-        if topWall | leftWall | rightWall | bottomWall:
-            self.bounce(topWall,  leftWall, rightWall, bottomWall)
-        self.currentPoint = Point(newX, newY )
-        if self.currentSpeed < 0:
-            self.currentSpeed = 0
-            self.acceleration = 0
-
-    def get_kicked(self):
-        self.acceleration = -2
-
-    def get_grabbed(self, robot):
-        willBounce = random.sample([0,0,1,1,0,0,0], 1)[0]
-        if nearEnough(robot.currentPoint, self.currentPoint):
-            if willBounce:
-                print("oh no, the ball bounced off the robot!")
-                self.direction = robot.direction - 15
-                self.currentSpeed = 0
-                self.acceleration = -0.15
-            else:
-                self.acceleration = 0
-                self.state = BallStatus.me
+        # simulatedBall.move()
 
 def simulatedStart(myPoint, allyPoint, enemyAPoint, enemyBPoint, myRot, allyRot, enemyARot, enemyBRot, ballPoint, ballStat):
     '''Reset the status of all robots and the ball'''

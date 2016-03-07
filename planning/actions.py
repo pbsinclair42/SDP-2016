@@ -2,6 +2,7 @@ from constants import *
 from globalObjects import *
 from moveables import Moveable, Ball
 from helperClasses import Point
+from helperFunctions import *
 from CommsAPI import turn, move
 
 def kick():
@@ -74,11 +75,18 @@ def rotateToAngle():
 
         # so if we're not currently turning and we're not yet facing the right directin,
         # send the command to turn to the angle we actually should be at
-    else:
-        turnToDirection(targetAngle)
+        else:
+            turnToDirection(targetAngle)
 
 
 def moveToPoint(point):
+    if position == 'attacker':
+        if outGoal == rightGoalCenter:
+            if(Point.x <= 30 or (Point.y <= 180 and Point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+        else:
+            if(Point.x <= (PITCH_LENGTH-30) or (Point.y <= 180 and Point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
     if not isinstance(point,Point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
     distance = point.distance(me.currentPoint)
