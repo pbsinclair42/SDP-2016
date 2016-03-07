@@ -152,12 +152,7 @@ def tick():
     threading.Timer(TICK_TIME, tick).start()
 
 # start it off
-#tick()
-'''
-updatePositions()
-updatePositions()
-from helperClasses import Point
-me.plan=[{'action':Actions.moveToPoint,'targetFunction':lambda:Point(80,80)}]
-me.goal = Goals.collectBall'''
-updatePositions()
-tick()
+if __name__ == "__main__":
+    tick()
+else:
+    updatePositions()
