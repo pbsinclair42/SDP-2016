@@ -10,7 +10,8 @@ def playBall():
         else:#defend the goal
             guardGoal()
     elif(ball.status == BallStatus.me):#if we have the ball
-        if(lineOfSight(me,opponentGoal) == False):#if we can score a goal,
+        if(lineOfSight(me.currentPoint,opponentGoal) == False):#if we can score a goal,
             shootBall()
-        else:#else, try and pass to ally
+        elif(lineOfSight(me.currentPoint,ally.currentPoint) == False):#else, try and pass to ally
             passBall()
+
