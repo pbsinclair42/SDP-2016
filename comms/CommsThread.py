@@ -8,13 +8,14 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM0",
+                 port="/dev/ttyACM1",
                  baudrate=115200,
                  debug=False):
         """
             Initialize firware API and start the communications parallel process
         """
         self.ack_counts = (0, 0)
+        self.mag_heading = 0
         self.commands = 0
         self.command_list = []
         self.command_dict = {
@@ -57,7 +58,7 @@ class CommsThread(object):
         """
             A movement-only function for distance up-to 255 cm
         """
-        assert distance >= 255, "Distance should not be longer than 255"
+        assert distance <= 255, "Distance should not be longer than 255"
         if degrees:
             self.rot_move(distance, degrees)
 
@@ -190,19 +191,28 @@ class CommsThread(object):
             Return a report of sent commands and currently-buffered data
         """
         self.parent_pipe_in.send("rprt")
+    def get_all_pipe_data(self):
+        while self.parent_pipe_out.poll():
+            item = self.parent_pipe_out.recv()
+            if isinstance(item, tuple):
+                self.ack_counts = item
+            else:
+                self.mag_heading = item
 
     def restart(self):
         self.process_event.set()
         self.parent_pipe_in.send("restart");
 
     def am_i_done(self):
-        while self.parent_pipe_out.poll():
-            self.ack_counts = self.parent_pipe_out.recv()
+        self.get_all_pipe_data()
         if self.ack_counts[0] == self.commands and self.ack_counts[1] == self.commands:
             #print self.ack_counts, self.commands
             return True
         else:
             return False
+    def get_mag_heading(self):
+        self.get_all_pipe_data()
+        return self.mag_heading
 
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
@@ -214,14 +224,20 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     seq_num = 0
     command_sleep_time = 0.05 # sleep time between sending each byte
     process_sleep_time = 0.13 # sleep time for process
-
+    # robot state parameters
+    robot_state = {
+    "mag_head" : 0,
+    "buffer"   : [0, 0, 0], # Overflow, buffer, command index
+    "seq_num"  : 0
+    }
+    
     # perform setup
     while not radio_connected:
         try:
             comms = Serial(port=port, baudrate=baudrate)
             radio_connected = True
-        except Exception:
-            print "Comms: Radio not connected. Trying again in 5 seconds;"
+        except Exception as e:
+            print "Comms: Radio not connected. Trying again in 5 seconds;", str(e)
             radio_connected = False
             sleep(5)
     print "Radio On-line"
@@ -268,84 +284,61 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             else:
                 data_buffer += [ord(data)]
                 print "DATA +=", ord(data)
-
-        # ensure data has been processed before attempting to send data
-        seq_num = process_data(cmnd_list, data_buffer, ack_count, seq_num)
-
-        # if there are commands to send
         try:
-            if cmnd_list and not all(cmnd_list[-1][-3:-1]):
-            # get first un-sent command or un-acknowledged, but send
+        # ensure data has been processed before attempting to send data
+            process_data(cmnd_list, data_buffer, robot_state)
+            data_buffer = []
+            process_state(cmnd_list, robot_state)
+        except IndexError:
+            for i in range(0, 1000):
+                print "You did not manage to reset the arduino :/"
+        
+            if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
+                # get first un-sent command or un-acknowledged, but send
                 cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
 
-            # if the command is not acknowledged
+                # if the command is not received
                 if cmd_to_send[-2] == 0:
-                    sequenced = sequence_command(cmd_to_send[:4], seq_num)
+                    sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
                     for command_byte in sequenced:
                         comms.write(sequenced)
-                        cmnd_list[cmd_index][-3] = 1
-                        resend_time = time()
-                        print "Sending command: ", cmd_index, sequenced, "SEQ:", seq_num
-        except IndexError as e:
-            print "This fucked up --->", cmnd_list
-            print str(e)
-
-        print "Queued:", len(cmnd_list), "Received:", ack_count[0], "Finished:", ack_count[1]
-        ack_count = check_ack_count(ack_count, cmnd_list)
+                        sleep(command_sleep_time)
+                    cmnd_list[cmd_index][-3] = 1
+                    print "Sending command: ", cmd_index, sequenced, "SEQ:", robot_state["seq_num"]
+        except StopIteration:
+            pass
+        
+        ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
         pipe_out.send(ack_count)
-        sleep(0.2)
+        pipe_out.send(robot_state["mag_head"])
+        sleep(process_sleep_time)
 
-def process_data(commands, data, comb_count, seq_num):
-    cutoff_index, ack_count, end_count = 0, 0, 0
-
+def process_data(commands, data, robot_state):
+    "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
+    data.reverse()
     for idx, item in enumerate(data):
-        if item == 250:
-            acknowledge_command(commands, 2)
-            cutoff_index = idx
-            ack_count += 1
-            if idx < len(data) - 1 and data[idx + 1] == 250:
-                ack_count-= 1
-            else:
-                seq_num = flip_seq(seq_num)
-        elif item == 253:
-            acknowledge_command(commands, 1)
-            cutoff_index = idx
-            end_count += 1
-            if idx < len(data) - 1 and data[idx + 1] == 253:
-                end_count-= 1
-            #else:
-            #    seq_num = flip_seq(seq_num)
+        if item == 253 and idx >  5:
+            checksum = 0
+            for cmd_byte in data[idx - 5: idx + 1]:
+                checksum += sum([bit == '1' for bit in bin(cmd_byte)])
+            checksum = 255 - checksum
+            if checksum ==  data[idx - 6]:
+                robot_state["buffer"] = [data[idx - 1], data[idx - 2], data[idx - 3]]
+                robot_state["mag_head"] = data[idx - 4] + data[idx - 5]
+                robot_state["seq_num"] = data[idx - 2] / 4 % 2
+                break;
+    del data
+def process_state(cmnd_list, robot_state):
+    """Set command_list flags, based on robot state, parsed from incoming comms"""
+    # see if everythin is received
+    if cmnd_list:
+        for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
+            cmnd_list[idx][-2] = 1
+        
+        if robot_state["buffer"][1] == robot_state["buffer"][2]:
+            for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
+                cmnd_list[idx][-1] = 1
 
-    del data[:cutoff_index + 1]
-    return seq_num
-
-
-def acknowledge_command(commands, flag):
-    assert flag == 1 or flag == 2
-    terget_idx, target_command = None, None
-
-    # get the last sent command
-    for command in commands:
-        if command[-3] == 1:
-            target_command = command
-        else:
-            break
-
-    try:
-        target_command[-flag] = 1
-    except IndexError:
-        pass
-
-    return
-
-
-
-
-def flip_seq(seq):
-    if seq == 1:
-        return 0
-    else:
-        return 1
 
 def sequence_command(command, seq):
     sequence = ord(chr(seq * 128 + command[0]))
@@ -374,46 +367,3 @@ if __name__ == "__main__":
     c = CommsThread()
 
     c.rotate(30)
-
-    """
-    # 15 x 30 degrees = 90
-    c.rotate(30)
-    sleep(1)
-    for i in range(0, 5):
-        c.rotate(15)
-        sleep(1)
-
-    sleep(5)
-
-    # 3 x 30 = 90
-    for i in range(0, 3):
-        c.rotate(30)
-        sleep(1)
-
-    sleep(5)
-
-    # 4 x 45 = 180
-    for i in range(0, 4):
-        c.rotate(45)
-        sleep(1)
-
-    sleep(5)
-    # 4 x 90 = 360
-    for i in range(0, 4):
-        c.rotate(90)
-        sleep(1)
-
-    # 3 x 120 = 360
-    for i in range (0, 3):
-        c.rotate(120)
-        sleep(1)
-
-    sleep(5)
-
-    # 2 x 180 = 360
-    c.rotate(180)
-    c.rotate(180)
-
-    sleep(20)
-    c.report()
-    c.exit()"""
