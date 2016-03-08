@@ -107,6 +107,8 @@ byte commandOverflow = 0;
 int rotary_target;
 int motion_target;
 int holono_target;
+boolean left_correction = 0;
+boolean right_correction = 0;
 
 // accelerometer variables
 float accel_targetx = 0;
@@ -170,7 +172,7 @@ void setup() {
     
     /* Custom commands can be initialized below */
     command_buffer[0] = CMD_ROTMOVE;
-    command_buffer[1] = 90;
+    command_buffer[1] = 10;
     command_buffer[2] = 0;
     command_buffer[3] = 255;
     buffer_index = 4;
@@ -187,10 +189,10 @@ void loop() {
   
   pollAccComp();
   //calibrateCompass(); // if wanting to do per-pitch calibration
-  if (millis() - idle_time < 3000){
+  /*if (millis() - idle_time < 3000){
       Serial.println(sqrt(realAccel[0] * realAccel[0]  + realAccel[1] * realAccel[1]));
       Serial.println(heading);
-  }
+  }*/
   //delay(1000);
   // Action FSM part
   int state_end = 0;
@@ -456,7 +458,7 @@ void restoreState(){
 
 int rotMoveStep(){
     // values for target calculation
-    int left;
+    int left, left_angle, right_angle;
     byte degrees, centimeters;
 
     switch(rotMoveGrabMode){
@@ -471,8 +473,7 @@ int rotMoveStep(){
                 rotMoveGrabMode = 2;
                 return 0;
             }
-            rotMoveGrabMode = 1;
-
+            
             /** Use bottom commented-out code for rotary stuff */
             // calculate target based on piece-wise linear approximation for
             // know values of 30, 45, 60, 90, 120, 180 degrees
@@ -482,14 +483,26 @@ int rotMoveStep(){
             //restoreMotorPositions(positions);
             //updateMotorPositions(positions);
             //rotaryBias = positions[0] + positions[1] + positions[2];
-
+            
             target_angle = normalize_angle(titleHeading - (float(degrees) * left));
+            
+            // got straight to correction for low angles
             
             if (left == 1)
                 rotateLeft();
             else
                 rotateRight();
+
+            rotMoveGrabMode = 1;
             
+            // manual override for VERY small angles
+            if (degrees < 15){
+                delay(degrees * 25);
+                motorAllStop();
+                rotMoveGrabMode = 2;
+                return 0;
+            }
+
             return 0;
         
         // chck whether to stop during rotation;
@@ -502,7 +515,9 @@ int rotMoveStep(){
             
             if (angle_difference < 10){
                 motorAllStop();
-                rotMoveGrabMode = 2;
+                rotMoveGrabMode = 4;
+                delay(150);
+                command_time = millis();
             }
             
             else{
@@ -550,10 +565,31 @@ int rotMoveStep(){
                 rotMoveGrabMode = 0;
                 return 1;
             }
-        // 
-        case 4: 
 
-
+        // rotation correction
+        case 4 :
+            if (millis() - command_time > 850){
+                motorAllStop();
+                rotMoveGrabMode = 2;
+            }
+            else if (calculateAngleDifference(heading, target_angle) > 5){
+                left_angle = calculateLeftAngle(heading, target_angle);
+                right_angle = calculateRightAngle(heading, target_angle);
+                if (left_angle < right_angle){
+                    right_correction = 1;
+                    left_correction = 0;
+                    correctRight();
+                }
+                else {
+                    right_correction = 0;
+                    left_correction = 1;
+                    correctLeft();
+                }
+            }
+            else{
+                motorAllStop();
+          }
+          return 0;
         default:
             return -1;
             break;       
@@ -776,6 +812,22 @@ int calculateAngleDifference(float current_angle, float target_angle){
         return phi;
 }
 
+int calculateLeftAngle(float current_angle, float target_angle){
+    int phi = abs(int(target_angle - current_angle)) % 360;
+    if (current_angle < target_angle)
+        return phi;
+    else
+        return 360 - phi;
+}
+
+int calculateRightAngle(float current_angle, float target_angle){
+    int phi = abs(int(target_angle - current_angle)) % 360;
+    if (current_angle < target_angle)
+        return 360 - phi;
+    else
+        return phi;
+}
+
 void calibrateCompass(){ 
   if (mag[0] > mag_max_x){
       mag_max_x = mag[0];
@@ -863,12 +915,24 @@ void testLeftBackward() {
 }
 
 void rotateRight() {
+    motorBackward(MOTOR_LFT, (int)(POWER_LFT * 1));
+    motorBackward(MOTOR_RGT, (int)(POWER_RGT * 1));
+    motorBackward(MOTOR_BCK, (int)(POWER_BCK * 1));    
+}
+
+void correctRight(){
     motorBackward(MOTOR_LFT, (int)(POWER_LFT * 0.7));
     motorBackward(MOTOR_RGT, (int)(POWER_RGT * 0.7));
     motorBackward(MOTOR_BCK, (int)(POWER_BCK * 0.7));    
 }
 
 void rotateLeft() {
+    motorForward(MOTOR_LFT, (int)(POWER_LFT * 1));
+    motorForward(MOTOR_RGT, (int)(POWER_RGT * 1));
+    motorForward(MOTOR_BCK, (int)(POWER_BCK * 1));    
+}
+
+void correctLeft(){
     motorForward(MOTOR_LFT, (int)(POWER_LFT * 0.7));
     motorForward(MOTOR_RGT, (int)(POWER_RGT * 0.7));
     motorForward(MOTOR_BCK, (int)(POWER_BCK * 0.7));    
