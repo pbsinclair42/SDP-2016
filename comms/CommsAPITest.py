@@ -75,4 +75,12 @@ if __name__ == "__main__":
     """
         Big test based on random data
     """
-    pass
+    i = 1
+    while True:
+        if commsSystem.am_i_done():
+            if i:
+                grab()
+                i = 0
+            else:
+                ungrab()
+                i = 1
