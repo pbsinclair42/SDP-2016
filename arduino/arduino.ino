@@ -178,7 +178,7 @@ void setup() {
     command_buffer[2] = 0;
     command_buffer[3] = 255;
     buffer_index = 4;*/
-    delay(300);
+    delay(300); // delay to get first proper mag value
   }
   
 
@@ -189,12 +189,17 @@ void loop() {
   // Sensor FSM part
   
   pollAccComp();
+  
+
+  // ***** Compass Calibration part
   //calibrateCompass(); // if wanting to do per-pitch calibration
   /*if (millis() - idle_time < 3000){
       Serial.println(sqrt(realAccel[0] * realAccel[0]  + realAccel[1] * realAccel[1]));
       Serial.println(heading);
   }*/
   //delay(1000);
+
+
   // Action FSM part
   int state_end = 0;
 
@@ -287,32 +292,12 @@ void loop() {
         if (command_index == 0){
             commandOverflow++;
         }
-        /*
-        // respond with FIN
-        for (int i=0; i < RESPONSE_COUNT; i++){
-            Serial.write(CMD_FIN) ;
-            delay(RESPONSE_PERIOD);
-        }*/
         
         // make not of respond time
         re_ack_time = millis();
 
       
     }
-
-    // check if idle and not received a command within a second. Then, its likely that all
-    // FIN flags were lost
-    /*
-    if (millis() - re_ack_time > 1500 && command_index != 0 && command_index != buffer_index){
-
-       for (int i=0; i < RESPONSE_COUNT; i++){
-            Serial.write(CMD_FIN);
-            delay(RESPONSE_PERIOD);
-        }
-       re_ack_time = millis();
-
-    }
-    */
 }
 
 
@@ -366,14 +351,6 @@ void Communications() {
                 
                 invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
-                
-                // Acknowledge receipt of cammand
-                //for (int i=0; i < RESPONSE_COUNT; i++){
-                //    Serial.write(CMD_ACK);
-                //    delay(RESPONSE_PERIOD);
-                //}
-                //Serial.write(command_index);
-                //Serial.write(buffer_index);
 
                 // Cases for Atomic commands
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
