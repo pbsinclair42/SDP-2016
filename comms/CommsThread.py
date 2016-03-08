@@ -280,12 +280,15 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             else:
                 data_buffer += [ord(data)]
                 print "DATA +=", ord(data)
-                
+        
+        try:
         # ensure data has been processed before attempting to send data
-        process_data(cmnd_list, data_buffer, robot_state)
-        data_buffer = []
-        process_state(cmnd_list, robot_state)
-
+            process_data(cmnd_list, data_buffer, robot_state)
+            data_buffer = []
+            process_state(cmnd_list, robot_state)
+        except IndexError:
+            for i in range(0, 1000):
+                print "You did not manage to reset the arduino :/"
         try:
         # if there are commands to send
             if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
