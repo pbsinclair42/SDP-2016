@@ -289,6 +289,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         except IndexError:
             for i in range(0, 1000):
                 print "You did not manage to reset the arduino :/"
+        
         try:
         # if there are commands to send
             if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
@@ -312,7 +313,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         sleep(process_sleep_time)
 
 def process_data(commands, data, robot_state):
-
+    "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
     data.reverse()
     for idx, item in enumerate(data):
         if item == 253 and idx >  5:
@@ -327,6 +328,7 @@ def process_data(commands, data, robot_state):
                 break;
     del data
 def process_state(cmnd_list, robot_state):
+    """Set command_list flags, based on robot state, parsed from incoming comms"""
     # see if everythin is received
     if cmnd_list:
         for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
@@ -335,35 +337,6 @@ def process_state(cmnd_list, robot_state):
         if robot_state["buffer"][1] == robot_state["buffer"][2]:
             for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
                 cmnd_list[idx][-1] = 1
-
-
-
-def acknowledge_command(commands, flag):
-    assert flag == 1 or flag == 2
-    terget_idx, target_command = None, None
-
-    # get the last sent command
-    for command in commands:
-        if command[-3] == 1:
-            target_command = command
-        else:
-            break 
-    
-    try:
-        target_command[-flag] = 1
-    except IndexError:
-        pass
-
-    return
-
-
-
-
-def flip_seq(seq):
-    if seq == 1:
-        return 0
-    else:
-        return 1
 
 def sequence_command(command, seq):
     sequence = ord(chr(seq * 128 + command[0]))
@@ -378,46 +351,3 @@ if __name__ == "__main__":
     c = CommsThread()
 
     c.rotate(30)
-
-    """
-    # 15 x 30 degrees = 90
-    c.rotate(30)
-    sleep(1)
-    for i in range(0, 5):
-        c.rotate(15)
-        sleep(1)
-
-    sleep(5)
-
-    # 3 x 30 = 90
-    for i in range(0, 3):
-        c.rotate(30)
-        sleep(1)
-
-    sleep(5)
-
-    # 4 x 45 = 180
-    for i in range(0, 4):
-        c.rotate(45)
-        sleep(1)
-
-    sleep(5)
-    # 4 x 90 = 360
-    for i in range(0, 4):
-        c.rotate(90)
-        sleep(1)
-
-    # 3 x 120 = 360
-    for i in range (0, 3):
-        c.rotate(120)
-        sleep(1)
-
-    sleep(5)
-
-    # 2 x 180 = 360
-    c.rotate(180)
-    c.rotate(180)
-
-    sleep(20)
-    c.report()
-    c.exit()"""
