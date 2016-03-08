@@ -555,6 +555,7 @@ int rotMoveStep(){
             rotaryTarget = (int) (MOTION_CONST * centimeters);
             
             restoreMotorPositions(positions);
+            delay(75);
             testForward();
              
             rotMoveGrabMode = 3;
