@@ -195,7 +195,7 @@ class CommsThread(object):
             item = self.parent_pipe_out.recv()
             if isinstance(item, tuple):
                 self.ack_counts = item
-            else
+            else:
                 self.mag_heading = item
 
     def am_i_done(self):
