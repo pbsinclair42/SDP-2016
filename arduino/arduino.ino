@@ -93,7 +93,8 @@ byte invalid_commands = 0;
 unsigned long serial_time; 
 unsigned long command_time;
 unsigned long idle_time;
-unsigned long re_ack_time;
+unsigned long report_time;
+unsigned long re_ack_time; // TODO: Remove
 
 // rotation parameters
 int rotaryTarget;
@@ -143,6 +144,7 @@ void setup() {
     bufferOverflow = 0;
     commandOverflow = 0;
     idle_time = millis();
+    report_time = millis();
 
     // initialize Accelerometer/Compass sensor
     char init = 0;
@@ -171,20 +173,19 @@ void setup() {
     mag_max_y = mag[1];
     
     /* Custom commands can be initialized below */
-    command_buffer[0] = CMD_ROTMOVE;
+    /*command_buffer[0] = CMD_ROTMOVE;
     command_buffer[1] = 10;
     command_buffer[2] = 0;
     command_buffer[3] = 255;
-    buffer_index = 4;
+    buffer_index = 4;*/
     delay(300);
-    //rotateLeft();
   }
   
 
 void loop() {
   // Communication FSM part
   Communications();
-  
+  CommsOut();
   // Sensor FSM part
   
   pollAccComp();
@@ -286,12 +287,12 @@ void loop() {
         if (command_index == 0){
             commandOverflow++;
         }
-
+        /*
         // respond with FIN
         for (int i=0; i < RESPONSE_COUNT; i++){
             Serial.write(CMD_FIN) ;
             delay(RESPONSE_PERIOD);
-        }
+        }*/
         
         // make not of respond time
         re_ack_time = millis();
@@ -301,6 +302,7 @@ void loop() {
 
     // check if idle and not received a command within a second. Then, its likely that all
     // FIN flags were lost
+    /*
     if (millis() - re_ack_time > 1500 && command_index != 0 && command_index != buffer_index){
 
        for (int i=0; i < RESPONSE_COUNT; i++){
@@ -310,6 +312,7 @@ void loop() {
        re_ack_time = millis();
 
     }
+    */
 }
 
 
@@ -365,12 +368,12 @@ void Communications() {
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
                 
                 // Acknowledge receipt of cammand
-                for (int i=0; i < RESPONSE_COUNT; i++){
-                    Serial.write(CMD_ACK);
-                    delay(RESPONSE_PERIOD);
-                }
-                Serial.write(command_index);
-                Serial.write(buffer_index);
+                //for (int i=0; i < RESPONSE_COUNT; i++){
+                //    Serial.write(CMD_ACK);
+                //    delay(RESPONSE_PERIOD);
+                //}
+                //Serial.write(command_index);
+                //Serial.write(buffer_index);
 
                 // Cases for Atomic commands
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
@@ -397,24 +400,58 @@ void Communications() {
                     garbage = Serial.read();
                     //Serial.write(garbage);
                 }
-                
+                /*
                 if (invalid_commands >= 10){
-                    for (int i=0; i < RESPONSE_COUNT; i++){
-                        Serial.write(CMD_ACK);
-                        delay(RESPONSE_PERIOD);
+                    //for (int i=0; i < RESPONSE_COUNT; i++){
+                    //    Serial.write(CMD_ACK);
+                    //    delay(RESPONSE_PERIOD);
                     }
                     invalid_commands = 0;
-                }
+                }*/
             }
         }
         // Time-out serial if reading is taking too long
-        else if (millis() - serial_time > 500){ 
+        else if (millis() - serial_time > 200){ 
             Serial.write(CMD_FULL);
             while(buffer_index %4 != 0) {
                 buffer_index--;
             }
         }
     }
+}
+
+void CommsOut(){
+    byte args[6], checksum = 0;
+    if (millis() - report_time > 250){
+        args[0] = CMD_FIN;
+        args[1] = bufferOverflow;
+        args[2] = buffer_index;
+        args[3] = command_index;
+        if (heading > 180) {
+            args[4] = 180;
+            args[5] = byte(int(heading - 180));
+        }
+        else{
+            args[4] = byte(int(heading));
+            args[5] = 0;
+        }
+        for (int i = 0; i < 6; i++){
+            checksum += (args[i] & 1);
+            checksum += (args[i] & 2)   >> 1;
+            checksum += (args[i] & 4)   >> 2;
+            checksum += (args[i] & 8)   >> 3;
+            checksum += (args[i] & 16)  >> 4;
+            checksum += (args[i] & 32)  >> 5;
+            checksum += (args[i] & 64)  >> 6;
+            checksum += (args[i] & 128) >> 7;
+        }
+        for (int i = 0; i < 6; i++){
+            Serial.write(args[i]);
+            delay(5);
+        }
+        Serial.write(255 - checksum);
+        report_time = millis();
+    }  
 }
 
 void pollAccComp(){
@@ -974,7 +1011,3 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
-
-
-
-
