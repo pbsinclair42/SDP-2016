@@ -173,12 +173,13 @@ void setup() {
     mag_max_y = mag[1];
     
     /* Custom commands can be initialized below */
-    /*command_buffer[0] = CMD_ROTMOVE;
-    command_buffer[1] = 10;
-    command_buffer[2] = 0;
-    command_buffer[3] = 255;
-    buffer_index = 4;*/
+    //command_buffer[0] = CMD_ROTMOVE;
+    //command_buffer[1] = 100;
+    //command_buffer[2] = 0;
+    //command_buffer[3] = 255;
+    //buffer_index = 4;
     delay(300); // delay to get first proper mag value
+    //rotateRight();
   }
   
 
@@ -189,14 +190,9 @@ void loop() {
   // Sensor FSM part
   
   pollAccComp();
-  
 
   // ***** Compass Calibration part
   //calibrateCompass(); // if wanting to do per-pitch calibration
-  /*if (millis() - idle_time < 3000){
-      Serial.println(sqrt(realAccel[0] * realAccel[0]  + realAccel[1] * realAccel[1]));
-      Serial.println(heading);
-  }*/
   //delay(1000);
 
 
@@ -205,10 +201,6 @@ void loop() {
 
   // remove SEQ from command
   MasterState = MasterState & 127;
-
-  if (MasterState != IDLE_STATE){
-      re_ack_time = millis();
-  }
 
   // Switch statement for the FSM state
   switch(MasterState){
@@ -292,11 +284,7 @@ void loop() {
         if (command_index == 0){
             commandOverflow++;
         }
-        
-        // make not of respond time
-        re_ack_time = millis();
-
-      
+        CommsOut();
     }
 }
 
@@ -498,7 +486,7 @@ int rotMoveStep(){
             //updateMotorPositions(positions);
             //rotaryBias = positions[0] + positions[1] + positions[2];
             
-            target_angle = normalize_angle(titleHeading - (float(degrees) * left));
+            target_angle = normalize_angle(heading - (float(degrees) * left));
             
             // got straight to correction for low angles
             
@@ -526,7 +514,6 @@ int rotMoveStep(){
             
             angle_difference = calculateAngleDifference(heading, target_angle);
             degrees = command_buffer[command_index + 1];
-            
             if (angle_difference < 10){
                 motorAllStop();
                 rotMoveGrabMode = 4;
