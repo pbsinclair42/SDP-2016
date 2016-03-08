@@ -152,6 +152,7 @@ class Robot(Moveable):
         # if we've told the robot to move or rotate and haven't noticed it stop doing so
         self.moving = False
         self.grabberState = 0
+        self.position = None
 
     def updateRotation(self, rotation):
         """Update the rotation with a new value
