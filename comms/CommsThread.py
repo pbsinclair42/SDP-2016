@@ -8,7 +8,7 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM1",
+                 port="/dev/ttyACM0",
                  baudrate=115200,
                  debug=False):
         """
