@@ -13,6 +13,8 @@ enemies = [Robot(name="pinkEnemy"), Robot(name="greenEnemy")]
 robots = [me, ally]+enemies
 # guess what this could possibly be
 ball = Ball(name="ball")
+#list of all movables
+moveables = [me,ally,ball]+enemies
 # the point at the center of the goal
 # TODO: add both goals and ability to differentiate between them and whatnot
 leftGoalCenter = Point(30,PITCH_WIDTH/2)

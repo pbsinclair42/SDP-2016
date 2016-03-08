@@ -1,7 +1,7 @@
 import threading
 
 from constants import *
-from globalObjects import me, ally, enemies, robots, ball
+from globalObjects import *
 from helperClasses import BallStatus, Goals
 from actions import executePlan
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass

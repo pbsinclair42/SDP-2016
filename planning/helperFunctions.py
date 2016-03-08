@@ -1,6 +1,6 @@
 from constants import POINT_ACCURACY, ANGLE_ACCURACY, ITLL_DO_POINT, ITLL_DO_ANGLE
 from math import radians, sin as sinr, cos as cosr
-
+from globalObjects import *
 
 def essentiallyEqual(a,b):
     """Checks whether two points or two angles are similar enough that they're probably the same,
@@ -41,3 +41,15 @@ def sin(angle):
 
 def cos(angle):
     return cosr(radians(angle))
+
+def lineOfSight(From,To):
+    dxc = From.x - To.x
+    dyc = From.y - To.y
+
+    for obj in globalObjects.moveables:
+        dxl = obj.x - To.x
+        dyl = obj.y - To.y
+        cross = dxc * dyl - dyc * dxl
+        if(cross ==0):
+            return True
+    return False
