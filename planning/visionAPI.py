@@ -38,7 +38,6 @@ with open('conf.txt','r') as f:
         else:
             ourGoal = leftGoalCenter
             opponentGoal = rightGoalCenter
-        position = context[5].strip('\n')
         
 if USING_SIMULATOR:
     camera=None
