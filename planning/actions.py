@@ -4,7 +4,6 @@ from moveables import Moveable, Ball
 from helperClasses import Point, Actions, Goals, BallStatus
 from helperFunctions import nearEnough
 from CommsAPI import turn, move, grab, ungrab, kick
-from robotAI import *
 from goals import *
 
 
