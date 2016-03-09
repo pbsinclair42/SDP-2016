@@ -226,11 +226,11 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     process_sleep_time = 0.13 # sleep time for process
     # robot state parameters
     robot_state = {
-    "mag_head" : 0,
-    "buffer"   : [0, 0, 0], # Overflow, buffer, command index
-    "seq_num"  : 0
+        "mag_head" : 0,
+        "buffer"   : [0, 0, 0], # Overflow, buffer, command index
+        "seq_num"  : 0
     }
-    
+
     # perform setup
     while not radio_connected:
         try:
@@ -242,7 +242,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)
     print "Radio On-line"
 
-    print comms.in_waiting
     # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
@@ -276,6 +275,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
+
+
         while comms.in_waiting:
             data = comms.read(1)
             # if last command isn't finished
@@ -284,6 +285,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             else:
                 data_buffer += [ord(data)]
                 #print "DATA +=", ord(data)
+
+
         try:
         # ensure data has been processed before attempting to send data
             process_data(cmnd_list, data_buffer, robot_state)
@@ -292,22 +295,24 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         except IndexError:
             for i in range(0, 1000):
                 print "You did not manage to reset the arduino :/"
-        try:
-	    if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
-		# get first un-sent command or un-acknowledged, but send
-		cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
 
-		# if the command is not received
-		if cmd_to_send[-2] == 0:
-		    sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
-		    for command_byte in sequenced:
-		        comms.write(sequenced)
-		        sleep(command_sleep_time)
-		    cmnd_list[cmd_index][-3] = 1
-		    print "Sending command: ", cmd_index, sequenced, "SEQ:", robot_state["seq_num"]
+
+        try:
+            if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
+                # get first un-sent command or un-acknowledged, but send
+                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+
+                # if the command is not received
+                if cmd_to_send[-2] == 0:
+                    sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
+                    for command_byte in sequenced:
+                        comms.write(sequenced)
+                        sleep(command_sleep_time)
+                    cmnd_list[cmd_index][-3] = 1
+                    print "Sending command: ", cmd_index, sequenced, "SEQ:", robot_state["seq_num"]
         except StopIteration:
             pass
-        
+
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
         pipe_out.send(ack_count)
         pipe_out.send(robot_state["mag_head"])
@@ -335,7 +340,7 @@ def process_state(cmnd_list, robot_state):
     if cmnd_list:
         for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
             cmnd_list[idx][-2] = 1
-        
+
         if robot_state["buffer"][1] == robot_state["buffer"][2]:
             for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
                 cmnd_list[idx][-1] = 1

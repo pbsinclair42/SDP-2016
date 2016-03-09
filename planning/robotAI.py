@@ -6,7 +6,7 @@ from helperClasses import BallStatus, Goals
 from actions import executePlan
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass
 import visionAPI #TODO remove
-from world import WorldApi
+#from world import WorldApi
 from CommsAPI import commsSystem
 
 

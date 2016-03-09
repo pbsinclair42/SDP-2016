@@ -75,12 +75,7 @@ if __name__ == "__main__":
     """
         Big test based on random data
     """
-    i = 1
     while True:
         if commsSystem.am_i_done():
-            if i:
-                grab()
-                i = 0
-            else:
-                ungrab()
-                i = 1
+            direction = random.choice([1, -1])
+            turn(direction * 90)

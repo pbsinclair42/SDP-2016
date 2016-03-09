@@ -66,9 +66,10 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
-#define MAG_OFFSET_X 312
-#define MAG_OFFSET_Y 3605
 
+#define MAG_OFFSET_X 2580
+#define MAG_OFFSET_Y 7174
+#define MAG_OFFSET_Z 6870
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -124,28 +125,35 @@ int mag_min_x; // for caliration
 int mag_max_x; // for caliration
 int mag_min_y; // for caliration
 int mag_max_y; // for caliration
+int mag_min_z; // for caliration
+int mag_max_z; // for caliration
+
 int accel[3];                // we'll store the raw acceleration values here
 int mag[3];                  // raw magnetometer values stored here
 float realAccel[3];          // calculated acceleration values here
 float heading, titleHeading; // compass values stored here
 
+
+void restoreState(){
+    updateMotorPositions(positions);
+    restoreMotorPositions(positions);
+    buffer_index = 0;
+    command_index = 0;
+    bufferOverflow = 0;
+    commandOverflow = 0;
+    rotMoveGrabMode = 0;
+    finishGrabbing = 0;
+    MasterState = 0;
+    motorAllStop();
+    idle_time = millis();
+    report_time = millis();
+}
+
 // Main Functions: Setup, Loop and SerialEvent
 void setup() {
     SDPsetup();
-    motorAllStop(); // for sanity
-    // to get rid of potential bias
-    updateMotorPositions(positions);
-    restoreMotorPositions(positions);
-    MasterState = 0;
-    finishGrabbing = 0;
-    buffer_index = 0;
-    command_index = 0;
-    rotMoveGrabMode = 0;
-    bufferOverflow = 0;
-    commandOverflow = 0;
-    idle_time = millis();
-    report_time = millis();
-
+    restoreState();
+    
     // initialize Accelerometer/Compass sensor
     char init = 0;
     init = Lsm303d.initI2C();
@@ -171,44 +179,28 @@ void setup() {
     mag_max_x = mag[0];
     mag_min_y = mag[1];
     mag_max_y = mag[1];
+    mag_min_z = mag[2];
+    mag_max_z = mag[2];
     
     /* Custom commands can be initialized below */
-    /*command_buffer[0] = CMD_ROTMOVE;
-    command_buffer[1] = 10;
-    command_buffer[2] = 0;
-    command_buffer[3] = 255;
-    buffer_index = 4;*/
     delay(300); // delay to get first proper mag value
+    //rotateRight();
   }
   
 
 void loop() {
-  // Communication FSM part
-  Communications();
-  CommsOut();
-  // Sensor FSM part
-  
-  pollAccComp();
-  
-
-  // ***** Compass Calibration part
-  //calibrateCompass(); // if wanting to do per-pitch calibration
-  /*if (millis() - idle_time < 3000){
-      Serial.println(sqrt(realAccel[0] * realAccel[0]  + realAccel[1] * realAccel[1]));
-      Serial.println(heading);
-  }*/
-  //delay(1000);
-
-
-  // Action FSM part
   int state_end = 0;
+  
+  Communications();
+  if (buffer_index + bufferOverflow != 0)
+    CommsOut();
+  
+
+  pollAccComp();
+  // calibrateCompass();
 
   // remove SEQ from command
   MasterState = MasterState & 127;
-
-  if (MasterState != IDLE_STATE){
-      re_ack_time = millis();
-  }
 
   // Switch statement for the FSM state
   switch(MasterState){
@@ -287,20 +279,15 @@ void loop() {
   if (state_end){
         MasterState = IDLE_STATE;
         command_index += 4;
-      
 
       // check for circular buffer end
       if (command_index == 0){
           commandOverflow++;
       }
-      
-    for (int i=0; i < 8; i++){
-        Serial.write(CMD_DONE);
-        delay(10);
-    }
-      //delay(5000);
+      CommsOut();
       
   }
+
 }
 
 
@@ -330,6 +317,7 @@ void Communications() {
     serial_time = millis();
 
     while (Serial.available()) {
+        
         // note overflow to maintain circular buffer
         if (buffer_index == 255){
             bufferOverflow++;
@@ -355,13 +343,6 @@ void Communications() {
                 invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
 
-                //Serial.write(command_index / 4);
-                //Serial.write(buffer_index / 4);
-                //Serial.write(command_buffer[target_value - 4]);
-                //Serial.write(command_buffer[target_value - 3]);
-                //Serial.write(command_buffer[target_value - 2]);
-                //Serial.write(command_buffer[target_value - 1]);
-                 
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
                     restoreState();
                 }
@@ -450,6 +431,7 @@ void pollAccComp(){
         // uncomment during calibration
         mag[0] += MAG_OFFSET_X;
         mag[1] += MAG_OFFSET_Y;
+        mag[2] += MAG_OFFSET_Z;
         //for (int i = 0; i < 3; i++){
         //  mag[i] -= mag_offset[i];
         //}
@@ -459,16 +441,6 @@ void pollAccComp(){
         // tilt-compensated angle
         titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
         }
-}
-
-void restoreState(){
-    buffer_index = 0;
-    command_index = 0;
-    bufferOverflow = 0;
-    commandOverflow = 0;
-    rotMoveGrabMode = 0;
-    MasterState = 0;
-    motorAllStop();
 }
 
 int rotMoveStep(){
@@ -499,7 +471,7 @@ int rotMoveStep(){
             //updateMotorPositions(positions);
             //rotaryBias = positions[0] + positions[1] + positions[2];
             
-            target_angle = normalize_angle(titleHeading - (float(degrees) * left));
+            target_angle = normalize_angle(heading - (float(degrees) * left));
             
             // got straight to correction for low angles
             
@@ -527,7 +499,6 @@ int rotMoveStep(){
             
             angle_difference = calculateAngleDifference(heading, target_angle);
             degrees = command_buffer[command_index + 1];
-            
             if (angle_difference < 10){
                 motorAllStop();
                 rotMoveGrabMode = 4;
@@ -556,6 +527,7 @@ int rotMoveStep(){
             rotaryTarget = (int) (MOTION_CONST * centimeters);
             
             restoreMotorPositions(positions);
+            delay(75);
             testForward();
              
             rotMoveGrabMode = 3;
@@ -843,7 +815,36 @@ int calculateRightAngle(float current_angle, float target_angle){
         return phi;
 }
 
-void calibrateCompass(){ 
+
+
+
+void calibrateCompass(){
+  // calculate real acceleration values, in units of g
+    // X:0, Y:1, Z:2 for index:axis
+    Lsm303d.getAccel(accel);
+    for (int i=0; i<3; i++)
+        {
+            realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
+        }
+    
+    // wait for the magnetometer readings to be ready
+    // if they're not - get them at next main loop
+    if(Lsm303d.isMagReady()){
+        // get the magnetometer values, store them in mag
+        Lsm303d.getMag(mag);
+        // uncomment during calibration
+        //mag[0] += MAG_OFFSET_X;
+        //mag[1] += MAG_OFFSET_Y;
+        //for (int i = 0; i < 3; i++){
+        //  mag[i] -= mag_offset[i];
+        //}
+        // angle between X and north
+        heading = Lsm303d.getHeading(mag);
+        
+        // tilt-compensated angle
+        titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
+        }
+        
   if (mag[0] > mag_max_x){
       mag_max_x = mag[0];
   }
@@ -856,6 +857,12 @@ void calibrateCompass(){
   if (mag[1] < mag_min_y){
       mag_min_y = mag[1];
   }
+  if (mag[2] > mag_max_z){
+      mag_max_z = mag[2];
+  }
+  if (mag[2] < mag_min_z){
+      mag_min_z = mag[2];
+  }
 
   if (millis() - idle_time > 5000){
     idle_time = millis();
@@ -867,10 +874,17 @@ void calibrateCompass(){
     Serial.println(mag_min_y);
     Serial.print("MAX Y: ");
     Serial.println(mag_max_y);
+    Serial.print("MIN Z: ");
+    Serial.println(mag_min_z);
+    Serial.print("MAX Z: ");
+    Serial.println(mag_max_z);
+    
     Serial.print("BIAS_X: ");
     Serial.println(-0.5 * (mag_max_x + mag_min_x));
     Serial.print("BIAS_Y: ");
     Serial.println(-0.5 * (mag_max_y + mag_min_y));
+    Serial.print("BIAS_Z: ");
+    Serial.println(-0.5 * (mag_max_z + mag_min_z));
     
  }
 }
