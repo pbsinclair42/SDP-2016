@@ -1,11 +1,13 @@
 from serial import Serial
 from multiprocessing import Process, Pipe, Event
-from time import sleep, time
-from struct import unpack
+from time import sleep, time # apparently unused?
+from struct import unpack  # apparently unused?
+
 
 class CommsThread(object):
     """
-        A thread-based API for the communication system. See the command_dict for command-based firmware API
+        A thread-based API for the communication system.
+        See the command_dict for command-based firmware API
     """
     def __init__(self,
                  port="/dev/ttyACM0",
@@ -41,7 +43,9 @@ class CommsThread(object):
         self.process_event = Event()
         self.process = Process(name="comms_thread",
                                target=comms_thread,
-                               args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
+                               args=(self.child_pipe_out,
+                                     self.child_pipe_in,
+                                     self.process_event, port, baudrate))
         self.process.start()
 
     def queue_command(self, command):
@@ -67,7 +71,6 @@ class CommsThread(object):
             while distance > 255:
                 self.queue_command(self.command_dict["ROT_MOVE_POS"] + chr(0) + chr(255) + self.command_dict["END"])
                 distance -= 255
-
             command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(distance) + self.command_dict["END"]
             self.queue_command(command)
 
@@ -79,14 +82,15 @@ class CommsThread(object):
 
         if distance:
             self.rot_move(distance, degrees)
-
         else:
+            end = self.command_dict["END"]
             if degrees >= 0:
-                command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(0) + self.command_dict["END"]
+                rotate = self.command_dict["ROT_MOVE_POS"]
+                command = rotate + chr(int(degrees)) + chr(0) + end
 
             else:
-                command = self.command_dict["ROT_MOVE_NEG"] + chr((-1 * degrees)) + chr(0) + self.command_dict["END"]
-
+                rotate = self.command_dict["ROT_MOVE_NEG"]
+                command = rotate + chr((-1 * degrees)) + chr(0) + end
             self.queue_command(command)
 
     def rot_move(self, degrees, distance):
@@ -205,11 +209,10 @@ class CommsThread(object):
 
     def am_i_done(self):
         self.get_all_pipe_data()
-        if self.ack_counts[0] == self.commands and self.ack_counts[1] == self.commands:
-            #print self.ack_counts, self.commands
-            return True
-        else:
-            return False
+        receivedAll = self.ack_counts[0] == self.commands
+        finishedAll = self.ack_counts[1] == self.commands
+        return receivedAll and finishedAll
+
     def get_mag_heading(self):
         self.get_all_pipe_data()
         return self.mag_heading
@@ -312,37 +315,45 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     print "Sending command: ", cmd_index, sequenced, "SEQ:", robot_state["seq_num"]
         except StopIteration:
             pass
-
-        ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
+        left = sum([command[-2] for command in cmnd_list])
+        right = sum([command[-1] for command in cmnd_list])
+        ack_count = (left, right)
         pipe_out.send(ack_count)
         pipe_out.send(robot_state["mag_head"])
         print robot_state
         sleep(process_sleep_time)
 
+
 def process_data(commands, data, robot_state):
-    "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
+    """Reverse all the incoming data,
+    find the *LAST* valid command, and delete the rest"""
     data.reverse()
     for idx, item in enumerate(data):
-        if item == 253 and idx >  5:
+        if item == 253 and idx > 5:
             checksum = 0
             for cmd_byte in data[idx - 5: idx + 1]:
                 checksum += sum([bit == '1' for bit in bin(cmd_byte)])
             checksum = 255 - checksum
-            if checksum ==  data[idx - 6]:
-                robot_state["buffer"] = [data[idx - 1], data[idx - 2], data[idx - 3]]
+            if checksum == data[idx - 6]:
+                robot_state["buffer"] = [data[idx-1], data[idx-2], data[idx-3]]
                 robot_state["mag_head"] = data[idx - 4] + data[idx - 5]
                 robot_state["seq_num"] = data[idx - 2] / 4 % 2
-                break;
+                break
     del data
+
+
 def process_state(cmnd_list, robot_state):
-    """Set command_list flags, based on robot state, parsed from incoming comms"""
-    # see if everythin is received
+    """Set command_list flags,
+    based on robot state, parsed from incoming comms"""
+    # see if everything is received
     if cmnd_list:
-        for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
+        upLim = robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4
+        for idx in range(0, upLim):
             cmnd_list[idx][-2] = 1
 
         if robot_state["buffer"][1] == robot_state["buffer"][2]:
-            for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
+            upLim = robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4
+            for idx in range(0, upLim):
                 cmnd_list[idx][-1] = 1
 
 
@@ -352,6 +363,7 @@ def sequence_command(command, seq):
     for cmd_byte in [sequence, command[1], command[2]]:
         checksum += sum([bit == '1' for bit in bin(cmd_byte)])
     return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
+
 
 def check_ack_count(ack_count, cmnd_list):
     received = ack_count[0]
@@ -363,13 +375,13 @@ def check_ack_count(ack_count, cmnd_list):
         print x, "Show this to Krassy", x
         print 80 * "*"
         print 80 * "="
-        acknowledge_command(cmnd_list, 1)
+        acknowledge_command(cmnd_list, 1) ## This function is not defined.
         return (received, received)
-        #return ack_count
+        # return ack_count
     else:
         return ack_count
 
 if __name__ == "__main__":
     c = CommsThread()
-
     c.rotate(30)
+print "For debug purpose, what is __name__ of comms/commsThread" + str(__name__)
