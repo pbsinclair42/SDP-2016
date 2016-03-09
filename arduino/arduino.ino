@@ -189,19 +189,20 @@ void setup() {
   
 
 void loop() {
+  int state_end = 0;
   //** Communication FSM part **\\
+  
   Communications();
   if (buffer_index + bufferOverflow != 0)
     CommsOut();
   
 
   //** Sensor FSM part        **\\
-  pollAccComp();
-  // calibrateCompass();
-
+  // pollAccComp();
+  calibrateCompass();
+  // Serial.println(heading);
 
   // Action FSM part           **\\
-  int state_end = 0;
   // remove SEQ from command
   MasterState = MasterState & 127;
 

@@ -76,5 +76,6 @@ if __name__ == "__main__":
         Big test based on random data
     """
     while True:
-        direction = random.choice([1, -1])
-        turn(direction * 90)
+        if commsSystem.am_i_done():
+            direction = random.choice([1, -1])
+            turn(direction * 90)
