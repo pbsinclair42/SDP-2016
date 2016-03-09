@@ -226,9 +226,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     process_sleep_time = 0.13 # sleep time for process
     # robot state parameters
     robot_state = {
-    "mag_head" : 0,
-    "buffer"   : [0, 0, 0], # Overflow, buffer, command index
-    "seq_num"  : 0
+        "mag_head" : 0,
+        "buffer"   : [0, 0, 0], # Overflow, buffer, command index
+        "seq_num"  : 0
     }
     
     # perform setup
@@ -242,7 +242,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)
     print "Radio On-line"
 
-    print comms.in_waiting
     # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
@@ -276,6 +275,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
+        
+
         while comms.in_waiting:
             data = comms.read(1)
             # if last command isn't finished
@@ -283,7 +284,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 print "Flushing: ", ord(data)
             else:
                 data_buffer += [ord(data)]
-                print "DATA +=", ord(data)
+                #print "DATA +=", ord(data)
+        
+
         try:
         # ensure data has been processed before attempting to send data
             process_data(cmnd_list, data_buffer, robot_state)
@@ -293,6 +296,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             for i in range(0, 1000):
                 print "You did not manage to reset the arduino :/"
         
+        
+        try:
             if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
                 # get first un-sent command or un-acknowledged, but send
                 cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
@@ -311,6 +316,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
         pipe_out.send(ack_count)
         pipe_out.send(robot_state["mag_head"])
+        print robot_state
         sleep(process_sleep_time)
 
 def process_data(commands, data, robot_state):

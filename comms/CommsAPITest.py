@@ -75,4 +75,6 @@ if __name__ == "__main__":
     """
         Big test based on random data
     """
-    pass
+    while True:
+        direction = random.choice([1, -1])
+        turn(direction * 90)
