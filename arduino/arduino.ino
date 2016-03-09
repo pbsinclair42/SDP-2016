@@ -67,9 +67,9 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
-#define MAG_OFFSET_X -1905
-#define MAG_OFFSET_Y 4944
-#define MAG_OFFSET_Z -6433
+#define MAG_OFFSET_X 2580
+#define MAG_OFFSET_Y 7174
+#define MAG_OFFSET_Z 6870
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -190,19 +190,15 @@ void setup() {
 
 void loop() {
   int state_end = 0;
-  //** Communication FSM part **\\
   
   Communications();
   if (buffer_index + bufferOverflow != 0)
     CommsOut();
   
 
-  //** Sensor FSM part        **\\
-  // pollAccComp();
-  calibrateCompass();
-  // Serial.println(heading);
+  pollAccComp();
+  // calibrateCompass();
 
-  // Action FSM part           **\\
   // remove SEQ from command
   MasterState = MasterState & 127;
 
