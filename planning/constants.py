@@ -49,10 +49,47 @@ ITLL_DO_POINT = 5
 ITLL_DO_ANGLE = 15
 
 
+# initialize the variables with dummy values that will be replaced with info from conf.txt
+TEAM_COLOUR = 'yellow'
+OUR_COLOUR = 'pink'
+BALL_COLOUR = 'red'
+OUR_GOAL = 'left'
+USING_SIMULATOR = False
 
-USING_SIMULATOR=False
-# get whether we're using the simulator or the real world from the config file
+# get the information from the config file
 with open('conf.txt','r') as f:
-    simConfig = f.readlines()[4]
-    if simConfig.lower().strip() == 'true':
+    
+    class _ConfigError(Exception):
+        """Simple exception for config errors"""
+        def __init__(self, value):
+            self.value = value
+        def __str__(self):
+            return repr(self.value)
+
+    config = f.readlines()
+    # get team colour
+    TEAM_COLOUR = config[0].lower().strip()
+    if TEAM_COLOUR != 'yellow' and TEAM_COLOUR != 'light_blue':
+        raise _ConfigError("Invalid team colour")
+    # get our robot colour
+    OUR_COLOUR = config[1].lower().strip()
+    if OUR_COLOUR != 'pink' and OUR_COLOUR != 'green':
+        raise _ConfigError("Invalid robot colour")
+    # get ball colour
+    BALL_COLOUR = config[2].lower().strip()
+    if BALL_COLOUR!='red' and BALL_COLOUR!='blue':
+        raise _ConfigError("Invalid ball colour")
+    # get our goal side
+    OUR_GOAL = config[3].lower().strip()
+    if OUR_GOAL!='left' and OUR_GOAL!='right':
+        raise _ConfigError("Invalid side for our goal")
+    # get if using simulator
+    if config[4].lower().strip() == 'true':
         USING_SIMULATOR=True
+    elif config[4].lower().strip() != 'false':
+        raise _ConfigError("Invalid value for if using simulator")
+
+
+
+
+

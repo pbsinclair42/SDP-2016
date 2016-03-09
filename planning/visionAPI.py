@@ -1,7 +1,7 @@
 from helperClasses import Point, BallStatus
 import sys
 import os
-from constants import ROOT_DIR, X_RATIO, Y_RATIO, USING_SIMULATOR
+from constants import ROOT_DIR, X_RATIO, Y_RATIO, USING_SIMULATOR, TEAM_COLOUR, OUR_COLOUR, BALL_COLOUR
 from cv2 import error as cv2Error
 from simulator import simulatedMe, simulatedAlly, simulatedEnemies, simulatedBall
 # enable access to the vision package
@@ -27,16 +27,10 @@ except cv2Error:
     camera=None
 
 with open('conf.txt','r') as f:
-        context = f.readlines()
-        our_team_color = context[0].strip('\n')
-        num_of_pink = context[1].strip('\n')
-        ball_color = context[2].strip('\n')
-        if context[3] == "right":
-            ourGoal = rightGoalCenter
-            opponentGoal = leftGoalCenter
-        else:
-            ourGoal = leftGoalCenter
-            opponentGoal = rightGoalCenter
+    context = f.readlines()
+    our_team_color = TEAM_COLOUR
+    num_of_pink = 3 if OUR_COLOUR=='pink' else 1
+    ball_color = BALL_COLOUR
 if USING_SIMULATOR:
     camera=None
 

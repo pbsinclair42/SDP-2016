@@ -1,5 +1,5 @@
 light_blue
-1
+pink
 red
 left
-False
+True

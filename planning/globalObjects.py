@@ -1,6 +1,6 @@
 from moveables import Robot, Ball
 from helperClasses import Point
-from constants import PITCH_WIDTH, GOAL_WIDTH, PITCH_LENGTH
+from constants import PITCH_WIDTH, GOAL_WIDTH, PITCH_LENGTH, OUR_GOAL
 
 # our supreme robot
 me = Robot(name="me")
@@ -15,11 +15,14 @@ robots = [me, ally]+enemies
 ball = Ball(name="ball")
 #list of all movables
 moveables = [me,ally,ball]+enemies
+
 # the point at the center of the goal
-# TODO: add both goals and ability to differentiate between them and whatnot
 leftGoalCenter = Point(30,PITCH_WIDTH/2)
 rightGoalCenter=Point(PITCH_LENGTH-30,PITCH_WIDTH/2)
 
-ourGoal = rightGoalCenter
-opponentGoal = leftGoalCenter
-#which role we are playing
+if OUR_GOAL=='right':
+    ourGoal = rightGoalCenter
+    opponentGoal = leftGoalCenter
+else:
+    ourGoal = leftGoalCenter
+    opponentGoal = rightGoalCenter
