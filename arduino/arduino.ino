@@ -288,16 +288,19 @@ void loop() {
         MasterState = IDLE_STATE;
         command_index += 4;
       
-        // check for circular buffer end
-        if (command_index == 0){
-            commandOverflow++;
-        }
-        
-        // make not of respond time
-        re_ack_time = millis();
 
+      // check for circular buffer end
+      if (command_index == 0){
+          commandOverflow++;
+      }
       
+    for (int i=0; i < 8; i++){
+        Serial.write(CMD_DONE);
+        delay(10);
     }
+      //delay(5000);
+      
+  }
 }
 
 
@@ -352,7 +355,13 @@ void Communications() {
                 invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
 
-                // Cases for Atomic commands
+                //Serial.write(command_index / 4);
+                //Serial.write(buffer_index / 4);
+                //Serial.write(command_buffer[target_value - 4]);
+                //Serial.write(command_buffer[target_value - 3]);
+                //Serial.write(command_buffer[target_value - 2]);
+                //Serial.write(command_buffer[target_value - 1]);
+                 
                 if (command_buffer[target_value - 4] == CMD_FLUSH){
                     restoreState();
                 }
@@ -377,14 +386,6 @@ void Communications() {
                     garbage = Serial.read();
                     //Serial.write(garbage);
                 }
-                /*
-                if (invalid_commands >= 10){
-                    //for (int i=0; i < RESPONSE_COUNT; i++){
-                    //    Serial.write(CMD_ACK);
-                    //    delay(RESPONSE_PERIOD);
-                    }
-                    invalid_commands = 0;
-                }*/
             }
         }
         // Time-out serial if reading is taking too long

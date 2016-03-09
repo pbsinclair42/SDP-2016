@@ -4,7 +4,6 @@ import os
 from constants import ROOT_DIR, X_RATIO, Y_RATIO, USING_SIMULATOR
 from cv2 import error as cv2Error
 from simulator import simulatedMe, simulatedAlly, simulatedEnemies, simulatedBall
-
 # enable access to the vision package
 sys.path.append(ROOT_DIR+'vision/')
 from tracker import BallTracker, RobotTracker
@@ -38,8 +37,6 @@ with open('conf.txt','r') as f:
         else:
             ourGoal = leftGoalCenter
             opponentGoal = rightGoalCenter
-
-print(USING_SIMULATOR)
 if USING_SIMULATOR:
     camera=None
 

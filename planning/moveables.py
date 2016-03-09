@@ -8,26 +8,16 @@ class Moveable(object):
     #TODO: walls
     _HISTORY_SIZE = 3
 
-    def __init__(self, p=None):
-        if p==None:
-            self.currentPoint=None
-            self.pointHistory=[]
-            # speed is in xm per tick
-            self.currentSpeed=None
-            self.speedHistory=[]
-            # note that direction corresponds to direction of movement and not necessarily the direction the object is facing
-            self.direction=None
-            # acceleration is in cm per tick per tick
-            self.acceleration=None
-        else:
-            if not isinstance(p,Point):
-                raise TypeError("Point expected, " + p.__class__.__name__ + " found")
-            self.currentPoint=p
-            self.pointHistory=[p]
-            self.currentSpeed=None
-            self.speedHistory=[]
-            self.direction=None
-            self.acceleration=None
+    def __init__(self):
+        self.currentPoint=Point(-100,-100) # a placeholder to prevent crashing
+        self.pointHistory=[Point(-100,-100)]
+        # speed is in xm per tick
+        self.currentSpeed=None
+        self.speedHistory=[]
+        # note that direction corresponds to direction of movement and not necessarily the direction the object is facing
+        self.direction=None
+        # acceleration is in cm per tick per tick
+        self.acceleration=None
 
 
     def update(self, newPoint):
@@ -39,12 +29,13 @@ class Moveable(object):
         """
         # if we've temporarily lost the object, assume it's in the same place
         if newPoint==None:
+            #TODO: assume it's moved on slightly
             newPoint=self.currentPoint
             print("Lost position of "+(self.name if self.name!=None else "moveable"))
         # if we've yet to find the robot, don't bother updating anything
         if newPoint!=None:
             # save the old point
-            if self.currentPoint!=None:
+            if self.currentPoint!=Point(-100,-100):
                 self.pointHistory.append(self.currentPoint)
             # save the new position
             self.currentPoint = newPoint
@@ -147,10 +138,10 @@ class Moveable(object):
 
 
 class Robot(Moveable):
-    def __init__(self, p=None, name=None):
-        super(Robot,self).__init__(p)
+    def __init__(self, name=None):
+        super(Robot,self).__init__()
         # the direction the robot is facing, as detected by the vision system
-        self.currentRotation=None
+        self.currentRotation=181 # 181 is a dummy value to avoid None type errors
         self.rotationHistory=[]
         # purely used for warning/error messages
         self.name=name
@@ -161,6 +152,7 @@ class Robot(Moveable):
         # if we've told the robot to move or rotate and haven't noticed it stop doing so
         self.moving = False
         self.grabberState = 0
+        self.position = None
 
     def updateRotation(self, rotation):
         """Update the rotation with a new value
@@ -170,17 +162,19 @@ class Robot(Moveable):
 
         Args:
             rotation (float): the direction the robot is facing in degrees"""
-        if self.currentRotation!=None:
+        # if you've found the actual rotation in the past, save this to history
+        if self.currentRotation!=181:
             # only store a max of _HISTORY_SIZE points in the history
             if len(self.rotationHistory)>self._HISTORY_SIZE:
                 self.rotationHistory.pop(0)
             self.rotationHistory.append(self.currentRotation)
         if rotation!=None:
+            # TODO: predict rotation rather than assuming it's in the same orientation
             self.currentRotation= rotation
 
 
 class Ball(Moveable):
-    def __init__(self, p=None, name=None):
-        super(Ball,self).__init__(p)
+    def __init__(self, name=None):
+        super(Ball,self).__init__()
         self.status=BallStatus.free
         self.name=name

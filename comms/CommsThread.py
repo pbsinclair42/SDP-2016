@@ -172,6 +172,7 @@ class CommsThread(object):
         """
             stop communications process until a new command has been issued
         """
+        print 15 * "STOP WAS CALLED"
         self.process_event.clear()
         '''
     def current_cmd(self):
@@ -197,6 +198,10 @@ class CommsThread(object):
                 self.ack_counts = item
             else:
                 self.mag_heading = item
+
+    def restart(self):
+        self.process_event.set()
+        self.parent_pipe_in.send("restart");
 
     def am_i_done(self):
         self.get_all_pipe_data()
@@ -237,6 +242,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sleep(5)
     print "Radio On-line"
 
+    print comms.in_waiting
     # flush commands prior to starting
     while comms.in_waiting:
         print "Flushing", ord(comms.read(1))
@@ -270,8 +276,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
-        
-        # parse all incoming comms
         while comms.in_waiting:
             data = comms.read(1)
             # if last command isn't finished
@@ -280,7 +284,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             else:
                 data_buffer += [ord(data)]
                 print "DATA +=", ord(data)
-        
         try:
         # ensure data has been processed before attempting to send data
             process_data(cmnd_list, data_buffer, robot_state)
@@ -290,8 +293,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             for i in range(0, 1000):
                 print "You did not manage to reset the arduino :/"
         
-        try:
-        # if there are commands to send
             if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
                 # get first un-sent command or un-acknowledged, but send
                 cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
@@ -338,6 +339,7 @@ def process_state(cmnd_list, robot_state):
             for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
                 cmnd_list[idx][-1] = 1
 
+
 def sequence_command(command, seq):
     sequence = ord(chr(seq * 128 + command[0]))
     checksum = 0
@@ -345,7 +347,21 @@ def sequence_command(command, seq):
         checksum += sum([bit == '1' for bit in bin(cmd_byte)])
     return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
 
-
+def check_ack_count(ack_count, cmnd_list):
+    received = ack_count[0]
+    finished = ack_count[1]
+    if finished > received:
+        print 80 * "="
+        print 80 * "*"
+        x = ((80 - len("Show this to Krassy!")) / 2 - 4) * " "
+        print x, "Show this to Krassy", x
+        print 80 * "*"
+        print 80 * "="
+        acknowledge_command(cmnd_list, 1)
+        return (received, received)
+        #return ack_count
+    else:
+        return ack_count
 
 if __name__ == "__main__":
     c = CommsThread()

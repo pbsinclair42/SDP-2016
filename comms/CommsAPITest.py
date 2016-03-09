@@ -67,12 +67,12 @@ def flush():
     commsSystem.flush()
     print("Clearing all commands")
 
+def getHeading():
+    """ Get magnetic heading of robot"""
+    return commsSystem.get_mag_heading()
+
 if __name__ == "__main__":
     """
         Big test based on random data
     """
-    while True:
-        if commsSystem.am_i_done():
-            
-            deg = random.random() * 90
-            turn(90)
+    pass

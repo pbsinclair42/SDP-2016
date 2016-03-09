@@ -19,7 +19,6 @@ def turn(x):
     x = int(x)
     commsSystem.rot_move(x, 0)
     me.moving=True
-    print(me.lastCommandFinished)
     print("Turning " + str(abs(x)) + " degrees " + ("clockwise" if x <= 0 else "anticlockwise"))
 
 def move(distance, angle):
@@ -30,7 +29,6 @@ def move(distance, angle):
     angle = int(angle)
     commsSystem.rot_move(angle, distance)
     me.moving=True
-    print(me.lastCommandFinished)
     print("Turning " + str(angle) + " degrees then moving " + str(distance) + "cm")
 
 
