@@ -183,24 +183,25 @@ void setup() {
     mag_max_z = mag[2];
     
     /* Custom commands can be initialized below */
-
     delay(300); // delay to get first proper mag value
+    //rotateRight();
   }
   
 
 void loop() {
-  // Communication FSM part
+  //** Communication FSM part **\\
   Communications();
   if (buffer_index + bufferOverflow != 0)
     CommsOut();
   
-  // Sensor FSM part
-  pollAccComp();
-  //  calibrateCompass();
-  
-  // Action FSM part
-  int state_end = 0;
 
+  //** Sensor FSM part        **\\
+  pollAccComp();
+  // calibrateCompass();
+
+
+  // Action FSM part           **\\
+  int state_end = 0;
   // remove SEQ from command
   MasterState = MasterState & 127;
 
@@ -281,16 +282,15 @@ void loop() {
   if (state_end){
         MasterState = IDLE_STATE;
         command_index += 4;
-      
 
       // check for circular buffer end
       if (command_index == 0){
           commandOverflow++;
       }
-      
       CommsOut();
       
   }
+
 }
 
 
@@ -502,7 +502,6 @@ int rotMoveStep(){
             
             angle_difference = calculateAngleDifference(heading, target_angle);
             degrees = command_buffer[command_index + 1];
-            
             if (angle_difference < 10){
                 motorAllStop();
                 rotMoveGrabMode = 4;
