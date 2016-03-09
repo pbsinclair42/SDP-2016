@@ -1,17 +1,20 @@
 import threading
 
 from constants import *
-from globalObjects import *
+from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals
 from actions import executePlan
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass
-import visionAPI
+import visionAPI #TODO remove
+from world import WorldApi
 from CommsAPI import commsSystem
 
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
     # get the info on the robots from the vision system
+
+    # old version:
     details = visionAPI.getAllRobotDetails()
     # update the system's beliefs about the robots
     for i in range(0,len(robots)):
@@ -20,6 +23,9 @@ def updatePositions():
     # get the info on the ball from the vision system and update the system's beliefs about the ball
     currentBallCoords = visionAPI.getBallCoords()
     ball.update(currentBallCoords)
+
+    # new version:
+    # visionAPI = WorldApi()
 
     # update who has the ball - workaround until vision can tell us
     try:
