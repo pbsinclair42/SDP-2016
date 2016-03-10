@@ -193,28 +193,29 @@ class RobotTracker(Tracker):
         # for _, cont in helper_contours:
         #     if cont == []:
         #         return None, None
-        orientation_support = self.getKClosestContours(
-            1, center, helper_contours[support_color])
-        support_center = self.getContourCenter(orientation_support[0])
+        if len(orientation_support) > 0:
+            orientation_support = self.getKClosestContours(
+                1, center, helper_contours[support_color])
+            support_center = self.getContourCenter(orientation_support[0])
 
-        orientation_main = self.getKClosestContours(
-            3, center, helper_contours[main_color])
-        orientation_main = self.getKFurthestContours(2, support_center,
+            orientation_main = self.getKClosestContours(
+                3, center, helper_contours[main_color])
+            orientation_main = self.getKFurthestContours(2, support_center,
                                                      orientation_main)
 
-        if len(orientation_main) != 2:
-            return None, None
+            if len(orientation_main) != 2:
+                return None, None
 
-        main_centers = self.getContourCenters(orientation_main)
-        # print(main_centers)
-        mean_main_point = meanPoint(main_centers)
+            main_centers = self.getContourCenters(orientation_main)
+            # print(main_centers)
+            mean_main_point = meanPoint(main_centers)
 
-        center = transformCoordstoDecartes(center)
-        mean_main_point = transformCoordstoDecartes(mean_main_point)
+            center = transformCoordstoDecartes(center)
+            mean_main_point = transformCoordstoDecartes(mean_main_point)
 
-        direction_vector = getDirectionVector(center, mean_main_point,
-                                              magnitude)
-        angle_radians = np.arctan2(direction_vector[1], direction_vector[0])
-        angle_degrees = math.degrees(angle_radians)
+            direction_vector = getDirectionVector(center, mean_main_point,
+                                                  magnitude)
+            angle_radians = np.arctan2(direction_vector[1], direction_vector[0])
+            angle_degrees = math.degrees(angle_radians)
 
         return (angle_degrees, direction_vector)

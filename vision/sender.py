@@ -113,8 +113,9 @@ def main():
         k = cv2.waitKey(10) & 0xFF
 
         if k == 27:
-            break        
-        elif previously_pressed == chr(k) and not not previously_pressed:
+            break   
+
+        if previously_pressed == chr(k) and not not previously_pressed:
             previously_pressed = '' 
             closeMask(keys[chr(k)], data) 
 
@@ -122,7 +123,7 @@ def main():
             previously_pressed = chr(k)
             initTrackbars(keys[chr(k)])
 
-        if not not previously_pressed:
+        elif not not previously_pressed:
             new_data = recordValues(keys[previously_pressed], frame) 
             for col in new_data:
                 data[col] = new_data[col]                        
@@ -155,7 +156,10 @@ def main():
                     a, v = orientation
                     print(side, color, a)
                     x, y = center
-                    draw_vector = (x + v[0], y + v[1])
+                    if v is not None:
+                        draw_vector = (x + v[0], y + v[1])
+                    else:
+                        draw_vector = (0, 0)
                     x, y = transformCoordstoCV(draw_vector)
                     center = transformCoordstoCV(center)
                     #print(center)
