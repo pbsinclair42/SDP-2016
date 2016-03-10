@@ -193,9 +193,10 @@ class RobotTracker(Tracker):
         # for _, cont in helper_contours:
         #     if cont == []:
         #         return None, None
+
+        orientation_support = self.getKClosestContours(
+            1, center, helper_contours[support_color])
         if len(orientation_support) > 0:
-            orientation_support = self.getKClosestContours(
-                1, center, helper_contours[support_color])
             support_center = self.getContourCenter(orientation_support[0])
 
             orientation_main = self.getKClosestContours(
