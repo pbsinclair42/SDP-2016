@@ -185,11 +185,6 @@ void setup() {
     
     /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
-    command_buffer[0] = CMD_HOLMOVE_Q1;
-    command_buffer[1] = 0;
-    command_buffer[2] = 90;
-    command_buffer[3] = 255;
-    buffer_index = 4;
   }
   
 
@@ -333,6 +328,7 @@ void Communications() {
         
         // read command
         command_buffer[buffer_index++] = Serial.read();
+        
         if (buffer_index % 4 == 0){
             
             // acknowledge proper command
@@ -602,12 +598,13 @@ int holoMoveStep(){
         case 0:
             // get angle and distance
             angle = command_buffer[command_index + 1];
-            if (command_buffer[command_index] & 64 == 1)
+            if ((command_buffer[command_index] & 64) != 0){
                 angle += 180;
+            }
 
             distance = command_buffer[command_index + 2];
 
-            rot_degrees = (int) value1 + (int) value2;
+            rot_degrees = (int) angle;
             rot_radians = rot_degrees * PI / 180;
 
             vx = cos(rot_radians);
@@ -629,7 +626,7 @@ int holoMoveStep(){
             m1_val *= POWER_RGT;
             m2_val *= POWER_LFT;
             m3_val *= POWER_BCK;
-            restoreMotorPositions();
+            restoreMotorPositions(positions);
             // turn motors
             if (m1_val > 0)
                 motorForward(1, byte(m1_val));
@@ -651,7 +648,7 @@ int holoMoveStep(){
             distance = command_buffer[command_index + 2] * MOTION_CONST; 
             if (abs(positions[0]) + abs(positions[1]) + abs(positions[2]) < distance){
                 updateMotorPositions(positions);
-                return 1;
+                return 0;
             } else{
                 restoreMotorPositions(positions);
                 motorAllStop();
