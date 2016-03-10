@@ -44,7 +44,7 @@ def holo(angle):
 
 if __name__ == "__main__":
     angulars = []
-    for i in range(0, 360, 10):
+    for i in range(0, 360, 30):
         print "HOLO", i
         angulars += [holo(i)]
     print angulars
