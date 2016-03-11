@@ -78,3 +78,4 @@ def getHeading():
     return commsSystem.get_mag_heading()
 
 if __name__ == "__main__":
+    turn(90)
