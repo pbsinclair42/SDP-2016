@@ -13,7 +13,7 @@ To calibrate the compass:
 4. slowly rotate it 360 degrees in either direction (preferably both)
 
  
-5. it will then print out the correct biasing values which you can change in the arduino code, revert to the correct version and have a well-calibrated compass. The values you need to change are MAG_OFFSET_X, MAG_OFFSET_Y, MAG_OFFSET_Z in the top defines. Then, undo the changes in step one, and reprogram the arduino
+5. it will then print out the correct biasing values every 5sec which you can change in the arduino code, revert to the correct version and have a well-calibrated compass. The values you need to change are MAG_OFFSET_X, MAG_OFFSET_Y, MAG_OFFSET_Z in the top defines. Then, undo the changes in step one, and reprogram the arduino
 
 Note:
 If you're doing it with a USB cable - use the long one we have, not the short one otherwise - I have added a compass-listener in firmware which you can use with RF - it simply reads serial ascii and prints it out (you can also do this with the serial monitor and the rf stick)
