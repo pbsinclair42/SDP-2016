@@ -31,5 +31,9 @@ def playBall():
             passBall()
 
 
-if __name__ == '__main__':
-    playBall()
+
+# start it off
+if __name__ == "__main__":
+    tick()
+else:
+    updatePositions()
