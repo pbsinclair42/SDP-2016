@@ -105,12 +105,12 @@ def executePlan():
         iAmNearBall = me.distance(ball.predictedPosition(9)) < me.distance(ball)
         if ball.moving is False:
             turnToDirection(me.bearing(ball))
-        # ballcoming towardsa us:
+        # ballcoming towards us:
         elif ball.moving and iAmNearBall:
             executePlan()
         # ball moving but not towards us
         elif ball.moving:
-            me.interceptObject(ball)
+            interceptObject(ball)
             me.plan.pop(0)
 
     elif currentAction == Actions.receiveBall:
@@ -198,3 +198,4 @@ def interceptObject(target):
     # if it would take more than 10 seconds to catch up, don't bother trying
     print("Can't catch up")
     return None
+
