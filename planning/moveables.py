@@ -3,56 +3,60 @@ from helperClasses import Point, BallStatus, Goals
 from helperFunctions import sin, cos
 
 
+# TODO: walls
+
 class Moveable(object):
     """An object in the game that can move (ie robot or ball)"""
-    #TODO: walls
     _HISTORY_SIZE = 3
 
     def __init__(self):
-        self.currentPoint=Point(-100,-100) # a placeholder to prevent crashing
-        self.pointHistory=[Point(-100,-100)]
+        self.currentPoint = Point(-100, -100)  # prevent crashing
+        self.pointHistory = [Point(-100, -100)]
         # speed is in xm per tick
-        self.currentSpeed=None
-        self.speedHistory=[]
-        # note that direction corresponds to direction of movement and not necessarily the direction the object is facing
-        self.direction=None
+        self.currentSpeed = None
+        self.speedHistory = []
+        # note that direction corresponds to direction of movement
+        # and not necessarily the direction the object is facing
+        self.direction = None
         # acceleration is in cm per tick per tick
-        self.acceleration=None
-
+        self.acceleration = None
 
     def update(self, newPoint):
-        """Update the object with the position it's in this new tick.  To be called every tick.
+        """Update the object with the position it's in this new tick.
+        To be called every tick.
 
         Args:
             newPoint (Point): the new coordinates of this object
 
         """
         # if we've temporarily lost the object, assume it's in the same place
-        if newPoint==None:
-            #TODO: assume it's moved on slightly
-            newPoint=self.currentPoint
-            print("Lost position of "+(self.name if self.name!=None else "moveable"))
+        if newPoint is None:
+            # TODO: assume it's moved on slightly
+            newPoint = self.currentPoint
+            robot = (self.name if self.name is not None else "moveable")
+            print("Lost position of " + robot)
         # if we've yet to find the robot, don't bother updating anything
-        if newPoint!=None:
+        if newPoint is not None:
             # save the old point
-            if self.currentPoint!=Point(-100,-100):
+            if self.currentPoint is not Point(-100, -100):
                 self.pointHistory.append(self.currentPoint)
             # save the new position
             self.currentPoint = newPoint
             # only store a max of _HISTORY_SIZE points in the history
-            if len(self.pointHistory)>self._HISTORY_SIZE:
+            if len(self.pointHistory) > self._HISTORY_SIZE:
                 self.pointHistory.pop(0)
 
             try:
                 # calculate and save the current direction
                 self.direction = self.pointHistory[0].bearing(self.pointHistory[-1])
             except IndexError:
-                # if we don't have enough information to calculate a direction, wait for now
+                # if we don't have enough information to
+                # calculate a direction so wait for now
                 pass
 
             # calculate and save the new speed
             try:
-                newSpeed=self.pointHistory[0].distance(self.pointHistory[-1])/(len(self.pointHistory)-1)
+                newSpeed = self.pointHistory[0].distance(self.pointHistory[-1])/(len(self.pointHistory)-1)
                 newSpeed = round(newSpeed, 2)
                 self.speedHistory.append(newSpeed)
                 self.currentSpeed = newSpeed
@@ -67,12 +71,13 @@ class Moveable(object):
                 acceleration = (self.speedHistory[-1]-self.speedHistory[0])/(len(self.speedHistory)-1)
                 self.acceleration = round(acceleration, 3)
             except (ZeroDivisionError, IndexError):
-                # if we don't have enough data to calculate an acceleration (not enough speeds recorded), wait for now
+                # if we don't have enough data to calculate an
+                # acceleration (not enough speeds recorded), wait for now
                 pass
 
-
     def predictedPosition(self, t):
-        """Calculate the position of the object in t ticks if it continues accelerating at its current rate
+        """Calculate the position of the object in t ticks
+        if it continues accelerating at its current rate
 
         Args:
             t (int): the number of ticks into the future you're predicting the object's position.
@@ -139,16 +144,16 @@ class Moveable(object):
 
 class Robot(Moveable):
     def __init__(self, name=None):
-        super(Robot,self).__init__()
+        super(Robot, self).__init__()
         # the direction the robot is facing, as detected by the vision system
-        self.currentRotation=181 # 181 is a dummy value to avoid None type errors
-        self.rotationHistory=[]
+        self.currentRotation = 181  # 181 is a dummy value to avoid None type errors
+        self.rotationHistory = []
         # purely used for warning/error messages
-        self.name=name
+        self.name = name
         # the high level goal of the robot
         self.goal = Goals.none
         # the plan of the robot
-        self.plan=[]
+        self.plan = []
         # if we've told the robot to move or rotate and haven't noticed it stop doing so
         self.moving = False
         self.grabberState = 0
@@ -163,18 +168,19 @@ class Robot(Moveable):
         Args:
             rotation (float): the direction the robot is facing in degrees"""
         # if you've found the actual rotation in the past, save this to history
-        if self.currentRotation!=181:
+        if self.currentRotation != 181:
             # only store a max of _HISTORY_SIZE points in the history
-            if len(self.rotationHistory)>self._HISTORY_SIZE:
+            if len(self.rotationHistory) > self._HISTORY_SIZE:
                 self.rotationHistory.pop(0)
             self.rotationHistory.append(self.currentRotation)
-        if rotation!=None:
-            # TODO: predict rotation rather than assuming it's in the same orientation
-            self.currentRotation= rotation
+        if rotation is not None:
+            # TODO: predict rotation rather than assuming it's in the same
+            # orientation
+            self.currentRotation = rotation
 
 
 class Ball(Moveable):
     def __init__(self, name=None):
-        super(Ball,self).__init__()
-        self.status=BallStatus.free
-        self.name=name
+        super(Ball, self).__init__()
+        self.status = BallStatus.free
+        self.name = name

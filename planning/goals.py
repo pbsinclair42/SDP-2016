@@ -10,8 +10,10 @@ Guard goal
 Tell teammate plans (?)
 """
 
+
 def collectBall():
-    """Make `collectBall` the goal of our robot, and implement the plan for achieving this"""
+    """Make `collectBall` the goal of our robot,
+    and implement the plan for achieving this"""
     # save the plan to the robot
     me.goal = Goals.collectBall
 
@@ -25,8 +27,11 @@ def collectBall():
         distanceAway = ROBOT_WIDTH + UNGRAB_DISTANCE
         xDisplacement = round(cos(bearingAway)*distanceAway, 2)
         yDisplacement = -round(sin(bearingAway)*distanceAway, 2)
-        return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
-        # Note, if we're already closer than we should be, we'll end up moving back a bit first to avoid knocking it
+        unGrabX = expectedBallPosition.x+xDisplacement
+        unGrabY = expectedBallPosition.y+yDisplacement
+        return Point(unGrabX, unGrabY)
+        # Note, if we're already closer than we should be,
+        # we'll end up moving back a bit first to avoid knocking it
 
     # function to calculate where to move to before grabbing
     def grabHere():
@@ -38,29 +43,32 @@ def collectBall():
         distanceAway = ROBOT_WIDTH + GRAB_DISTANCE
         xDisplacement = round(cos(bearingAway)*distanceAway, 2)
         yDisplacement = -round(sin(bearingAway)*distanceAway, 2)
-        return Point(expectedBallPosition.x+xDisplacement,expectedBallPosition.y+yDisplacement)
+        grabX = expectedBallPosition.x+xDisplacement
+        grabY = expectedBallPosition.y+yDisplacement
+        return Point(grabX, grabY)
 
-    me.plan = [ {'action':Actions.moveToPoint,'targetFunction':ungrabHere},
-                {'action':Actions.ungrab},
-                {'action':Actions.moveToPoint,'targetFunction':grabHere},
-                {'action':Actions.grab}]
+    me.plan = [{'action': Actions.moveToPoint, 'targetFunction': ungrabHere},
+               {'action': Actions.ungrab},
+               {'action': Actions.moveToPoint, 'targetFunction': grabHere},
+               {'action': Actions.grab}]
 
 
 def shoot():
-    """Make `shoot` the goal of our robot, and implement the plan for achieving this"""
+    """Make `shoot` the goal of our robot,
+    and implement the plan for achieving this"""
     # save the plan to the robot
     me.goal = Goals.shoot
 
     # work out how far to kick the ball
     def distanceToKick():
-        return 255# me.distance(opponentGoal) # maybe change to be more accurate?
+        return 255  # maybe change to be more accurate? can shoot with max power
 
-    # function to aim at the goal
     def aim():
         return me.bearing(opponentGoal)
 
-    me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': aim},
-                {'action':Actions.kick, 'targetFunction':distanceToKick}]
+    me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': aim},
+               {'action': Actions.kick, 'targetFunction': distanceToKick}]
+
 
 def receiveAndPass():
     me.goal = Goals.receiveAndPass
@@ -74,27 +82,28 @@ def receiveAndPass():
         return me.bearing(ally)
 
     def kickToAlly():
-        return 255#me.distance(ally)
+        return 255  # me.distance(ally)
 
-    me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate1},
-               {'action':Actions.ungrab},
-               {'action':Actions.receiveBallForPass},
-               {'action':Actions.grab},
-               {'action':Actions.rotateToAngle,'targetFunction': rotate2},
-               {'action':Actions.kick,'targetFunction': kickToAlly}]
+    me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': rotate1},
+               {'action': Actions.ungrab},
+               {'action': Actions.receiveBallForPass},
+               {'action': Actions.grab},
+               {'action': Actions.rotateToAngle, 'targetFunction': rotate2},
+               {'action': Actions.kick, 'targetFunction': kickToAlly}]
 
 
 def passBall():
-
     me.goal = Goals.passBall
+
     def rotate():
         return me.bearing(ally)
 
     def kickToAlly():
-        return 255#me.distance(ally)
+        return 255  # me.distance(ally)
 
-    me.plan = [ {'action':Actions.rotateToAngle,'targetFunction': rotate},
-                {'action':Actions.kick,'targetFunction': kickToAlly}]
+    me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': rotate},
+               {'action': Actions.kick, 'targetFunction': kickToAlly}]
+
 
 def receivePass():
     me.goal = Goals.receivePass
@@ -102,31 +111,33 @@ def receivePass():
     def rotate():
         return me.bearing(ally)
 
-    me.plan = [{'action':Actions.rotateToAngle,'targetFunction':rotate},
-               {'action':Actions.ungrab},
-               {'action':Actions.receiveBall},
-               {'action':Actions.grab}]
+    me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': rotate},
+               {'action': Actions.ungrab},
+               {'action': Actions.receiveBall},
+               {'action': Actions.grab}]
+
 
 def blockPass():
     me.goal = Goals.blockPass
 
     def blockHere():
         """move to inbetween two oponents"""
-        e0 =enemies[0].currentPoint
+        e0 = enemies[0].currentPoint
         e1 = enemies[1].currentPoint
         x = (e0.x + e1.x)/2
         y = (e0.y + e1.y)/2
-        return Point(x,y)
+        return Point(x, y)
 
     def rotate():
         """rotate to face oponent with ball"""
         return me.bearing(ball)
 
-    me.plan = [{'action':Actions.moveToPoint,'targetFunction':blockHere},
-               {'action':Actions.rotateToAngle, 'targetFunction':rotate},
-               {'action':Actions.ungrab},
-               {'action':Actions.receiveBall},
-               {'action':Actions.grab}]
+    me.plan = [{'action': Actions.moveToPoint, 'targetFunction': blockHere},
+               {'action': Actions.rotateToAngle, 'targetFunction': rotate},
+               {'action': Actions.ungrab},
+               {'action': Actions.receiveBall},
+               {'action': Actions.grab}]
+
 
 def guardGoal():
     """Stop bad people from scoring"""
@@ -140,8 +151,7 @@ def guardGoal():
         """rotate into position"""
         return me.bearing(ball)
 
-
-    me.plan = [{'action':Actions.moveToPoint,'targetFunction':gotoGoal},
-               {'action':Actions.rotateToAngle,'targetFunction':rotate},
-               {'action':Actions.receiveBall},
-               {'action':Actions.grab}]
+    me.plan = [{'action': Actions.moveToPoint, 'targetFunction': gotoGoal},
+               {'action': Actions.rotateToAngle, 'targetFunction': rotate},
+               {'action': Actions.receiveBall},
+               {'action': Actions.grab}]

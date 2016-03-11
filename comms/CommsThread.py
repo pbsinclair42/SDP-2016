@@ -384,4 +384,3 @@ def check_ack_count(ack_count, cmnd_list):
 if __name__ == "__main__":
     c = CommsThread()
     c.rotate(30)
-print "For debug purpose, what is __name__ of comms/commsThread" + str(__name__)
