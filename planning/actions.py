@@ -8,7 +8,8 @@ from goals import *
 
 
 def executePlan():
-    """Check whether the action you're currently performing has finished and move to the next action if so"""
+    """Check whether the action you're currently performing has finished
+    and move to the next action if so"""
     try:
         currentAction = me.plan[0]['action']
     except IndexError:
@@ -20,7 +21,7 @@ def executePlan():
             # TODO: add in some kind of checker/corrector
             print("Still doing stuff")
         else:
-            #calculate the angle we're aming for
+            # calculate the angle we're aming for
             targetAngle = me.plan[0]['targetFunction']()
              # if we're at a close enough angle, we're done
             if nearEnough(me.currentRotation, targetAngle):
@@ -132,24 +133,23 @@ def moveToPoint(point):
     if not isinstance(point,Point):
         raise TypeError("Point expected, " + point.__class__.__name__ + " found")
 
-
     # ensure the attacker doesn't go into the goal
-    if me.position == 1:#attacker
+    if me.position == 1:  # attacker
         if outGoal == rightGoalCenter:
-            if(point.x <= 30 or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+            #  check these values w/ real pitch
+            if(point.x <= 30 or (point.y <= 180 and point.y >= 40)):
                 print("It's in the Goal Box, we Can't go there")
-        else:#defender
-            if(point.x <= (PITCH_LENGTH-30) or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+        else:  # defender
+            if(point.x <= (PITCH_LENGTH-30) or (point.y <= 180 and point.y >= 40)):
                 print("It's in the Goal Box, we Can't go there")
-
 
     distance = point.distance(me.currentPoint)
     angle = me.bearing(point) - me.currentRotation
     # ensure the angle is between -180 and 180
     if angle < -180:
-        angle+=360
+        angle += 360
     elif angle > 180:
-        angle-=360
+        angle -= 360
     # make that movement
     move(distance, angle)
 
@@ -158,19 +158,20 @@ def turnToDirection(angle):
     angleToMove = angle-me.currentRotation
     # ensure the angle is between -180 and 80
     if angleToMove < -180:
-        angleToMove+=360
+        angleToMove += 360
     elif angleToMove > 180:
-        angleToMove-=360
-    #remember, negative is clockwise
+        angleToMove -= 360
+    # remember, negative is clockwise
     turn(angleToMove)
 
 
 def interceptObject(target):
-    #return target.currentPoint
-    if not isinstance(target,Moveable):
-        raise TypeError("Moveable expected, " + point.__class__.__name__ + " found")
+    # return target.currentPoint
+    if not isinstance(target, Moveable):
+        c = target.__class__.__name__
+        raise TypeError("Moveable expected, " + c + " found")
     # iteratively work out how long it would take to catch up to the object
-    for t in range(0,int(10/TICK_TIME)+1):
+    for t in range(0, int(10/TICK_TIME)+1):
         # calculate where you expect it to be at time t
         expectedPosition = target.predictedPosition(t)
         # calculate how far away you expect it to be at time t
@@ -178,8 +179,9 @@ def interceptObject(target):
         # calculate how far you could theoretically travel in t seconds
         distanceTravellable = MAX_SPEED*t
         # if you could theoretically travel to that point in t seconds,
-        if ( distanceTravellable > distanceFromMe ):
+        if (distanceTravellable > distanceFromMe):
             return expectedPosition
     # if it would take more than 10 seconds to catch up, don't bother trying
     print("Can't catch up")
     return None
+
