@@ -8,7 +8,7 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM0",
+                 port="/dev/ttyACM4",
                  baudrate=115200,
                  debug=False):
         """
@@ -22,7 +22,7 @@ class CommsThread(object):
             "ROT_MOVE_POS" : chr(3  ),
             "ROT_MOVE_NEG" : chr(15),
             "HOL_MOVE_POS" : chr(2  ),
-            "HOL_MOVE_NEG" : chr(130),
+            "HOL_MOVE_NEG" : chr(66),
             "KICK"         : chr(4  ),
             "STOP"         : chr(8  ),
             "GRAB"         : chr(16 ),
@@ -125,11 +125,11 @@ class CommsThread(object):
             offset -= 255
 
     def holo(self, dist_vector, angular):
-        """
-           Not yet implemented due to command-length issue
-        """
-        pass
-
+        if angular > 180:
+            command = self.command_dict["HOL_MOVE_NEG"] + chr(int(angular - 180)) + chr(int(dist_vector)) + self.command_dict["END"]
+        else:
+            command = self.command_dict["HOL_MOVE_POS"] + chr(int(angular)) + chr(int(dist_vector)) + self.command_dict["END"]
+        self.queue_command(command)
     def exit(self):
         """
             Exit comms process
@@ -241,11 +241,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             radio_connected = False
             sleep(5)
     print "Radio On-line"
-
+    sleep(1)
     # flush commands prior to starting
-    while comms.in_waiting:
-        print "Flushing", ord(comms.read(1))
-
+    
     while True:
         event.wait()
         if pipe_in.poll():
@@ -276,19 +274,14 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
         
-
         while comms.in_waiting:
             data = comms.read(1)
-            # if last command isn't finished
-            if cmnd_list and all(cmnd_list[-1][-3:]):
-                print "Flushing: ", ord(data)
-            else:
-                data_buffer += [ord(data)]
-                #print "DATA +=", ord(data)
+            data_buffer += [ord(data)]
+            #print "DATA +=", ord(data)
         
-
         try:
         # ensure data has been processed before attempting to send data
+            #print data_buffer
             process_data(cmnd_list, data_buffer, robot_state)
             data_buffer = []
             process_state(cmnd_list, robot_state)
@@ -317,6 +310,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         pipe_out.send(ack_count)
         pipe_out.send(robot_state["mag_head"])
         print robot_state
+        #print cmnd_list
         sleep(process_sleep_time)
 
 def process_data(commands, data, robot_state):
@@ -336,6 +330,15 @@ def process_data(commands, data, robot_state):
     del data
 def process_state(cmnd_list, robot_state):
     """Set command_list flags, based on robot state, parsed from incoming comms"""
+    # if this is the first command and it has not been sent
+    if cmnd_list and len(cmnd_list) == 1 and cmnd_list[0][-3:] == [0, 0, 0]:
+        if robot_state["buffer"] != [0, 0, 0]:
+            command_bias = robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4
+            for item in range(0, command_bias):
+                cmnd_list.insert(0, [255, 255, 255, 255, 1, 1, 1])
+            print "Corrected State", cmnd_list, range(0, command_bias)
+
+
     # see if everythin is received
     if cmnd_list:
         for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
@@ -372,4 +375,4 @@ def check_ack_count(ack_count, cmnd_list):
 if __name__ == "__main__":
     c = CommsThread()
 
-    c.rotate(30)
+    c.kick(255)
