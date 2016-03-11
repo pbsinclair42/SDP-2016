@@ -31,7 +31,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 
 // temporal calibrations
 #define KICK_TIME 550
-#define GRAB_TIME 4000
+#define GRAB_TIME 650
 
 
 // Movement Constants
@@ -43,7 +43,8 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 // COMMS API Byte Definitions
 #define CMD_ROTMOVE    B00000011 // Buffered: MSB 1 performs CCW rotation
 #define CMD_ROTMOVECCW B00001111 // Buffered: MSB 1 performs CCW rotation
-#define CMD_HOLMOVE    B00000010 // Buffered
+#define CMD_HOLMOVE_Q1 B00000010 // Buffered
+#define CMD_HOLMOVE_Q2 B01000010 // Buffered
 #define CMD_KICK       B00000100 // Buffered
 #define CMD_STOP       B00001000 // Buffered
 #define CMD_GRAB       B00010000 // Buffered
@@ -67,10 +68,9 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
-#define MAG_OFFSET_X 489
-#define MAG_OFFSET_Y 2774
-#define MAG_OFFSET_Z 957
-
+#define MAG_OFFSET_X -1923
+#define MAG_OFFSET_Y 2611
+#define MAG_OFFSET_Z -839
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -185,7 +185,6 @@ void setup() {
     
     /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
-    //rotateRight();
   }
   
 
@@ -198,7 +197,7 @@ void loop() {
   
 
   pollAccComp();
-  //calibrateCompass();
+  // calibrateCompass();
 
   // remove SEQ from command
   MasterState = MasterState & 127;
@@ -233,10 +232,13 @@ void loop() {
             break;
         
 
-        case CMD_HOLMOVE:
+        case CMD_HOLMOVE_Q1:
             state_end = holoMoveStep();
             break;
         
+        case CMD_HOLMOVE_Q2:
+            state_end = holoMoveStep();
+            break;
 
         case CMD_KICK:
             state_end = kickStep();
@@ -326,6 +328,7 @@ void Communications() {
         
         // read command
         command_buffer[buffer_index++] = Serial.read();
+        
         if (buffer_index % 4 == 0){
             
             // acknowledge proper command
@@ -588,53 +591,71 @@ int holoMoveStep(){
     // TODO: Scale motor values by 1 / max: abs(value1, value2, value3)
     // to make sure motors are running as fast as possible since
     // maths functions may produce vectors not properly scaled to 1
+    int angle, distance, rot_degrees;
+    float rot_radians, vx, vy, m1_val, m2_val, m3_val, scale_factor;
 
-    int value1 = command_buffer[command_index + 1];
-    int value2 = command_buffer[command_index + 2];
+    switch(rotMoveGrabMode){
+        case 0:
+            // get angle and distance
+            angle = command_buffer[command_index + 1];
+            if ((command_buffer[command_index] & 64) != 0){
+                angle += 180;
+            }
 
-    int rot_degrees = (int) value1 + (int) value2;
-    float rot_radians = rot_degrees * PI / 180;
+            distance = command_buffer[command_index + 2];
 
-    float vx = cos(rot_radians);
-    float vy = sin(rot_radians);
+            rot_degrees = (int) angle;
+            rot_radians = rot_degrees * PI / 180;
+
+            vx = cos(rot_radians);
+            vy = sin(rot_radians);
+            
+            m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy;
+            m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy;
+            m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy;
+            
+            scale_factor = fmax(abs(m1_val), abs(m2_val));
+            scale_factor = 1 / fmax(scale_factor, abs(m3_val));
+            
+            // scale up to 1
+            m1_val *= scale_factor;
+            m2_val *= scale_factor;
+            m3_val *= scale_factor;
+            
+            //scale up to 255
+            m1_val *= POWER_RGT;
+            m2_val *= POWER_LFT;
+            m3_val *= POWER_BCK;
+            restoreMotorPositions(positions);
+            // turn motors
+            if (m1_val > 0)
+                motorForward(1, byte(m1_val));
+            else
+                motorBackward(1, byte(fabs(m1_val)));
+            
+            if (m2_val > 0)
+                motorForward(0, byte(m2_val));
+            else
+                motorBackward(0, byte(fabs(m2_val)));
+            
+            if (m3_val > 0)
+                motorForward(2, byte(m3_val));
+            else
+                motorBackward(2, byte(fabs(m3_val)));  
+            rotMoveGrabMode = 1;
+            return 0;  
+        case 1:
+            distance = command_buffer[command_index + 2] * MOTION_CONST; 
+            if (abs(positions[0]) + abs(positions[1]) + abs(positions[2]) < distance){
+                updateMotorPositions(positions);
+                return 0;
+            } else{
+                restoreMotorPositions(positions);
+                motorAllStop();
+                return 1;
+            }
+    }
     
-    float m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy;
-    float m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy;
-    float m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy;
-    
-    float scale_factor = fmax(abs(m1_val), abs(m2_val));
-    scale_factor = 1 / fmax(scale_factor, abs(m3_val));
-    
-    // scale up to 1
-    m1_val *= scale_factor;
-    m2_val *= scale_factor;
-    m3_val *= scale_factor;
-    
-    //scale up to 255
-    m1_val *= POWER_RGT;
-    m2_val *= POWER_LFT;
-    m3_val *= POWER_BCK;
-    
-    // turn motors
-    if (m1_val > 0)
-        motorForward(1, byte(m1_val));
-    else
-        motorBackward(1, byte(fabs(m1_val)));
-    
-    if (m2_val > 0)
-        motorForward(0, byte(m2_val));
-    else
-        motorBackward(0, byte(fabs(m2_val)));
-    
-    if (m3_val > 0)
-        motorForward(2, byte(m3_val));
-    else
-        motorBackward(2, byte(fabs(m3_val)));    
-    delay(1500);
-    
-    motorAllStop();
-    
-    return 1;
 }
 
 int kickStep(){

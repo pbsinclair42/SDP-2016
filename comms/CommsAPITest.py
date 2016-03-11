@@ -32,6 +32,12 @@ def move(distance, angle):
 #    print(me.lastCommandFinished)
     print("Turning " + str(angle) + " degrees then moving " + str(distance) + "cm")
 
+def holo(distance, angle):
+    """
+    Move holonomically for some distance at an angle, relative to the robot's planar orientation,
+    e.g. 0 -> right, 90 -> forward, 180 -> left, 270 -> back, etc.
+    """
+    commsSystem.holo(distance, angle)
 
 def kick(distance):
     """Kicks the ball `distance` cm"""
@@ -72,10 +78,4 @@ def getHeading():
     return commsSystem.get_mag_heading()
 
 if __name__ == "__main__":
-    """
-        Big test based on random data
-    """
-    while True:
-        if commsSystem.am_i_done():
-            direction = random.choice([1, -1])
-            turn(direction * 90)
+    turn(90)
