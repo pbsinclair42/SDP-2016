@@ -31,7 +31,7 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 
 // temporal calibrations
 #define KICK_TIME 550
-#define GRAB_TIME 650
+#define GRAB_TIME 4000
 
 
 // Movement Constants
@@ -67,9 +67,10 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
-#define MAG_OFFSET_X 2580
-#define MAG_OFFSET_Y 7174
-#define MAG_OFFSET_Z 6870
+#define MAG_OFFSET_X 489
+#define MAG_OFFSET_Y 2774
+#define MAG_OFFSET_Z 957
+
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -197,7 +198,7 @@ void loop() {
   
 
   pollAccComp();
-  // calibrateCompass();
+  //calibrateCompass();
 
   // remove SEQ from command
   MasterState = MasterState & 127;
