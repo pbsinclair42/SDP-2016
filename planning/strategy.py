@@ -24,11 +24,12 @@ def playBall():
     # if we have the ball
     elif ball.status == BallStatus.me:
         # if we can score a goal,
-        if lineOfSight(me.currentPoint, opponentGoal) == False:
+        if lineOfSight(me.currentPoint, opponentGoal):
             shootBall()
         # else, try and pass to ally
-        elif lineOfSight(me.currentPoint, ally.currentPoint) == False:
+        elif lineOfSight(me.currentPoint, ally.currentPoint):
             passBall()
+
 
 if __name__ == '__main__':
     playBall()
