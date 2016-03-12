@@ -42,6 +42,9 @@ def sin(angle):
 def cos(angle):
     return cosr(radians(angle))
 
+def tan(angle):
+    return tanr(radians(angle))
+
 def lineOfSight(From,To):
     dxc = From.x - To.x
     dyc = From.y - To.y
