@@ -145,13 +145,17 @@ def guardGoal():
 
     def gotoGoal():
         """Move into position"""
-        return leftGoalCenter
+        return ourGoal
 
     def rotate():
         """rotate into position"""
         return me.bearing(ball)
 
+    def defend():
+        """Get the Y coord of ball to try and defend the goal"""
+        ballY = ball.currentPoint.y
+        return Point(ourGoal.x,ballY)
+
     me.plan = [{'action': Actions.moveToPoint, 'targetFunction': gotoGoal},
                {'action': Actions.rotateToAngle, 'targetFunction': rotate},
-               {'action': Actions.receiveBall},
-               {'action': Actions.grab}]
+               {'action': Actions.moveToPoint,'targetFunction':defend}]
