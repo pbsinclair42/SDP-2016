@@ -104,7 +104,8 @@ def executePlan():
     elif currentAction == Actions.guardGoal:
         iAmNearBall = me.distance(ball.predictedPosition(9)) < me.distance(ball)
         if ball.moving is False:
-            turnToDirection(me.bearing(ball))
+            # turnToDirection(me.bearing(ball))
+            moveHolonomicallyInGoal()
         # ballcoming towards us:
         elif ball.moving and iAmNearBall:
             executePlan()
@@ -137,6 +138,23 @@ def executePlan():
     # if our plan is over, we've achieved our goal
     if len(me.plan) == 0:
         me.goal = Goals.none
+
+
+def moveHolonomicallyInGoal():
+    # Predict where the enemy will shoot the ball
+    enemyWithBall = enemies[Ball.status - 2]
+    theta = enemyWithBall.currentRotation
+    if ourGoal == rightGoalCenter:
+        theta = theta + 180
+        if theta > 180:
+            d = theta - 180
+            theta -= d
+        h = enemyWithBall.currentPoint.y
+    else:
+        h = enemyWithBall.currentPoint.y - PITCH_WIDTH
+    predictShot = h * cos(theta)
+    # Holonomically move to that point along the x axis
+    holo(predictShot, me.currentRotation)
 
 
 def moveToPoint(point):
@@ -198,4 +216,3 @@ def interceptObject(target):
     # if it would take more than 10 seconds to catch up, don't bother trying
     print("Can't catch up")
     return None
-
