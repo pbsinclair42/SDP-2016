@@ -140,21 +140,40 @@ def executePlan():
         me.goal = Goals.none
 
 
+
+def getHoloVariables(EWBR, EWBY, EWBX):
+    theta = EWBR
+    h = EWBY
+    if ourGoal == rightGoalCenter:
+        theta +=180
+        if theta > 180:
+            theta -=360
+    else:
+        h -= PITCH_WIDTH
+
+    def opp(a,b):
+        if ourGoal == rightGoalCenter:
+           if EWBX > 0:
+                return a - b
+           else:
+               return a +b
+        else:
+            if EWBX <0 :
+                return a - b
+            else:
+                return a + b
+    return theta, h, opp
 def moveHolonomicallyInGoal():
     # Predict where the enemy will shoot the ball
     enemyWithBall = enemies[Ball.status - 2]
     theta = enemyWithBall.currentRotation
-    if ourGoal == rightGoalCenter:
-        theta = theta + 180
-        if theta > 180:
-            d = theta - 180
-            theta -= d
-        h = enemyWithBall.currentPoint.y
-    else:
-        h = enemyWithBall.currentPoint.y - PITCH_WIDTH
-    predictShot = h * cos(theta)
+    yPos = enemyWithBall.currentPoint.y
+    xPos = enemyWithBall.currentPoint.x
+    theta, h, opp = getHoloVariables(theta, yPos, xPos)
+    predictShot = h * tan(theta)
     # Holonomically move to that point along the x axis
-    holo(predictShot, me.currentRotation)
+    holo(opp(predictShot, enemyWithBall.currentPoint.x), 0)
+
 
 
 def moveToPoint(point):

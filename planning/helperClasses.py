@@ -100,3 +100,24 @@ class Actions(Enum):
     kick = 5
     guardGoal = 6
     receiveBall = 7
+
+
+class Anglez():
+    def __init__(self, x):
+        self.angle = x
+        self.rangez = [-180, 180]
+        self.totalSpan = 360
+
+    def validate(self):
+        if self.angle < self.rangez[0]:
+            self.angle += self.totalSpan
+        elif self.angle > self.rangez[1]:
+            self.angle -= self.totalSpan
+
+    def __add__(self, a):
+        self.angle += (a.angle % self.totalSpan)
+        self.validate
+
+    def __radd__(self, a):
+        self.angle += (a % self.totalSpan)
+        self.validate

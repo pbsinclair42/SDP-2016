@@ -14,7 +14,7 @@ class SimBall(Ball):
             self.direction = - self.direction
         else:
             self.direction = (180 - self.direction) % 180
-         
+
 
     def move(self):
         if self.currentSpeed ==0 & self.acceleration ==0:
@@ -26,7 +26,7 @@ class SimBall(Ball):
         yDisplacement = -round(sin(angle)*distanceTravelled, 2)
         newX = self.currentPoint.x+xDisplacement
         newY = self.currentPoint.y+yDisplacement
-        topWall = xDisplacement == PITCH_WIDTH 
+        topWall = xDisplacement == PITCH_WIDTH
         leftWall = xDisplacement ==0
         rightWall = yDisplacement == PITCH_LENGTH
         bottomWall = yDisplacement ==0
@@ -82,17 +82,12 @@ class Simulator(object):
 
 
     # move holonomically at an angle of `degrees` anticlockwise and a distance of `distance` cm
-    def holo(self,degrees,distance):
-        checkValid(degrees,distance)
-        # TODO
-        pass
-
-
-    # move holonomically at an angle of `degrees` clockwise and a distance of `distance` cm
-    def holoneg(self,degrees,distance):
-        checkValid(degrees,distance)
-        # TODO
-        pass
+    def holo(self, degrees, distance):
+        checkValid(degrees, distance)
+        if degrees < 180:
+            self.currentActionQueue.append({'action':SimulatorActions.moveHolo, 'amount': (degrees, -distance), 'timeLeft': distance/(MAX_SPEED * 0.9)})
+        else: ## holonomic movement is about 10% slower
+            self.currentActionQueue.append({'action':SimulatorActions.moveHolo, 'amount': (degrees, distance), 'timeLeft': distance/(MAX_SPEED * 0.9)})
 
 
     # stop all motors
@@ -202,6 +197,28 @@ class Simulator(object):
         except IndexError:
             # if it's not currently carrying out an action, it'll stay the same
             return
+
+        if currentAction['action'] == SimulatorActions.moveHolo:
+            if TICK_TIME < currentAction['timeLeft']:
+                currentAction['timeLeft'] -= TICK_TIME
+                distanceTravelled = MAX_SPEED * TICK_TIME * 0.9
+                angle = simulatedMe.currentRotation + currentAction['action'][0]
+                xDisplacement = round(cos(angle) * distanceTravelled, 2)
+                yDisplacement = -round(sin(angle) * distanceTravelled, 2)
+                simulatedMe.currentPoint = Point(simulatedMe.currentPoint.x + xDisplacement, simulatedMe.currentPoint.y + yDisplacement)
+            else:
+                tickTimeLeft = TICK_TIME-currentAction['timeLeft']
+                distanceTravelled = MAX_SPEED*currentAction['timeLeft'] * 0.9
+                angle = simulatedMe.currentRotation + currentAction['action'][0]
+                xDisplacement = round(cos(angle)*distanceTravelled, 2)
+                yDisplacement = -round(sin(angle)*distanceTravelled, 2)
+                simulatedMe.currentPoint = Point(simulatedMe.currentPoint.x+xDisplacement, simulatedMe.currentPoint.y+yDisplacement)
+                # report that we've finished executing this command
+                self.currentActionQueue.pop(0)
+                self.lastCommandFinished += 1
+                # start the next action if it's queued
+                self.tick(tickTimeLeft)
+
         # if currently moving forwards
         if currentAction['action']==SimulatorActions.moveForwards:
             # if it'll keep going for this whole tick, move the simulated robot forwards the appropriate amount
@@ -353,4 +370,4 @@ class SimulatorActions(Enum):
     kick = 3
     ungrab = 4
     grab = 5
-
+    moveHolo = 6
