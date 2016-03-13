@@ -129,7 +129,7 @@ class CommsThread(object):
             offset -= 255
 
     def holo(self, dist_vector, angular):
-          if angular > 180:
+        if angular > 180:
             command = self.command_dict["HOL_MOVE_NEG"] + chr(int(angular - 180)) + chr(int(dist_vector)) + self.command_dict["END"]
         else:
             command = self.command_dict["HOL_MOVE_POS"] + chr(int(angular)) + chr(int(dist_vector)) + self.command_dict["END"]
