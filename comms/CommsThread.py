@@ -8,7 +8,7 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM4",
+                 port="/dev/ttyACM0",
                  baudrate=115200,
                  debug=False):
         """
@@ -230,7 +230,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         "buffer"   : [0, 0, 0], # Overflow, buffer, command index
         "seq_num"  : 0
     }
-    
+
     # perform setup
     while not radio_connected:
         try:
@@ -273,12 +273,18 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
-        
+
+
         while comms.in_waiting:
             data = comms.read(1)
-            data_buffer += [ord(data)]
-            #print "DATA +=", ord(data)
-        
+            # if last command isn't finished
+            if cmnd_list and all(cmnd_list[-1][-3:]):
+                print "Flushing: ", ord(data)
+            else:
+                data_buffer += [ord(data)]
+                #print "DATA +=", ord(data)
+
+
         try:
         # ensure data has been processed before attempting to send data
             #print data_buffer
@@ -288,8 +294,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         except IndexError:
             for i in range(0, 1000):
                 print "You did not manage to reset the arduino :/"
-        
-        
+
+
         try:
             if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
                 # get first un-sent command or un-acknowledged, but send
@@ -305,7 +311,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     print "Sending command: ", cmd_index, sequenced, "SEQ:", robot_state["seq_num"]
         except StopIteration:
             pass
-        
+
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
         pipe_out.send(ack_count)
         pipe_out.send(robot_state["mag_head"])
@@ -343,7 +349,7 @@ def process_state(cmnd_list, robot_state):
     if cmnd_list:
         for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
             cmnd_list[idx][-2] = 1
-        
+
         if robot_state["buffer"][1] == robot_state["buffer"][2]:
             for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
                 cmnd_list[idx][-1] = 1

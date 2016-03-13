@@ -59,8 +59,8 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define CMD_FIN        B11111101 // Sent when command is finished
 
 // Comms Tuning Parameters
-#define RESPONSE_COUNT 3 // how many bytes to respond with, for ACK and FIN
-#define RESPONSE_PERIOD 10 // how many milliseconds to wait between responses
+#define RESPONSE_TIME 200
+
 byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 
 // utils
@@ -68,9 +68,11 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
-#define MAG_OFFSET_X 2002
-#define MAG_OFFSET_Y -72
-#define MAG_OFFSET_Z 696
+
+#define MAG_OFFSET_X -2881
+#define MAG_OFFSET_Y 1812
+#define MAG_OFFSET_Z -855
+
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -187,7 +189,7 @@ void setup() {
     
     /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
-    
+
   }
   
 
@@ -195,11 +197,10 @@ void loop() {
   int state_end = 0;
   
   Communications();
-  //if (buffer_index + bufferOverflow != 0)
-  // CommsOut();
+  CommsOut();
   
-  // pollAccComp();
-  calibrateCompass();
+  pollAccComp();
+  // calibrateCompass();
 
   // remove SEQ from command
   MasterState = MasterState & 127;
@@ -289,6 +290,8 @@ void loop() {
       if (command_index == 0){
           commandOverflow++;
       }
+      // override report_time to respond immediately!
+      report_time += RESPONSE_TIME;
       CommsOut();
       
   }
@@ -358,7 +361,9 @@ void Communications() {
                     MasterState = 0;
                     bufferOverflow = 0;
                     commandOverflow = 0;
-                }    
+                }
+              // override report_time to respond immediately!   
+              report_time += RESPONSE_TIME;
             }
             // report invalid command
             else{
@@ -387,7 +392,7 @@ void Communications() {
 
 void CommsOut(){
     byte args[6], checksum = 0;
-    if (millis() - report_time > 250){
+    if (millis() - report_time > RESPONSE_TIME){
         args[0] = CMD_FIN;
         args[1] = bufferOverflow;
         args[2] = buffer_index;
@@ -590,7 +595,6 @@ int holoMoveStep(){
     // to make sure motors are running as fast as possible since
     // maths functions may produce vectors not properly scaled to 1
     int distance, left_angle, right_angle;
-    float rot_radians, vx, vy, m1_val, m2_val, m3_val, scale_factor;
 
     switch(rotMoveGrabMode){
         case 0:
@@ -608,9 +612,12 @@ int holoMoveStep(){
             rotMoveGrabMode = 1;
             return 0;  
         case 1:
-            distance = command_buffer[command_index + 2] * MOTION_CONST; 
+            distance = command_buffer[command_index + 2] * MOTION_CONST;
+            // if we're not there yet
             if (abs(positions[0]) + abs(positions[1]) + abs(positions[2]) < distance){
                 updateMotorPositions(positions);
+
+                // if we've turned, calculate a new angular acceleration
                 if (calculateAngleDifference(heading, target_angle) > 4){
                     left_angle = calculateLeftAngle(heading, target_angle);
                     right_angle = calculateRightAngle(heading, target_angle);
@@ -624,6 +631,7 @@ int holoMoveStep(){
                 else {
                     Rw_current = 0;
                 }
+                // turn motors again
                 holo_math(holo_angle, Rw_current);
                 turn_holo_motors();
                 delay(75);

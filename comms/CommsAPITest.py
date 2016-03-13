@@ -78,5 +78,8 @@ def getHeading():
     return commsSystem.get_mag_heading()
 
 if __name__ == "__main__":
-    
-    holo(200, 90)
+   
+        holo(100, 90)
+        time.sleep(10)
+        move(100,0)
+
