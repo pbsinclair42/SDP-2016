@@ -79,7 +79,6 @@ def getHeading():
 
 if __name__ == "__main__":
    
-        holo(100, 90)
-        time.sleep(10)
-        move(100,0)
+        holo(200, 90)
+        holo(200, 270)
 

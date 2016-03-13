@@ -222,7 +222,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     radio_connected = False
     ack_count = (0, 0)
     seq_num = 0
-    command_sleep_time = 0.05 # sleep time between sending each byte
+    command_sleep_time = 0.005 # sleep time between sending each byte
     process_sleep_time = 0.13 # sleep time for process
     # robot state parameters
     robot_state = {
@@ -277,13 +277,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         while comms.in_waiting:
             data = comms.read(1)
-            # if last command isn't finished
-            if cmnd_list and all(cmnd_list[-1][-3:]):
-                print "Flushing: ", ord(data)
-            else:
-                data_buffer += [ord(data)]
-                #print "DATA +=", ord(data)
-
+            data_buffer += [ord(data)]
 
         try:
         # ensure data has been processed before attempting to send data
@@ -315,8 +309,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
         pipe_out.send(ack_count)
         pipe_out.send(robot_state["mag_head"])
-        print robot_state
-        #print cmnd_list
+        #print robot_state
         sleep(process_sleep_time)
 
 def process_data(commands, data, robot_state):
@@ -361,22 +354,6 @@ def sequence_command(command, seq):
     for cmd_byte in [sequence, command[1], command[2]]:
         checksum += sum([bit == '1' for bit in bin(cmd_byte)])
     return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
-
-def check_ack_count(ack_count, cmnd_list):
-    received = ack_count[0]
-    finished = ack_count[1]
-    if finished > received:
-        print 80 * "="
-        print 80 * "*"
-        x = ((80 - len("Show this to Krassy!")) / 2 - 4) * " "
-        print x, "Show this to Krassy", x
-        print 80 * "*"
-        print 80 * "="
-        acknowledge_command(cmnd_list, 1)
-        return (received, received)
-        #return ack_count
-    else:
-        return ack_count
 
 if __name__ == "__main__":
     c = CommsThread()
