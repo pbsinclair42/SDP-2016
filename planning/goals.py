@@ -145,11 +145,15 @@ def guardGoal():
 
     def gotoGoal():
         """Move into position"""
+        # ourGoalX = 30 if OUR_GOAL == "right" else PITCH_LENGTH - 30
+        # ourGoalY = (PITCH_WIDTH)/2
+        # GoalPosition = Point(ourGoalX, ourGoalY)
+        # move to the top of the goal
         return ourGoal
 
     def rotate():
         """rotate into position"""
-        return me.bearing(ball)
+        return me.bearing(opponentGoal)
 
     def defend():
         """Get the Y coord of ball to try and defend the goal"""
