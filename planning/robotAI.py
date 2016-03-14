@@ -27,6 +27,9 @@ def updatePositions():
     robots_colours = [OUR_COLOUR, TEAM_MATE_COLOUR]
     i = 0
     for group in groups:
+        # When setting enemies, the order of colours is important.
+        if i > 2:
+            robots_colours = ["pink", "green"]
         for robot in robots_colours:
             try:
                 r = api.world[group, robot]['center']
