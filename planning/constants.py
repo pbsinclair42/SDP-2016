@@ -58,7 +58,7 @@ USING_SIMULATOR = False
 
 # get the information from the config file
 with open('conf.txt','r') as f:
-    
+
     class _ConfigError(Exception):
         """Simple exception for config errors"""
         def __init__(self, value):
@@ -69,7 +69,7 @@ with open('conf.txt','r') as f:
     config = f.readlines()
     # get team colour
     TEAM_COLOUR = config[0].lower().strip()
-    if TEAM_COLOUR != 'yellow' and TEAM_COLOUR != 'light_blue':
+    if TEAM_COLOUR != 'yellow' and TEAM_COLOUR != 'bright_blue':
         raise _ConfigError("Invalid team colour")
     # get our robot colour
     OUR_COLOUR = config[1].lower().strip()
