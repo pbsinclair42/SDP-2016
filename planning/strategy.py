@@ -1,6 +1,6 @@
 from robotAI import *
 from actions import *
-import constants
+from constants import *
 
 
 def playBall():
@@ -24,11 +24,6 @@ def playBall():
         # otherwise, defend the goal
         else:
             print "I'm going to go and guard the goal"
-            ourGoalY = 0 if OUR_GOAL == "right" else constants.PITCH_WIDTH
-            ourGoalX = (constants.PITCH_LENGTH - constants.BOX_LENGTH)/2
-            GoalPosition = Point(ourGoalX, ourGoalY)
-            # move to the top of the goal
-            moveToPoint(GoalPosition)
             # move holonomically inside the goal to protect it.
             guardGoal()
 
