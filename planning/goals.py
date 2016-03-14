@@ -149,7 +149,7 @@ def guardGoal():
 
     def rotate():
         """rotate into position"""
-        return me.bearing(ball)
+        return me.bearing(opponentGoal)
 
     def defend():
         """Get the Y coord of ball to try and defend the goal"""

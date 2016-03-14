@@ -35,6 +35,8 @@ def nearEnough(a, b):
     try:
         return abs(a.x - b.x) <= ITLL_DO_POINT and abs(a.y - b.y) <= ITLL_DO_POINT
     except AttributeError:
+        print a
+        print b
         return abs(a - b) <= ITLL_DO_ANGLE or abs(a + 360 - b) <= ITLL_DO_ANGLE or abs(a - 360 - b) <= ITLL_DO_ANGLE
 
 

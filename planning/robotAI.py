@@ -9,8 +9,13 @@ import world
 from CommsAPI import commsSystem
 
 api = world.WorldApi()
-time.sleep(9)
+#time.sleep(9)
+while not api.ready():
+    #print "READY BITCH"
+    sfgfdgd = 3
+print"READY BITCH"
 try:
+    print api.ready()
     print api.world['ally','green']['center']
     print api.world['ally','green']['orientation']
     print api.world['ball_center']
@@ -40,8 +45,10 @@ def updatePositions():
                 pass
             i += 1
     try:
+        world = api.world
         ball.update(Point(api.world['ball_center'][0],api.world['ball_center'][1]))
     except:
+        #print((api.world['ball_center'][0] + " ||||| " + api.world['ball_center'][1]))
         print("no ball update")
     # update who has the ball - workaround until vision can tell us
     try:
