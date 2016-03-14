@@ -145,6 +145,10 @@ def guardGoal():
 
     def gotoGoal():
         """Move into position"""
+        # ourGoalX = 30 if OUR_GOAL == "right" else PITCH_LENGTH - 30
+        # ourGoalY = (PITCH_WIDTH)/2
+        # GoalPosition = Point(ourGoalX, ourGoalY)
+        # move to the top of the goal
         return ourGoal
 
     def rotate():
