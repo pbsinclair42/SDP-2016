@@ -59,3 +59,25 @@ def lineOfSight(From,To):
         if(cross == 0):
             return True
     return False
+
+
+def getHoloVariables(EWBR, EWBY, EWBX):
+    theta = EWBR
+    h = EWBY
+    if ourGoal == rightGoalCenter:
+        theta += 180
+        if theta > 180:
+            theta -= 360
+    else:
+        h -= PITCH_WIDTH
+    # If approaching from the left, then the predicted shot will be EWBX -
+    # predict shot, otherwise, EWBX + predictShot.  For encapsulation, I want to
+    # calculate the multiplier and then do the predict shot equation elsewhere.
+    if ourGoal == rightGoalCenter and EWBX > 0:
+        multiplier = -1
+    elif ourGoal == leftGoalCenter and EWBX < 0:
+        multiplier = -1
+    else:
+        multiplier = 1
+
+    return theta, h, multiplier
