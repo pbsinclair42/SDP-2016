@@ -2,7 +2,7 @@ import threading
 import time
 from constants import *
 from globalObjects import me, ally, enemies, robots, ball
-from helperClasses import BallStatus, Goals
+from helperClasses import BallStatus, Goals, Point
 from actions import executePlan
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 import world
@@ -10,10 +10,12 @@ from CommsAPI import commsSystem
 
 api = world.WorldApi()
 time.sleep(9)
-print api.world['ally']['green']['center']
-print api.world['ally']['green']['orientation']
-print api.world['ball_center']
-
+try:
+    print api.world['ally','green']['center']
+    print api.world['ally','green']['orientation']
+    print api.world['ball_center']
+except:
+    print("woops")
 
 def updatePositions():
     # me = 0
@@ -21,21 +23,26 @@ def updatePositions():
     # enemyGreen = 2
     # enemyPink = 3
     groups = ["ally", "enemy"]
-    robots_colours = ["pink", "green"]
+    TEAM_MATE_COLOUR = "pink" if OUR_COLOUR == "green" else "green"
+    robots_colours = [OUR_COLOUR, TEAM_MATE_COLOUR]
     i = 0
     for group in groups:
         for robot in robots_colours:
             try:
-                r = api.world[group][robot]['center']
-                print("group " + group + " robot " + robot + " i " + str(i) + str(type(r)) )
+                r = api.world[group, robot]['center']
                 p = Point(r[0], r[1])
-                robots[i].updateRotation(api.world[group][robot]['orientation'])
+                print("group " + group + " robot " + robot + " i " + str(i) + str(type(p)) )
+                robots[i].updateRotation(api.world[group, robot]['orientation'][0])
+                print (api.world[group, robot]['orientation'] +90)
+                print "My colour is: Robot[0].name" + robots[i].name
                 robots[i].update(p)
             except (TypeError):
                 pass
             i += 1
-    ball.update(api.world['ball_center'])
-
+    try:
+        ball.update(Point(api.world['ball_center'][0],api.world['ball_center'][1]))
+    except:
+        print("no ball update")
     # update who has the ball - workaround until vision can tell us
     try:
         if ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
@@ -47,7 +54,7 @@ def updatePositions():
         elif ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
             ball.status = BallStatus.me
         # if we can't see it, assume it's the same, otherwise if it's far enough from everything, it's free
-        elif currentBallCoords!=None:
+        elif Point(api.world['ball_center'][0],api.world['ball_center'][1]) !=None:
             ball.status = BallStatus.free
     except (TypeError, AttributeError):
         print("Location of some objects unknown")
