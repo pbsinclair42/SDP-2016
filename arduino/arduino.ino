@@ -26,12 +26,12 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define KICKER_PWR 255
 #define KICKER_LFT_POWER 255
 #define KICKER_RGT_POWER 255
-#define GRABBER_POWER 255
+#define GRABBER_POWER 200
 
 
 // temporal calibrations
 #define KICK_TIME 550
-#define GRAB_TIME 650
+#define GRAB_TIME 400
 
 
 // Movement Constants
@@ -68,9 +68,9 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
-#define MAG_OFFSET_X -1923
-#define MAG_OFFSET_Y 2611
-#define MAG_OFFSET_Z -839
+#define MAG_OFFSET_X -4639
+#define MAG_OFFSET_Y 5606
+#define MAG_OFFSET_Z 6696
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -196,8 +196,8 @@ void loop() {
     CommsOut();
   
 
-  pollAccComp();
-  // calibrateCompass();
+  //pollAccComp();
+  calibrateCompass();
 
   // remove SEQ from command
   MasterState = MasterState & 127;

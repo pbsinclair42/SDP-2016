@@ -3,6 +3,7 @@ from globalObjects import *
 from helperClasses import Point, Goals, Actions
 from helperFunctions import sin, cos
 from actions import *
+import time
 
 """TODO
 Position to receive pass - Speak to Other Team About that
@@ -64,7 +65,11 @@ def shoot():
         return 255  # maybe change to be more accurate? can shoot with max power
 
     def aim():
-        return me.bearing(opponentGoal)
+        print ball.currentPoint
+        print "-----------------------------------------------"
+        print -me.bearing(opponentGoal)
+        #time.sleep(60)
+        return -me.bearing(opponentGoal)
 
     me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': aim},
                {'action': Actions.kick, 'targetFunction': distanceToKick}]

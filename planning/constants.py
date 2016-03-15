@@ -2,7 +2,7 @@ from os.path import abspath
 # root directory
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP-2016/'
 # the number of seconds between updating the robot position
-TICK_TIME = 0.1
+TICK_TIME = 0.9
 # our robot's max speed (cm per second)
 MAX_SPEED = 25.0
 # our robot's rotational speed (degrees per second)
@@ -51,7 +51,7 @@ ITLL_DO_ANGLE = 15
 
 # initialize the variables with dummy values that will be replaced with info from conf.txt
 TEAM_COLOUR = 'yellow'
-OUR_COLOUR = 'pink'
+OUR_COLOUR = 'green'
 BALL_COLOUR = 'red'
 OUR_GOAL = 'left'
 USING_SIMULATOR = False

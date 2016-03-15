@@ -14,11 +14,13 @@ while not api.ready():
     #print "READY BITCH"
     sfgfdgd = 3
 print"READY BITCH"
+print
 try:
     print api.ready()
     print api.world['ally','green']['center']
     print api.world['ally','green']['orientation']
     print api.world['ball_center']
+    print api.world['ally','pink']['center']
 except:
     print("woops")
 
@@ -27,32 +29,44 @@ def updatePositions():
     # ally = 1
     # enemyGreen = 2
     # enemyPink = 3
-    groups = ["ally", "enemy"]
-    TEAM_MATE_COLOUR = "pink" if OUR_COLOUR == "green" else "green"
-    robots_colours = [OUR_COLOUR, TEAM_MATE_COLOUR]
-    i = 0
-    for group in groups:
-        # When setting enemies, the order of colours is important.
-        if i > 2:
-            robots_colours = ["pink", "green"]
-        for robot in robots_colours:
-            try:
-                r = api.world[group, robot]['center']
-                p = Point(r[0], r[1])
-                print("group " + group + " robot " + robot + " i " + str(i) + str(type(p)) )
-                robots[i].updateRotation(api.world[group, robot]['orientation'][0])
-                print (api.world[group, robot]['orientation'] +90)
-                print "My colour is: Robot[0].name" + robots[i].name
-                robots[i].update(p)
-            except (TypeError):
-                pass
-            i += 1
+    ALLY_COLOUR = "pink" if OUR_COLOUR == "green" else "green"
     try:
-        world = api.world
-        ball.update(Point(api.world['ball_center'][0],api.world['ball_center'][1]))
+        me.update(Point(api.world['ally',OUR_COLOUR]['center'][0]/2,api.world['ally',OUR_COLOUR]['center'][1]/2))
+        me.updateRotation((api.world['ally',OUR_COLOUR]['orientation'][1]))
+        print me.currentRotation
     except:
-        #print((api.world['ball_center'][0] + " ||||| " + api.world['ball_center'][1]))
-        print("no ball update")
+        print "No me to update"
+    try:
+        ally.update(Point(api.world['ally',ALLY_COLOUR]['center'][0]/2,api.world['ally',ALLY_COLOUR]['center'][1]/2))
+        ally.updateRotation((api.world['ally',ALLY_COLOUR]['orientation'][1]))
+        print ally.currentRotation
+        print "AYE"
+    except:
+        print "No ally to update"
+    try:
+        enemyA.update(Point(api.world['enemy',ALLY_COLOUR]['center'][0]/2,api.world['enemy',ALLY_COLOUR]['center'][1]/2))
+    except:
+        print "No enemy a to update"
+    try:
+        enenmyB.update(Point(api.world['emeny',OUR_COLOUR]['center'][0]/2,api.world['enemy',OUR_COLOUR]['center'][1]/2))
+    except:
+        print "No enemy B to update"
+
+
+    #try:
+	print "set ball x"
+        ballX = api.world['ball_center'][0]/2
+	print "set ball y, the type is " + str(type (ballX))
+        ballY = api.world['ball_center'][1]/2
+
+	print "set the global object"
+	p = Point(ballX, ballY)
+        print "the ball is at " + str(p)
+	print "ball is " + str(type(ball))
+        ball.update(p)
+    #except:
+
+    #    print("no ball update")
     # update who has the ball - workaround until vision can tell us
     try:
         if ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:

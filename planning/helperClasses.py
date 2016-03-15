@@ -44,9 +44,21 @@ class Point(object):
         """
         if not isinstance(p, self.__class__):
             raise TypeError("Point expected, "+p.__class__.__name__+" found")
+        y = self.y
+	x = self.x
+        angle = degrees(atan2(self.y - p.y, self.x - p.x))
+
+        bearing1 = (angle + 360) % 360
+
+        bearing2 = (90 - angle) % 360
+
+        print "gb: x=%2d y=%2d angle=%6.1f bearing1=%5.1f bearing2=%5.1f" % ( x, y, angle, bearing1, bearing2)
+
         xDisplacement = p.x-self.x
         yDisplacement = p.y-self.y
+	
         bearing = atan2(yDisplacement,xDisplacement)
+	print "Before rounding, the bearing is " + str(degrees(bearing))
         return -round(degrees(bearing), 3)
 
 

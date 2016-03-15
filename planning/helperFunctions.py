@@ -22,6 +22,12 @@ def essentiallyEqual(a, b):
 
 
 def nearEnough(a, b):
+    print type(a)
+    print type(b)
+    print a
+    print b
+    #a = Point(a[0],a[1])
+    #b = Point(b[0],b[1])
     """Checks whether two points or two angles are similar enough
     that we'll work with it
 

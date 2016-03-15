@@ -5,6 +5,7 @@ from helperClasses import Point, Actions, Goals, BallStatus
 from helperFunctions import nearEnough
 from CommsAPI import turn, move, grab, ungrab, kick
 from goals import *
+import time
 
 
 def executePlan():
@@ -53,8 +54,9 @@ def executePlan():
                 executePlan()
 
             elif not nearEnough(me.currentRotation, me.bearing(targetPoint)):
-                # if we're not facing the right direction then
-                # add a step to the plan to face the right way first
+
+            # if we're not facing the right direction then
+            # add a step to the plan to face the right way first
                 def targetAngle():
                     '''Return the angle between us and the point we're headed to
                     in the next step of the plan'''
@@ -193,7 +195,12 @@ def turnToDirection(angle):
     elif angleToMove > 180:
         angleToMove -= 360
     # remember, negative is clockwise
+    print me.currentRotation
     turn(angleToMove)
+    print me.currentRotation
+    #'time.sleep(10)
+    print "WOOOP"
+    print me.currentRotation
 
 
 def interceptObject(target):
