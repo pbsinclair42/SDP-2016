@@ -12,7 +12,7 @@ def playBall():
     heldByEnemyA = ball.status == BallStatus.enemyA
     heldByEnemyB = ball.status == BallStatus.enemyB
 
-    if ballNearerMeThanAlly and ballNotNearEnemy:
+    if ballNearerMeThanAlly and ballNotNearEnemy and lineOfSight(me.currentPoint,ball.currentPoint):
         print "I'm going to collect the ball."
         collectBall()
 
@@ -38,3 +38,5 @@ def playBall():
         elif lineOfSight(me.currentPoint, ally.currentPoint):
             print "I'm going to pass to my ally"
             passBall()
+        else:
+            print("HELP! I can't do anything with the ball!")

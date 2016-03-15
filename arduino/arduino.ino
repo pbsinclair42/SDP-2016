@@ -43,7 +43,8 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 // COMMS API Byte Definitions
 #define CMD_ROTMOVE    B00000011 // Buffered: MSB 1 performs CCW rotation
 #define CMD_ROTMOVECCW B00001111 // Buffered: MSB 1 performs CCW rotation
-#define CMD_HOLMOVE    B00000010 // Buffered
+#define CMD_HOLMOVE_Q1 B00000010 // Buffered
+#define CMD_HOLMOVE_Q2 B01000010 // Buffered
 #define CMD_KICK       B00000100 // Buffered
 #define CMD_STOP       B00001000 // Buffered
 #define CMD_GRAB       B00010000 // Buffered
@@ -58,8 +59,8 @@ IMPORTANT: PLEASE READ BEFORE EDITING:
 #define CMD_FIN        B11111101 // Sent when command is finished
 
 // Comms Tuning Parameters
-#define RESPONSE_COUNT 3 // how many bytes to respond with, for ACK and FIN
-#define RESPONSE_PERIOD 10 // how many milliseconds to wait between responses
+#define RESPONSE_TIME 200
+
 byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 
 // utils
@@ -67,9 +68,11 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
-#define MAG_OFFSET_X 2580
-#define MAG_OFFSET_Y 7174
-#define MAG_OFFSET_Z 6870
+
+#define MAG_OFFSET_X -2881
+#define MAG_OFFSET_Y 1812
+#define MAG_OFFSET_Z -855
+
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
@@ -90,12 +93,16 @@ byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 byte invalid_commands = 0;
 
-// used for the millis function.
+// temporal parameters used for the millis function.
 unsigned long serial_time; 
 unsigned long command_time;
 unsigned long idle_time;
 unsigned long report_time;
-unsigned long re_ack_time; // TODO: Remove
+
+// holonomic parameters
+int holo_vals[3];
+int holo_angle;
+float Rw_current;
 
 // rotation parameters
 int rotaryTarget;
@@ -105,12 +112,10 @@ int rotaryBias;
 byte bufferOverflow = 0;
 byte commandOverflow = 0;
 
-// targets for rotary encoders
+// parameter targets for rotary encoders
 int rotary_target;
 int motion_target;
 int holono_target;
-boolean left_correction = 0;
-boolean right_correction = 0;
 
 // accelerometer variables
 float accel_targetx = 0;
@@ -184,7 +189,7 @@ void setup() {
     
     /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
-    //rotateRight();
+
   }
   
 
@@ -192,10 +197,8 @@ void loop() {
   int state_end = 0;
   
   Communications();
-  if (buffer_index + bufferOverflow != 0)
-    CommsOut();
+  CommsOut();
   
-
   pollAccComp();
   // calibrateCompass();
 
@@ -232,10 +235,13 @@ void loop() {
             break;
         
 
-        case CMD_HOLMOVE:
+        case CMD_HOLMOVE_Q1:
             state_end = holoMoveStep();
             break;
         
+        case CMD_HOLMOVE_Q2:
+            state_end = holoMoveStep();
+            break;
 
         case CMD_KICK:
             state_end = kickStep();
@@ -284,6 +290,8 @@ void loop() {
       if (command_index == 0){
           commandOverflow++;
       }
+      // override report_time to respond immediately!
+      report_time += RESPONSE_TIME;
       CommsOut();
       
   }
@@ -325,6 +333,7 @@ void Communications() {
         
         // read command
         command_buffer[buffer_index++] = Serial.read();
+        
         if (buffer_index % 4 == 0){
             
             // acknowledge proper command
@@ -352,7 +361,9 @@ void Communications() {
                     MasterState = 0;
                     bufferOverflow = 0;
                     commandOverflow = 0;
-                }    
+                }
+              // override report_time to respond immediately!   
+              report_time += RESPONSE_TIME;
             }
             // report invalid command
             else{
@@ -381,7 +392,7 @@ void Communications() {
 
 void CommsOut(){
     byte args[6], checksum = 0;
-    if (millis() - report_time > 250){
+    if (millis() - report_time > RESPONSE_TIME){
         args[0] = CMD_FIN;
         args[1] = bufferOverflow;
         args[2] = buffer_index;
@@ -563,13 +574,9 @@ int rotMoveStep(){
                 left_angle = calculateLeftAngle(heading, target_angle);
                 right_angle = calculateRightAngle(heading, target_angle);
                 if (left_angle < right_angle){
-                    right_correction = 1;
-                    left_correction = 0;
                     correctRight();
                 }
                 else {
-                    right_correction = 0;
-                    left_correction = 1;
                     correctLeft();
                 }
             }
@@ -587,54 +594,108 @@ int holoMoveStep(){
     // TODO: Scale motor values by 1 / max: abs(value1, value2, value3)
     // to make sure motors are running as fast as possible since
     // maths functions may produce vectors not properly scaled to 1
+    int distance, left_angle, right_angle;
 
-    int value1 = command_buffer[command_index + 1];
-    int value2 = command_buffer[command_index + 2];
+    switch(rotMoveGrabMode){
+        case 0:
+            // get angle and distance
+            holo_angle = command_buffer[command_index + 1];
+            if ((command_buffer[command_index] & 64) != 0){
+                holo_angle += 180;
+            }
+            
+            holo_math(holo_angle, 0);
+            turn_holo_motors(); 
+            
+            target_angle = heading;
+            restoreMotorPositions(positions);
+            rotMoveGrabMode = 1;
+            return 0;  
+        case 1:
+            distance = command_buffer[command_index + 2] * MOTION_CONST;
+            // if we're not there yet
+            if (abs(positions[0]) + abs(positions[1]) + abs(positions[2]) < distance){
+                updateMotorPositions(positions);
 
-    int rot_degrees = (int) value1 + (int) value2;
-    float rot_radians = rot_degrees * PI / 180;
-
-    float vx = cos(rot_radians);
-    float vy = sin(rot_radians);
+                // if we've turned, calculate a new angular acceleration
+                if (calculateAngleDifference(heading, target_angle) > 4){
+                    left_angle = calculateLeftAngle(heading, target_angle);
+                    right_angle = calculateRightAngle(heading, target_angle);
+                    if (left_angle < right_angle){
+                        Rw_current = -1 * (left_angle / 90.0);
+                    }
+                    else {
+                        Rw_current = right_angle / 90.0;
+                    }
+                }
+                else {
+                    Rw_current = 0;
+                }
+                // turn motors again
+                holo_math(holo_angle, Rw_current);
+                turn_holo_motors();
+                delay(75);
+                Serial.println(Rw_current);
+                return 0;
+                
+            
+            } else{
+                restoreMotorPositions(positions);
+                motorAllStop();
+                rotMoveGrabMode = 0;
+                return 1;
+            }
+    }
     
-    float m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy;
-    float m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy;
-    float m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy;
-    
-    float scale_factor = fmax(abs(m1_val), abs(m2_val));
-    scale_factor = 1 / fmax(scale_factor, abs(m3_val));
-    
-    // scale up to 1
-    m1_val *= scale_factor;
-    m2_val *= scale_factor;
-    m3_val *= scale_factor;
-    
-    //scale up to 255
-    m1_val *= POWER_RGT;
-    m2_val *= POWER_LFT;
-    m3_val *= POWER_BCK;
-    
-    // turn motors
-    if (m1_val > 0)
-        motorForward(1, byte(m1_val));
-    else
-        motorBackward(1, byte(fabs(m1_val)));
-    
-    if (m2_val > 0)
-        motorForward(0, byte(m2_val));
-    else
-        motorBackward(0, byte(fabs(m2_val)));
-    
-    if (m3_val > 0)
-        motorForward(2, byte(m3_val));
-    else
-        motorBackward(2, byte(fabs(m3_val)));    
-    delay(1500);
-    
-    motorAllStop();
-    
-    return 1;
 }
+void holo_math(int angle, float Rw){
+        int rot_degrees;
+        float rot_radians, vx, vy, m1_val, m2_val, m3_val, scale_factor;
+        
+        rot_degrees = (int) angle;
+        rot_radians = rot_degrees * PI / 180;
+
+        vx = cos(rot_radians);
+        vy = sin(rot_radians);
+            
+        m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy + Rw;
+        m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy  + Rw;
+        m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy  + Rw;
+            
+        scale_factor = fmax(abs(m1_val), abs(m2_val));
+        scale_factor = 1 / fmax(scale_factor, abs(m3_val));
+            
+        //scale up to 1
+        m1_val *= scale_factor;
+        m2_val *= scale_factor;
+        m3_val *= scale_factor;
+                
+        //scale up to 255
+        m1_val *= POWER_RGT;
+        m2_val *= POWER_LFT;
+        m3_val *= POWER_BCK;
+        
+        holo_vals[0] = m2_val; // left
+        holo_vals[1] = m1_val; // right
+        holo_vals[2] = m3_val; // back
+}
+void turn_holo_motors(){
+    if (holo_vals[0] > 0)
+        motorForward(0, byte(holo_vals[0]));
+    else
+        motorBackward(0, byte(fabs(holo_vals[0])));
+            
+    if (holo_vals[1] > 0)
+        motorForward(1, byte(holo_vals[1]));
+    else
+        motorBackward(1, byte(fabs(holo_vals[1])));
+            
+    if (holo_vals[2] > 0)
+        motorForward(2, byte(holo_vals[2]));
+    else
+        motorBackward(2, byte(fabs(holo_vals[2])));    
+}
+
 
 int kickStep(){
     byte kick_val;
@@ -642,7 +703,7 @@ int kickStep(){
         // initial state which starts ungrabbing
         case 0:
             command_time = millis();
-            motorBackward(GRABBER, GRABBER_POWER);
+            motorForward(GRABBER, GRABBER_POWER);
             rotMoveGrabMode = 1;
             return 0;
         
@@ -672,7 +733,7 @@ int kickStep(){
         case 3:
             if (millis() - command_time > KICK_TIME){
                 motorBackward(KICKER, 0);
-                motorForward(GRABBER, GRABBER_POWER);
+                motorBackward(GRABBER, GRABBER_POWER);
                 rotMoveGrabMode = 4;
                 command_time = millis(); // restore current time
             }
@@ -682,7 +743,7 @@ int kickStep(){
         // if re-grabbed, process is finished
         case 4:
             if (millis() - command_time > GRAB_TIME){
-                motorForward(GRABBER, 0);
+                motorBackward(GRABBER, 0);
                 rotMoveGrabMode = 0;
                 return 1; // make sure that the only way to return from this function is to 
             }
@@ -701,13 +762,13 @@ int kickStep(){
 int grabStep(){
     switch(rotMoveGrabMode){
         case 0:
-            motorForward(GRABBER, GRABBER_POWER);
+            motorBackward(GRABBER, GRABBER_POWER);
             command_time = millis();
             rotMoveGrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
-                motorForward(GRABBER, 0);
+                motorBackward(GRABBER, 0);
                 rotMoveGrabMode = 0;
                 finishGrabbing = 0;
                 return 1;
@@ -719,13 +780,13 @@ int grabStep(){
 int unGrabStep(){
     switch(rotMoveGrabMode){
         case 0:
-            motorBackward(GRABBER, GRABBER_POWER);
+            motorForward(GRABBER, GRABBER_POWER);
             command_time = millis();
             rotMoveGrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
-                motorBackward(GRABBER, 0);
+                motorForward(GRABBER, 0);
                 rotMoveGrabMode = 0;
                 return 1;
 

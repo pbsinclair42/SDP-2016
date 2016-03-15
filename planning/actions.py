@@ -153,6 +153,31 @@ def moveToPoint(point):
     # make that movement
     move(distance, angle)
 
+def moveToPointHolo(point):
+    if not isinstance(point,Point):
+        raise TypeError("Point expected, " + point.__class__.__name__ + " found")
+
+
+    # ensure the attacker doesn't go into the goal
+    if me.position == 1:#attacker
+        if outGoal == rightGoalCenter:
+            if(point.x <= 30 or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+        else:#defender
+            if(point.x <= (PITCH_LENGTH-30) or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+
+
+    distance = point.distance(me.currentPoint)
+    angle = me.bearing(point) - me.currentRotation
+    # ensure the angle is between -180 and 180
+    if angle < -180:
+        angle+=360
+    elif angle > 180:
+        angle-=360
+    # make that movement
+    holo(distance, angle)
+
 
 def turnToDirection(angle):
     angleToMove = angle-me.currentRotation

@@ -160,4 +160,4 @@ def guardGoal():
 
     me.plan = [{'action': Actions.moveToPoint, 'targetFunction': gotoGoal},
                {'action': Actions.rotateToAngle, 'targetFunction': rotate},
-               {'action': Actions.moveToPoint,'targetFunction':defend}]
+               {'action': Actions.moveToPointHolo,'targetFunction':defend}]
