@@ -40,13 +40,13 @@ ROBOT_WIDTH = 6
 BALL_OWNERSHIP_DISTANCE = 20
 
 # how close to a target point you need to be to count as equal, give or take normal vision inaccuracy (centimeters)
-POINT_ACCURACY = 3
+POINT_ACCURACY = 5
 # how close to a target angle you need to be to count as equal, give or take normal vision inaccuracy (degrees)
 ANGLE_ACCURACY = 15
 # how close to a target point you need to be to count as 'close enough' for the sake of doing stuff (centimeters)
 ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (degrees)
-ITLL_DO_ANGLE = 15
+ITLL_DO_ANGLE = 20
 
 
 # initialize the variables with dummy values that will be replaced with info from conf.txt
@@ -88,7 +88,7 @@ with open('conf.txt','r') as f:
         USING_SIMULATOR=True
     elif config[4].lower().strip() != 'false':
         raise _ConfigError("Invalid value for if using simulator")
-
+    PITCH_NUM = config[5].lower().strip()
 
 
 
