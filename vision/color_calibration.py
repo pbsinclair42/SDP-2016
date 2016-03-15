@@ -265,7 +265,7 @@ def calibrateThresholds(pitch):
 
 if __name__ == "__main__":
     args = parseArgs()
-    pitch = args.p
+    pitch = int(args.p)
     data = calibrateThresholds(pitch)
     print data
     save_colors(data)

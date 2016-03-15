@@ -1,7 +1,7 @@
 from helperClasses import Point, BallStatus
 import sys
 import os
-from constants import ROOT_DIR, X_RATIO, Y_RATIO, USING_SIMULATOR, TEAM_COLOUR, OUR_COLOUR, BALL_COLOUR
+from constants import ROOT_DIR, X_RATIO, Y_RATIO, USING_SIMULATOR, TEAM_COLOUR, OUR_COLOUR, BALL_COLOUR, PITCH_NUM
 from cv2 import error as cv2Error
 from simulator import simulatedMe, simulatedAlly, simulatedEnemies, simulatedBall
 # enable access to the vision package
@@ -10,7 +10,11 @@ from tracker import BallTracker, RobotTracker
 from camera import Camera
 from globalObjects import *
 
-camera = Camera()
+our_team_color = TEAM_COLOUR
+num_of_pink = 3 if OUR_COLOUR=='pink' else 1
+ball_color = BALL_COLOUR
+pitch = int(PITCH_NUM)
+camera = Camera(pitch)
 
 # NOTE: UNKNOWN ERROR: Each call of camera.get_frame_hack() is exactly 5 calls behind the actual value!
 
@@ -26,11 +30,7 @@ except cv2Error:
     print
     camera=None
 
-with open('conf.txt','r') as f:
-    context = f.readlines()
-    our_team_color = TEAM_COLOUR
-    num_of_pink = 3 if OUR_COLOUR=='pink' else 1
-    ball_color = BALL_COLOUR
+
 if USING_SIMULATOR:
     camera=None
 
