@@ -5,8 +5,8 @@ from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals
 from actions import executePlan
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass
-import visionAPI #TODO remove
-#from world import WorldApi
+from strategy import playBall
+import visionAPI
 from CommsAPI import commsSystem
 
 
@@ -49,7 +49,10 @@ def updatePositions():
 
 
 def makePlan():
-    """Decide what to do based on the system's current beliefs about the state of play"""
+    """DEPRECATED
+    
+    Explicitly tell the robot what to do"""
+
     if me.goal == Goals.none:
         if not USING_SIMULATOR:
             commsSystem.restart()
@@ -82,7 +85,7 @@ def tick():
     if USING_SIMULATOR:
         commsSystem.tick()
     updatePositions()
-    makePlan()
+    playBall()
     executePlan()
     threading.Timer(TICK_TIME, tick).start()
 
