@@ -69,9 +69,9 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define IDLE_STATE 0
 
 
-#define MAG_OFFSET_X -3446
-#define MAG_OFFSET_Y 1158
-#define MAG_OFFSET_Z 1997
+#define MAG_OFFSET_X -2777
+#define MAG_OFFSET_Y 2406
+#define MAG_OFFSET_Z 1155
 
 
 // *** Globals ***
@@ -189,7 +189,6 @@ void setup() {
     
     /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
-
   }
   
 

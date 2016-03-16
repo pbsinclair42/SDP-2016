@@ -119,7 +119,6 @@ def executePlan():
             print("Still doing stuff")
         else:
             targetPoint = me.plan[0]['targetFunction']()
-            print(targetPoint)
             moveToPointHolo(targetPoint)
 
 
@@ -169,7 +168,6 @@ def moveToPointHolo(point):
 
     distance = point.distance(me.currentPoint)
     angle = me.bearing(point) - me.currentRotation+90
-    print str(angle) +"First bit thing"
     # ensure the angle is between 0 and 360
     while True:
         if angle < 0:
@@ -178,7 +176,6 @@ def moveToPointHolo(point):
             angle-=360
         else:
             break
-    print str(angle)+ "Second bit thign"
     # make that movement
     holo(distance, angle)
 

@@ -33,14 +33,13 @@ def move(distance, angle):
 
 
 def holo(distance, angle):
-    """Moves `distance` cm at a direction of `angle` degrees"""
-    # TODO: update for holo movement
+    """Moves `distance` cm holonomically at a direction of `angle` degrees"""
     # ensure the distance is an appropriate size
     distance = int(distance)
     angle = int(angle)
-    commsSystem.rot_move(angle, distance)
+    commsSystem.holo(distance, angle)
     me.moving=True
-    print("Turning " + str(angle) + " degrees then moving " + str(distance) + "cm")
+    print("Moving holonomically "+ str(distance) + "cm at an angle of " + str(angle))
 
 
 def kick(distance):

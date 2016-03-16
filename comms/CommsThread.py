@@ -126,6 +126,7 @@ class CommsThread(object):
             offset -= 255
 
     def holo(self, dist_vector, angular):
+        dist_vector = min(dist_vector,255)
         if angular > 180:
             command = self.command_dict["HOL_MOVE_NEG"] + chr(int(angular - 180)) + chr(int(dist_vector)) + self.command_dict["END"]
         else:
@@ -316,6 +317,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if robot_state["mag_head"] != prev_mag:
             pipe_out.send(robot_state["mag_head"])
             prev_mag = robot_state["mag_head"]
+        if robot_state["buffer"][1] %4 != 0 or robot_state["buffer"][2] %4 != 0:
+            print "CNOOOOOOMS"
+            print robot_state
         #print robot_state
         sleep(process_sleep_time)
 
@@ -364,5 +368,6 @@ def sequence_command(command, seq):
 
 if __name__ == "__main__":
     c = CommsThread()
-
-    c.kick(255)
+    while True:
+        if c.am_i_done():
+            c.kick(255)     
