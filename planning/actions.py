@@ -3,7 +3,7 @@ from globalObjects import me, ally, enemies, robots, ball
 from moveables import Moveable, Ball
 from helperClasses import Point, Actions, Goals, BallStatus
 from helperFunctions import nearEnough
-from CommsAPI import turn, move, grab, ungrab, kick
+from CommsAPI import turn, move, grab, ungrab, kick, holo
 from goals import *
 
 
@@ -93,15 +93,6 @@ def executePlan():
             me.grabbed=True
             me.plan.pop(0)
 
-    elif currentAction == Actions.guardGoal:
-        if ball.moving == False:
-            turnToDirection(me.bearing(ball))
-        elif ball.moving and (me.distance(ball.predictedPosition(10)) < me.distance(ball)): # ballcoming towardsa us:
-            executePlan()
-        elif ball.moving:# ball moving but not towards us
-            me.interceptObject(ball)
-            me.plan.pop(0)
-
     elif currentAction == Actions.receiveBall:
         if me.moving:
             print("Still doing stuff")
@@ -122,6 +113,15 @@ def executePlan():
                 else:
                     # go to where its actually going
                     collectBall()
+
+    elif currentAction == Actions.defend:
+        if me.moving:
+            print("Still doing stuff")
+        else:
+            targetPoint = me.plan[0]['targetFunction']()
+            print(targetPoint)
+            moveToPointHolo(targetPoint)
+
 
     # if our plan is over, we've achieved our goal
     if len(me.plan)==0:
@@ -153,6 +153,34 @@ def moveToPoint(point):
     # make that movement
     move(distance, angle)
 
+
+def moveToPointHolo(point):
+    if not isinstance(point,Point):
+        raise TypeError("Point expected, " + point.__class__.__name__ + " found")
+
+    # ensure the attacker doesn't go into the goal
+    if me.position == 1:#attacker
+        if outGoal == rightGoalCenter:
+            if(point.x <= 30 or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+        else:#defender
+            if(point.x <= (PITCH_LENGTH-30) or (point.y <= 180 and point.y >=40)):#check these values w/ real pitch
+                print("It's in the Goal Box, we Can't go there")
+
+    distance = point.distance(me.currentPoint)
+    angle = me.bearing(point) - me.currentRotation+90
+    print str(angle) +"First bit thing"
+    # ensure the angle is between 0 and 360
+    while True:
+        if angle < 0:
+            angle+=360
+        elif angle > 360:
+            angle-=360
+        else:
+            break
+    print str(angle)+ "Second bit thign"
+    # make that movement
+    holo(distance, angle)
 
 def turnToDirection(angle):
     angleToMove = angle-me.currentRotation

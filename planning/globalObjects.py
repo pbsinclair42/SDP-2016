@@ -17,8 +17,8 @@ ball = Ball(name="ball")
 moveables = [me,ally,ball]+enemies
 
 # the point at the center of the goal
-leftGoalCenter = Point(30,PITCH_WIDTH/2)
-rightGoalCenter=Point(PITCH_LENGTH-30,PITCH_WIDTH/2)
+leftGoalCenter = Point(15,PITCH_WIDTH/2)
+rightGoalCenter=Point(PITCH_LENGTH-15,PITCH_WIDTH/2)
 
 if OUR_GOAL=='right':
     ourGoal = rightGoalCenter

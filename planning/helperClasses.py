@@ -100,3 +100,4 @@ class Actions(Enum):
     kick = 5
     guardGoal = 6
     receiveBall = 7
+    defend = 8

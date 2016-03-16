@@ -156,8 +156,11 @@ def guardGoal():
     def defend():
         """Get the Y coord of ball to try and defend the goal"""
         ballY = ball.currentPoint.y
+        minY = PITCH_WIDTH/2 - 0.5*GOAL_WIDTH + ROBOT_WIDTH/2
+        maxY = PITCH_WIDTH/2 + 0.5*GOAL_WIDTH - ROBOT_WIDTH/2
+        ballY = max(minY, min(maxY, ballY))
         return Point(ourGoal.x,ballY)
 
     me.plan = [{'action': Actions.moveToPoint, 'targetFunction': gotoGoal},
                {'action': Actions.rotateToAngle, 'targetFunction': rotate},
-               {'action': Actions.moveToPoint,'targetFunction':defend}]
+               {'action': Actions.defend,'targetFunction':defend}]
