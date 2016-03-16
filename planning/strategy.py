@@ -1,5 +1,5 @@
 from globalObjects import ball, me, ally, enemies
-from helperClasses import BallStatus
+from helperClasses import BallStatus, Goals
 from goals import collectBall, blockPass, guardGoal, shoot, passBall
 from helperFunctions import lineOfSight
 
@@ -12,29 +12,33 @@ def playBall():
     heldByEnemyA = ball.status == BallStatus.enemyA
     heldByEnemyB = ball.status == BallStatus.enemyB
 
-    if ballNearerMeThanAlly and ballNotNearEnemy:
-        print "I'm going to collect the ball."
-        collectBall()
+    if me.goal == Goals.none:
 
-    # If the enemy has the ball
-    elif heldByEnemyA or heldByEnemyB:
-        # if i'm closer to the ball than the ally
-        if me.distance(ball) < ally.distance(ball):
-            print "I'm going to block a pass"
-            blockPass()
-        # otherwise, defend the goal
-        else:
-            print "I'm going to go and guard the goal"
-            # move holonomically inside the goal to protect it.
-            guardGoal()
+        if ballNearerMeThanAlly and ballNotNearEnemy:
+            print "I'm going to collect the ball."
+            collectBall()
 
-    # if we have the ball
-    elif ball.status == BallStatus.me:
-        # if we can score a goal,
-        if lineOfSight(me.currentPoint, opponentGoal):
-            print "I'm going to shoot"
-            shoot()
-        # else, try and pass to ally
-        elif lineOfSight(me.currentPoint, ally.currentPoint):
-            print "I'm going to pass to my ally"
-            passBall()
+        # If the enemy has the ball
+        elif heldByEnemyA or heldByEnemyB:
+            # if I'm closer to the ball than the ally
+            if me.distance(ball) < ally.distance(ball):
+                print "I'm going to block a pass"
+                blockPass()
+            # otherwise, defend the goal
+            else:
+                print "I'm going to go and guard the goal"
+                # move holonomically inside the goal to protect it.
+                guardGoal()
+
+        # if we have the ball
+        elif ball.status == BallStatus.me:
+            # if we can score a goal,
+            if lineOfSight(me.currentPoint, opponentGoal):
+                print "I'm going to shoot"
+                shoot()
+            # else, try and pass to ally
+            elif lineOfSight(me.currentPoint, ally.currentPoint):
+                print "I'm going to pass to my ally"
+                passBall()
+            else:
+                pass

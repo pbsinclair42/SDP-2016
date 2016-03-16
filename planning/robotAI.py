@@ -85,7 +85,7 @@ def tick():
     if USING_SIMULATOR:
         commsSystem.tick()
     updatePositions()
-    #playBall()
+    playBall()
     executePlan()
     print me.plan
     threading.Timer(TICK_TIME, tick).start()
