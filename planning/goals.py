@@ -4,6 +4,7 @@ from helperClasses import Point, Goals, Actions
 from helperFunctions import sin, cos
 from actions import *
 import time
+from random import randrange
 
 """TODO
 Position to receive pass - Speak to Other Team About that
@@ -17,6 +18,7 @@ def collectBall():
     and implement the plan for achieving this"""
     # save the plan to the robot
     me.goal = Goals.collectBall
+    print("NEW GOAL: Collect ball")
 
     # function to calculate where to move to before ungrabbing
     def ungrabHere():
@@ -59,6 +61,7 @@ def shoot():
     and implement the plan for achieving this"""
     # save the plan to the robot
     me.goal = Goals.shoot
+    print("NEW GOAL: Shoot")
 
     # work out how far to kick the ball
     def distanceToKick():
@@ -69,6 +72,25 @@ def shoot():
 
     me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': aim},
                {'action': Actions.kick, 'targetFunction': distanceToKick}]
+
+
+def confuseEnemy():
+    """Shoogle around a bit to confuse the enemy and hopefully make them move"""
+    # save the plan to the robot
+    me.goal = Goals.confuse
+    print("NEW GOAL: Confuse the enemy")
+
+    actualDirection = me.currentRotation
+    randomRotationAmount = randrange(20,90)
+
+    def firstRotationAmount():
+        return actualDirection + randomRotationAmount
+
+    def backAgain():
+        return actualDirection
+
+    me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': firstRotationAmount},
+               {'action': Actions.rotateToAngle, 'targetFunction': backAgain}]
 
 
 def receiveAndPass():
@@ -95,6 +117,7 @@ def receiveAndPass():
 
 def passBall():
     me.goal = Goals.passBall
+    print("NEW GOAL: Pass")
 
     def rotate():
         return me.bearing(ally)
@@ -108,6 +131,7 @@ def passBall():
 
 def receivePass():
     me.goal = Goals.receivePass
+    print("NEW GOAL: Receive pass")
 
     def rotate():
         return me.bearing(ally)
@@ -120,6 +144,7 @@ def receivePass():
 
 def blockPass():
     me.goal = Goals.blockPass
+    print("NEW GOAL: Intercept enemy pass")
 
     def blockHere():
         """move to inbetween two oponents"""
@@ -143,6 +168,7 @@ def blockPass():
 def guardGoal():
     """Stop bad people from scoring"""
     me.goal = Goals.guardGoal
+    print("NEW GOAL: Guard our goal")
 
     def gotoGoal():
         """Move into position"""
@@ -164,3 +190,9 @@ def guardGoal():
     me.plan = [{'action': Actions.moveToPoint, 'targetFunction': gotoGoal},
                {'action': Actions.rotateToAngle, 'targetFunction': rotate},
                {'action': Actions.defend,'targetFunction':defend}]
+
+def clearPlan():
+    """Reset the robot's goal and plan"""
+    me.goal=Goals.none
+    me.plan=[]
+    print("GOAL CLEAED")

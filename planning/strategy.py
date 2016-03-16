@@ -1,6 +1,6 @@
 from globalObjects import ball, me, ally, enemies
 from helperClasses import BallStatus, Goals
-from goals import collectBall, blockPass, guardGoal, shoot, passBall
+from goals import collectBall, blockPass, guardGoal, shoot, passBall, confuseEnemy, receivePass, clearPlan
 from helperFunctions import lineOfSight
 
 
@@ -12,33 +12,39 @@ def playBall():
     heldByEnemyA = ball.status == BallStatus.enemyA
     heldByEnemyB = ball.status == BallStatus.enemyB
 
+    # stop guarding the goal if you could be more useful elsewhere
+    if me.goal == Goals.guardGoal:
+        if not (heldByEnemyA or heldByEnemyB or (ball.status == BallStatus.free and not ballNearerMeThanAlly)) :
+            clearPlan()
+
     if me.goal == Goals.none:
-
-        if ballNearerMeThanAlly and ballNotNearEnemy:
-            print "I'm going to collect the ball."
-            collectBall()
-
         # If the enemy has the ball
-        elif heldByEnemyA or heldByEnemyB:
+        if heldByEnemyA or heldByEnemyB:
             # if I'm closer to the ball than the ally
             if me.distance(ball) < ally.distance(ball):
-                print "I'm going to block a pass"
                 blockPass()
             # otherwise, defend the goal
             else:
-                print "I'm going to go and guard the goal"
-                # move holonomically inside the goal to protect it.
                 guardGoal()
 
         # if we have the ball
         elif ball.status == BallStatus.me:
-            # if we can score a goal,
+            # shoot if possible
             if lineOfSight(me.currentPoint, opponentGoal):
-                print "I'm going to shoot"
                 shoot()
             # else, try and pass to ally
             elif lineOfSight(me.currentPoint, ally.currentPoint):
-                print "I'm going to pass to my ally"
                 passBall()
             else:
-                pass
+                confuseEnemy()
+
+        # if our ally has the ball, set up a pass
+        elif ball.status == BallStatus.ally:
+            receivePass()
+
+        # if noone has the ball, go grab the ball or defend
+        elif ballNearerMeThanAlly:
+            collectBall()
+        else:
+            guardGoal()
+        
