@@ -32,6 +32,17 @@ def move(distance, angle):
     print("Turning " + str(angle) + " degrees then moving " + str(distance) + "cm")
 
 
+def holo(distance, angle):
+    """Moves `distance` cm at a direction of `angle` degrees"""
+    # TODO: update for holo movement
+    # ensure the distance is an appropriate size
+    distance = int(distance)
+    angle = int(angle)
+    commsSystem.rot_move(angle, distance)
+    me.moving=True
+    print("Turning " + str(angle) + " degrees then moving " + str(distance) + "cm")
+
+
 def kick(distance):
     """Kicks the ball `distance` cm"""
     # ensure the distance is an appropriate size
