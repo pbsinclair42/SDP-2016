@@ -17,6 +17,10 @@ def playBall():
         if not (heldByEnemyA or heldByEnemyB or (ball.status == BallStatus.free and not ballNearerMeThanAlly)) :
             clearPlan()
 
+    elif me.goal == Goals.collectBall:
+        if heldByEnemyA or heldByEnemyB or ball.status==BallStatus.ally:
+            clearPlan()
+
     if me.goal == Goals.none:
         # If the enemy has the ball
         if heldByEnemyA or heldByEnemyB:
