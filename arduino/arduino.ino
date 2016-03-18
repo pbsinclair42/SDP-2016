@@ -703,7 +703,7 @@ int kickStep(){
         // initial state which starts ungrabbing
         case 0:
             command_time = millis();
-            motorBackward(GRABBER, GRABBER_POWER);
+            motorForward(GRABBER, GRABBER_POWER);
             rotMoveGrabMode = 1;
             return 0;
         
@@ -733,7 +733,7 @@ int kickStep(){
         case 3:
             if (millis() - command_time > KICK_TIME){
                 motorBackward(KICKER, 0);
-                motorForward(GRABBER, GRABBER_POWER);
+                motorBackward(GRABBER, GRABBER_POWER);
                 rotMoveGrabMode = 4;
                 command_time = millis(); // restore current time
             }
@@ -743,7 +743,7 @@ int kickStep(){
         // if re-grabbed, process is finished
         case 4:
             if (millis() - command_time > GRAB_TIME){
-                motorForward(GRABBER, 0);
+                motorBackward(GRABBER, 0);
                 rotMoveGrabMode = 0;
                 return 1; // make sure that the only way to return from this function is to 
             }
@@ -762,13 +762,13 @@ int kickStep(){
 int grabStep(){
     switch(rotMoveGrabMode){
         case 0:
-            motorForward(GRABBER, GRABBER_POWER);
+            motorBackward(GRABBER, GRABBER_POWER);
             command_time = millis();
             rotMoveGrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
-                motorForward(GRABBER, 0);
+                motorBackward(GRABBER, 0);
                 rotMoveGrabMode = 0;
                 finishGrabbing = 0;
                 return 1;
@@ -780,13 +780,13 @@ int grabStep(){
 int unGrabStep(){
     switch(rotMoveGrabMode){
         case 0:
-            motorBackward(GRABBER, GRABBER_POWER);
+            motorForward(GRABBER, GRABBER_POWER);
             command_time = millis();
             rotMoveGrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
-                motorBackward(GRABBER, 0);
+                motorForward(GRABBER, 0);
                 rotMoveGrabMode = 0;
                 return 1;
 
