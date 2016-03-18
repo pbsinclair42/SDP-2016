@@ -174,18 +174,11 @@ class CommsThread(object):
         """
         print 15 * "STOP WAS CALLED"
         self.process_event.clear()
-        '''
-    def current_cmd(self):
-        """
-            get current command
-        """
+    
+    def stop_robot(self):
+        command = self.command_dict["STOP"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+        self.queue_command(command)
 
-
-        self.parent_pipe_in.send("ccmd")
-        while self.parent_pipe_out.poll():
-            self.x = self.parent_pipe_out.recv()
-        return self.x
-        '''
     def report(self):
         """
             Return a report of sent commands and currently-buffered data

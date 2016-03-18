@@ -3,16 +3,9 @@
 #include <Math.h>
 #include <Wire.h>
 #include "Accelerometer_Compass_LSM303D.h"
-/***
-IMPORTANT: PLEASE READ BEFORE EDITING:
-    If editing file:
-        1. push to master only working code that doesn't break it;
-        2. follow the standard reasonably;
-        3. read the comments before-hand.
-***/
 
 // Motor Definitions
-#define MOTOR_LFT   0
+#define MOTOR_LFT   3
 #define MOTOR_RGT   1
 #define MOTOR_BCK   2
 #define GRABBER     4
@@ -126,12 +119,12 @@ float target_angle;
 float angle_difference;
 
 // Accelerometer/Magnetometer values
-int mag_min_x; // for caliration
-int mag_max_x; // for caliration
-int mag_min_y; // for caliration
-int mag_max_y; // for caliration
-int mag_min_z; // for caliration
-int mag_max_z; // for caliration
+int mag_min_x; // for calibration
+int mag_max_x; // for calibration
+int mag_min_y; // for calibration
+int mag_max_y; // for calibration
+int mag_min_z; // for calibration
+int mag_max_z; // for calibration
 
 int accel[3];                // we'll store the raw acceleration values here
 int mag[3];                  // raw magnetometer values stored here
@@ -170,14 +163,10 @@ void setup() {
     while(!Lsm303d.isMagReady());// wait for the magnetometer readings to be ready
     Lsm303d.getMag(mag);  // get the magnetometer values, store them in mag
     
-    // X:0, Y:1, Z:2 for index:axis
-    for (int i=0; i<3; i++)
-    {
-        realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;  // calculate real acceleration values, in units of g
+    for (int i=0; i<3; i++){
+        realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;  
     }
-    // angle between X and north
     heading = Lsm303d.getHeading(mag);
-    // tilt-compensated angl
     titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
     
     mag_min_x = mag[0];
@@ -189,7 +178,6 @@ void setup() {
     
     /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
-
   }
   
 
@@ -209,10 +197,7 @@ void loop() {
   switch(MasterState){
         
         case IDLE_STATE:
-            // very strange issue fix
-            if (command_index > buffer_index && commandOverflow == bufferOverflow){
-                command_index = buffer_index;
-            }
+
             // check whether circular buffer contains a valid command
             if ((command_index != buffer_index && command_index + 4 <= buffer_index && commandOverflow == bufferOverflow) || 
                  commandOverflow < bufferOverflow) {
@@ -359,8 +344,8 @@ void Communications() {
                     motorAllStop();
                     rotMoveGrabMode = 0;
                     MasterState = 0;
-                    bufferOverflow = 0;
-                    commandOverflow = 0;
+                    command_index = target_value;
+                    commandOverflow = bufferOverflow;
                 }
               // override report_time to respond immediately!   
               report_time += RESPONSE_TIME;
@@ -681,19 +666,19 @@ void holo_math(int angle, float Rw){
 }
 void turn_holo_motors(){
     if (holo_vals[0] > 0)
-        motorForward(0, byte(holo_vals[0]));
+        motorForward(MOTOR_LFT, byte(holo_vals[0]));
     else
-        motorBackward(0, byte(fabs(holo_vals[0])));
+        motorBackward(MOTOR_RGT, byte(fabs(holo_vals[0])));
             
     if (holo_vals[1] > 0)
-        motorForward(1, byte(holo_vals[1]));
+        motorForward(MOTOR_RGT, byte(holo_vals[1]));
     else
-        motorBackward(1, byte(fabs(holo_vals[1])));
+        motorBackward(MOTOR_RGT, byte(fabs(holo_vals[1])));
             
     if (holo_vals[2] > 0)
-        motorForward(2, byte(holo_vals[2]));
+        motorForward(MOTOR_BCK, byte(holo_vals[2]));
     else
-        motorBackward(2, byte(fabs(holo_vals[2])));    
+        motorBackward(MOTOR_BCK, byte(fabs(holo_vals[2])));    
 }
 
 
