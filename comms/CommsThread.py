@@ -214,6 +214,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     data_buffer = []
     radio_connected = False
     ack_count = (0, 0)
+    prev_ack_count = ack_count
     seq_num = 0
     command_sleep_time = 0.005 # sleep time between sending each byte
     process_sleep_time = 0.13 # sleep time for process
@@ -223,6 +224,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         "buffer"   : [0, 0, 0], # Overflow, buffer, command index
         "seq_num"  : 0
     }
+    prev_mag_state = robot_state["mag_head"]
 
     # perform setup
     while not radio_connected:
@@ -275,8 +277,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         try:
         # ensure data has been processed before attempting to send data
             #print data_buffer
-            process_data(cmnd_list, data_buffer, robot_state)
-            data_buffer = []
+            data_buffer = process_data(cmnd_list, data_buffer, robot_state)
             process_state(cmnd_list, robot_state)
         except IndexError:
             for i in range(0, 1000):
@@ -297,11 +298,19 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     cmnd_list[cmd_index][-3] = 1
                     print "Sending command: ", cmd_index, sequenced, "SEQ:", robot_state["seq_num"]
         except StopIteration:
+            # don't do anything if there are no commands to send
             pass
 
+        # computer ack count
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
-        pipe_out.send(ack_count)
-        pipe_out.send(robot_state["mag_head"])
+       
+        # report back to main process
+        if ack_count != prev_ack_count:
+            pipe_out.send(ack_count)
+            prev_ack_count = ack_count
+        if robot_state["mag_head"] != prev_mag_state
+            pipe_out.send(robot_state["mag_head"])
+            prev_mag_state = robot_state["mag_head"]
         #print robot_state
         sleep(process_sleep_time)
 
@@ -318,8 +327,8 @@ def process_data(commands, data, robot_state):
                 robot_state["buffer"] = [data[idx - 1], data[idx - 2], data[idx - 3]]
                 robot_state["mag_head"] = data[idx - 4] + data[idx - 5]
                 robot_state["seq_num"] = data[idx - 2] / 4 % 2
-                break;
-    del data
+                return []
+    return data
 def process_state(cmnd_list, robot_state):
     """Set command_list flags, based on robot state, parsed from incoming comms"""
     # if this is the first command and it has not been sent
@@ -331,7 +340,7 @@ def process_state(cmnd_list, robot_state):
             print "Corrected State", cmnd_list, range(0, command_bias)
 
 
-    # see if everythin is received
+    # see if everything is received
     if cmnd_list:
         for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
             cmnd_list[idx][-2] = 1
