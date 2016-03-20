@@ -713,80 +713,9 @@ int holoMoveStep(){
         else {
             Rw = right_angle / 90.0;
         }
-
-    holo_math(holo_angle, Rw_current);
+    movement_angle = movement_angle - (heading - 90);
+    holo_math(movement_angle, Rw);
     turn_holo_motors();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    switch(MoveMode){
-        case 0:
-            // get angle and distance
-            holo_angle = command_buffer[command_index + 1];
-            if ((command_buffer[command_index] & 64) != 0){
-                holo_angle += 180;
-            }
-            
-            holo_math(holo_angle, 0);
-            turn_holo_motors(); 
-            
-            target_angle = heading;
-            restoreMotorPositions(positions);
-            MoveMode = 1;
-            return 0;  
-        case 1:
-            distance = command_buffer[command_index + 2] * MOTION_CONST;
-            // if we're not there yet
-            if (abs(positions[0]) + abs(positions[1]) + abs(positions[2]) < distance){
-                updateMotorPositions(positions);
-
-                // if we've turned, calculate a new angular acceleration
-                if (calculateAngleDifference(heading, target_angle) > 4){
-                    left_angle = calculateLeftAngle(heading, target_angle);
-                    right_angle = calculateRightAngle(heading, target_angle);
-                    if (left_angle < right_angle){
-                        Rw_current = -1 * (left_angle / 90.0);
-                    }
-                    else {
-                        Rw_current = right_angle / 90.0;
-                    }
-                }
-                else {
-                    Rw_current = 0;
-                }
-                // turn motors again
-                holo_math(holo_angle, Rw_current);
-                turn_holo_motors();
-                delay(75);
-                return 0;
-                
-            
-            } else{
-                restoreMotorPositions(positions);
-                motorAllStop();
-                MoveMode = 0;
-                return 1;
-            }
-    }
     
 }
 void holo_math(int angle, float Rw){
