@@ -102,11 +102,9 @@ unsigned long idle_time;    // to make compass calibration possible
 unsigned long report_time;  // to make reporting state possible
 unsigned long atomic_time;  // to make sure atomic grab/ungrab may be performed
 unsigned long correct_time; // to enable rotational correction optimization
+
 // holonomic parameters
 int holo_vals[3];
-int holo_angle;
-float Rw_current;
-
 
 // rotation parameters
 int rotaryTarget;
@@ -693,11 +691,52 @@ int rotMoveStep(){
     }
 }
 int holoMoveStep(){
-    // TODO: Add rotational values and feedback
-    // TODO: Scale motor values by 1 / max: abs(value1, value2, value3)
-    // to make sure motors are running as fast as possible since
-    // maths functions may produce vectors not properly scaled to 1
-    int distance, left_angle, right_angle;
+    // Note that values are absolute, and differences are based on absolute magnetic heading
+    int left_angle, right_angle, movement_angle, facing_angle;
+    float Rw = 0;
+    
+    movement_angle = command_buffer[command_index + 1];
+    facing_angle = command_buffer[command_index + 2];
+    
+    if (command_buffer[command_index] & 254)
+        facing_angle += 180;
+
+    if (command_buffer[command_index] & 253)
+        movement_angle += 180;
+
+    if (calculateAngleDifference(heading, facing_angle) > 4)
+        left_angle = calculateLeftAngle(heading, target_angle);
+        right_angle = calculateRightAngle(heading, target_angle);
+        if (left_angle < right_angle){
+            Rw = -1 * (left_angle / 90.0);
+        }
+        else {
+            Rw = right_angle / 90.0;
+        }
+
+    holo_math(holo_angle, Rw_current);
+    turn_holo_motors();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     switch(MoveMode){
         case 0:
@@ -738,7 +777,6 @@ int holoMoveStep(){
                 holo_math(holo_angle, Rw_current);
                 turn_holo_motors();
                 delay(75);
-                Serial.println(Rw_current);
                 return 0;
                 
             
