@@ -71,9 +71,11 @@ int MAG_OFFSET_Z = 0;
 byte MasterState = 0;
 byte finishGrabbing = 0;
 byte MoveMode = 0;
-
+byte GrabMode = 0;
 boolean atomicGrab = 0;
+byte AtomicGrabMode = 0;
 boolean atomicUnGrab = 0;
+byte AtomicUnGrabMode = 0;
 
 
 // positions of wheels based on rotary encoder values
@@ -478,11 +480,55 @@ void CommsOut(){
 }
 
 void handleAtomicActions(){
-    if (!(atomicGrab || atomicUnGrab)){
-        atomic_time = millis();
-    }
-    else if (atomicUnGrab || (atomicGrab && atomicUnGrab)){
+    if (atomicUnGrab){
+        switch(AtomicUnGrabMode){
+            // start grabbing
+            case 0:
+                motorForward(GRABBER, GRABBER_POWER);
+                atomicUnGrabMode = 1;
+                break;
+            
 
+            // finish grabbing
+            case 1:
+                if (millis() - atomic_time > GRAB_TIME){
+                    motorForward(GRABBER, 0);
+                    atomicUnGrabMode = 0;
+                    atomicUnGrab = 0;
+                    atomic_time = millis();
+                }
+                break;
+            
+
+            default:
+                break;
+        }
+    }
+    else if (atomicGrab){
+        switch(AtomicGrabMode){
+            case 0:
+                motorBackward(GRABBER, GRABBER_POWER);
+                atomicGrabMode = 1;
+                break;
+            
+
+            // finish grabbing
+            case 1:
+                if (millis() - atomic_time > GRAB_TIME){
+                    motorBackward(GRABBER, 0);
+                    atomicGrabMode = 0;
+                    atomicGrab = 0;
+                    atomic_time = millis();
+                }
+                break;
+
+
+            default:
+                break;
+        }
+    }
+    else{
+        atomic_time = millis();
     }
 }
 
