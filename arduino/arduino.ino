@@ -31,6 +31,7 @@
 // Movement and kicker Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
+#define ROTATION_CORRECT_TIME 400
 #define KICKER_CONST 10.0  
 
 
@@ -100,7 +101,7 @@ unsigned long command_time; // to make sure commands can be interrupted
 unsigned long idle_time;    // to make compass calibration possible
 unsigned long report_time;  // to make reporting state possible
 unsigned long atomic_time;  // to make sure atomic grab/ungrab may be performed
-
+unsigned long correct_time; // to enable rotational correction optimization
 // holonomic parameters
 int holo_vals[3];
 int holo_angle;
@@ -110,7 +111,7 @@ float Rw_current;
 // rotation parameters
 int rotaryTarget;
 int rotaryBias;
-
+byte in_the_zone = 0;
 
 // circular buffer counters
 byte bufferOverflow = 0;
@@ -604,11 +605,12 @@ int rotMoveStep(){
             
             angle_difference = calculateAngleDifference(heading, target_angle);
             degrees = command_buffer[command_index + 1];
-            if (angle_difference < 10){
+            if (angle_difference < 20){
                 motorAllStop();
                 MoveMode = 4;
                 delay(150);
                 command_time = millis();
+                correct_time = millis();
             }
             
             else{
@@ -660,11 +662,8 @@ int rotMoveStep(){
 
         // rotation correction
         case 4 :
-            if (millis() - command_time > 850){
-                motorAllStop();
-                MoveMode = 2;
-            }
-            else if (calculateAngleDifference(heading, target_angle) > 5){
+            if (calculateAngleDifference(heading, target_angle) > 5){
+                in_the_zone = 0;
                 left_angle = calculateLeftAngle(heading, target_angle);
                 right_angle = calculateRightAngle(heading, target_angle);
                 if (left_angle < right_angle){
@@ -675,7 +674,17 @@ int rotMoveStep(){
                 }
             }
             else{
-                motorAllStop();
+                // exit if you've been in the zone enough time
+                if (in_the_zone){
+                    if (millis() - correct_time > ROTATION_CORRECT_TIME){
+                        moveMode = 2;
+                        in_the_zone = 0;
+                    }
+                }
+                else{
+                    in_the_zone = 1;
+                    correct_time = millis();
+                }
           }
           return 0;
         default:
