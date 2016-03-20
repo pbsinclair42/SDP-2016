@@ -78,9 +78,9 @@ byte MasterState = 0;
 byte finishGrabbing = 0;
 byte MoveMode = 0;
 byte GrabMode = 0;
-boolean atomicGrab = 0;
+boolean AtomicGrab = 0;
 byte AtomicGrabMode = 0;
-boolean atomicUnGrab = 0;
+boolean AtomicUnGrab = 0;
 byte AtomicUnGrabMode = 0;
 
 
@@ -247,13 +247,22 @@ void loop() {
             break;
         
 
-        case CMD_HOLMOVE_Q1:
+        case CMD_HOLMOVE_1:
             state_end = holoMoveStep();
             break;
         
-        case CMD_HOLMOVE_Q2:
+        case CMD_HOLMOVE_2:
             state_end = holoMoveStep();
             break;
+
+        case CMD_HOLMOVE_3:
+            state_end = holoMoveStep();
+            break;
+        
+        case CMD_HOLMOVE_4:
+            state_end = holoMoveStep();
+            break;
+
 
         case CMD_KICK:
             state_end = kickStep();
@@ -285,15 +294,12 @@ void loop() {
         
 
         default:
-            Serial.write(CMD_ERROR);
-            Serial.write(CMD_ERROR);
-            Serial.write(CMD_ERROR);
             MasterState = IDLE_STATE;
             state_end = 1;
             break;
     }
   
-  if (state_end){
+  if (state_end || millis() - command_time > 5000){
         MasterState = IDLE_STATE;
         command_index += 4;
 
@@ -337,7 +343,7 @@ void atomicHoloCommand(byte target_value){
 }
 void restoreCommsState(byte target_value){
     buffer_index = target_value - 4;
-    bufferOverflow = buffer_index == 252 : bufferOverflow - 1 ? bufferOverflow;  
+    bufferOverflow = buffer_index == 252 ? bufferOverflow - 1 : bufferOverflow;  
     SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
 }
 
@@ -397,7 +403,7 @@ void Communications() {
                     
                     case CMD_GRAB:
                         if (command_buffer[target_value - 3]){
-                            atomicGrab = 1;
+                            AtomicGrab = 1;
                             restoreCommsState(target_value);
                         }
                         break;
@@ -405,7 +411,7 @@ void Communications() {
 
                     case CMD_UNGRAB:
                         if (command_buffer[target_value - 3]){
-                            atomicUnGrab = 1;
+                            AtomicUnGrab = 1;
                             restoreCommsState(target_value);
                         }
                         break;
@@ -452,7 +458,6 @@ void Communications() {
         }
         // Time-out serial if reading is taking too long
         else if (millis() - serial_time > 200){ 
-            Serial.write(CMD_FULL);
             while(buffer_index %4 != 0) {
                 buffer_index--;
             }
@@ -495,12 +500,12 @@ void CommsOut(){
 }
 
 void handleAtomicActions(){
-    if (atomicUnGrab){
+    if (AtomicUnGrab){
         switch(AtomicUnGrabMode){
             // start grabbing
             case 0:
                 motorForward(GRABBER, GRABBER_POWER);
-                atomicUnGrabMode = 1;
+                AtomicUnGrabMode = 1;
                 break;
             
 
@@ -508,8 +513,8 @@ void handleAtomicActions(){
             case 1:
                 if (millis() - atomic_time > GRAB_TIME){
                     motorForward(GRABBER, 0);
-                    atomicUnGrabMode = 0;
-                    atomicUnGrab = 0;
+                    AtomicUnGrabMode = 0;
+                    AtomicUnGrab = 0;
                     atomic_time = millis();
                 }
                 break;
@@ -519,11 +524,11 @@ void handleAtomicActions(){
                 break;
         }
     }
-    else if (atomicGrab){
+    else if (AtomicGrab){
         switch(AtomicGrabMode){
             case 0:
                 motorBackward(GRABBER, GRABBER_POWER);
-                atomicGrabMode = 1;
+                AtomicGrabMode = 1;
                 break;
             
 
@@ -531,8 +536,8 @@ void handleAtomicActions(){
             case 1:
                 if (millis() - atomic_time > GRAB_TIME){
                     motorBackward(GRABBER, 0);
-                    atomicGrabMode = 0;
-                    atomicGrab = 0;
+                    AtomicGrabMode = 0;
+                    AtomicGrab = 0;
                     atomic_time = millis();
                 }
                 break;
@@ -675,7 +680,7 @@ int rotMoveStep(){
                 // exit if you've been in the zone enough time
                 if (in_the_zone){
                     if (millis() - correct_time > ROTATION_CORRECT_TIME){
-                        moveMode = 2;
+                        MoveMode = 2;
                         in_the_zone = 0;
                     }
                 }
@@ -716,6 +721,7 @@ int holoMoveStep(){
     movement_angle = movement_angle - (heading - 90);
     holo_math(movement_angle, Rw);
     turn_holo_motors();
+    return 0;
     
 }
 void holo_math(int angle, float Rw){
@@ -825,7 +831,6 @@ int kickStep(){
         default:
             //Serial.writeln("BAD KICK");
             MoveMode = 0;
-            Serial.write(CMD_ERROR);
             return -1;
     }
     return -1;
