@@ -201,19 +201,20 @@ void loop() {
         return;
     } 
 
-  // Comms in and out
-  Communications();
-  CommsOut();
+    // Comms in and out
+    Communications();
+    CommsOut();
   
-  // Sensor FSM part
-  pollAccComp();
-  updateMotorPositions(positions);
+    // Sensor FSM part
+    pollAccComp();
+    updateMotorPositions(positions);
 
-  // Action fsm part
-  // remove SEQ from command
-  MasterState = MasterState & 127;
-  switch(MasterState){
-        
+    // Action fsm part
+    // remove SEQ from command
+    handleAtomicActions();
+    MasterState = MasterState & 127;
+    switch(MasterState){
+            
         case IDLE_STATE:
 
             // check whether circular buffer contains a valid command
@@ -283,7 +284,6 @@ void loop() {
             state_end = 1;
             break;
     }
-
   
   if (state_end){
         MasterState = IDLE_STATE;
@@ -473,34 +473,6 @@ void CommsOut(){
         Serial.write(255 - checksum);
         report_time = millis();
     }  
-}
-
-void pollAccComp(){
-
-    // calculate real acceleration values, in units of g
-    // X:0, Y:1, Z:2 for index:axis
-    Lsm303d.getAccel(accel);
-    for (int i=0; i<3; i++)
-        {
-            realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
-        }
-    
-    // wait for the magnetometer readings to be ready
-    // if they're not - get them at next main loop
-    if(Lsm303d.isMagReady()){
-        // get the magnetometer values, store them in mag
-        Lsm303d.getMag(mag);
-        // uncomment during calibration
-        mag[0] += MAG_OFFSET_X;
-        mag[1] += MAG_OFFSET_Y;
-        mag[2] += MAG_OFFSET_Z;
-
-        // angle between X and north
-        heading = Lsm303d.getHeading(mag);
-        
-        // tilt-compensated angle
-        titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
-        }
 }
 
 int rotMoveStep(){
@@ -728,6 +700,8 @@ void holo_math(int angle, float Rw){
         holo_vals[1] = m1_val; // right
         holo_vals[2] = m3_val; // back
 }
+
+
 void turn_holo_motors(){
     if (holo_vals[0] > 0)
         motorForward(MOTOR_LFT, byte(holo_vals[0]));
@@ -925,7 +899,33 @@ int calculateRightAngle(float current_angle, float target_angle){
         return phi;
 }
 
+void pollAccComp(){
 
+    // calculate real acceleration values, in units of g
+    // X:0, Y:1, Z:2 for index:axis
+    Lsm303d.getAccel(accel);
+    for (int i=0; i<3; i++)
+        {
+            realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;
+        }
+    
+    // wait for the magnetometer readings to be ready
+    // if they're not - get them at next main loop
+    if(Lsm303d.isMagReady()){
+        // get the magnetometer values, store them in mag
+        Lsm303d.getMag(mag);
+        // uncomment during calibration
+        mag[0] += MAG_OFFSET_X;
+        mag[1] += MAG_OFFSET_Y;
+        mag[2] += MAG_OFFSET_Z;
+
+        // angle between X and north
+        heading = Lsm303d.getHeading(mag);
+        
+        // tilt-compensated angle
+        titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
+        }
+}
 
 
 void calibrateCompass(){
