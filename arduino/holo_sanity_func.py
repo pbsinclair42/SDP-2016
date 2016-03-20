@@ -42,10 +42,28 @@ def holo(angle):
 
     return accel_angular
 
+def angle_diff(start, end):
+    phi = abs(end - start) % 360
+    if phi > 180:
+        return 360 - phi
+    else:
+        return phi
+
+
+def angles(a1, a2):
+    print "A1 is:", a1,
+    print "A2 is:", a2,
+    d = abs(a1 - a2) % 360
+    print "Diff is:", 360 - d if d > 180 else d
+    print "Right: ", 360 - d if a1 < a2 else d
+    print "Left: ", d if a1 < a2 else 360 - d
+    print
+
+def magnetic_to_holonomic(heading, holo_magnetic):
+    ref_point = heading - 90
+    angle = holo_magnetic - ref_point
+    print angle
 if __name__ == "__main__":
-    angulars = []
-    for i in range(0, 360, 30):
-        print "HOLO", i
-        angulars += [holo(i)]
-    print angulars
-    
+    magnetic_to_holonomic(273, 244)
+    magnetic_to_holonomic(273, 315)
+    magnetic_to_holonomic(30, 40)
