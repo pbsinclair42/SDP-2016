@@ -21,8 +21,7 @@ class CommsThread(object):
         self.command_dict = {
             "ROT_MOVE_POS" : chr(3  ),
             "ROT_MOVE_NEG" : chr(15),
-            "HOL_MOVE_POS" : chr(2  ),
-            "HOL_MOVE_NEG" : chr(66),
+            "HOL_MOVE"     : chr(124  ),
             "KICK"         : chr(4  ),
             "STOP"         : chr(8  ),
             "GRAB"         : chr(16 ),
@@ -124,12 +123,20 @@ class CommsThread(object):
             self.move(255);
             offset -= 255
 
-    def holo(self, dist_vector, angular):
-        if angular > 180:
-            command = self.command_dict["HOL_MOVE_NEG"] + chr(int(angular - 180)) + chr(int(dist_vector)) + self.command_dict["END"]
-        else:
-            command = self.command_dict["HOL_MOVE_POS"] + chr(int(angular)) + chr(int(dist_vector)) + self.command_dict["END"]
+    def holo(self, dist_vector, angular_vector):
+        command_byte = ord(self.command_dict["HOL_MOVE"])
+        
+        if dist_vector > 180:
+            command_byte += 1
+            dist_vector = dist_vector - 180
+        
+        if angular_vector > 180
+            command_byte += 2
+            angular_vector = angular_vector - 180
+
+        command = chr(command_byte) + chr(int(dist_vector)) + chr(int(angular_vector)) + self.command_dict["END"]
         self.queue_command(command)
+    
     def exit(self):
         """
             Exit comms process
@@ -144,18 +151,24 @@ class CommsThread(object):
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
-    def grab(self):
+    def grab(self, atomic=False):
         """
             grab
         """
-        command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+        if not atomic:
+            command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
+        else:
+            command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
-    def ungrab(self):
+    def ungrab(self, atomic=False):
         """
             ungrab
         """
-        command = self.command_dict["UNGRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+        if not atomic:
+            command = self.command_dict["UNGRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
+        else:
+            command = self.command_dict["UNGRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
     def flush(self):
@@ -168,11 +181,10 @@ class CommsThread(object):
         command = self.command_dict["FLUSH"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 
-    def stop(self):
+    def stop_comms(self):
         """
             stop communications process until a new command has been issued
         """
-        print 15 * "STOP WAS CALLED"
         self.process_event.clear()
     
     def stop_robot(self):
@@ -217,7 +229,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     prev_ack_count = ack_count
     seq_num = 0
     command_sleep_time = 0.005 # sleep time between sending each byte
-    process_sleep_time = 0.13 # sleep time for process
+    process_sleep_time = 0.1 # sleep time for process
     # robot state parameters
     robot_state = {
         "mag_head" : 0,
