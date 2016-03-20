@@ -34,19 +34,23 @@
 #define KICKER_CONST 10.0  
 
 
-// COMMS API Byte Definitions
+/****** COMMS API Byte Definitions  ******/
 #define CMD_ROTMOVE    B00000011 // Buffered. Bits 2-3 indicate direction 
 #define CMD_ROTMOVECCW B00001111 // Buffered. Bits 2-3 indicate direction
-#define CMD_KICK       B00000100 // Buffered.
+
 #define CMD_STOP       B00001000 // Atomic.
+#define CMD_KICK       B00000100 // Buffered.
 #define CMD_GRAB       B00010000 // Buffered or atomic dependent on next byte
 #define CMD_UNGRAB     B00100000 // Buffered or atomic dependent on next byte
 #define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
-#define CMD_HOLMOVE_1  B01111100 // Buffered. May be corrected via the same command. First 4 bits part of args
-#define CMD_HOLMOVE_2  B01111101 // Buffered. May be corrected via the same command. First 4 bits part of args
-#define CMD_HOLMOVE_3  B01111110 // Buffered. May be corrected via the same command. First 4 bits part of args
-#define CMD_HOLMOVE_4  B01111111 // Buffered. May be corrected via the same command. First 4 bits part of args
-#define CMD_ACK        B11111010 // Sent  back based on response time for encoded state representation feedback
+
+#define CMD_HOLMOVE_1  B01111100 // Buffered. May be corrected via the same command. First 2 bits part of args
+#define CMD_HOLMOVE_2  B01111101 // Buffered. May be corrected via the same command. First 2 bits part of args
+#define CMD_HOLMOVE_3  B01111110 // Buffered. May be corrected via the same command. First 2 bits part of args
+#define CMD_HOLMOVE_4  B01111111 // Buffered. May be corrected via the same command. First 2 bits part of args
+
+#define CMD_FIN        B11111101 // Sent  back based on response time for encoded state representation feedback
+
 
 // Comms Tuning Parameters
 #define RESPONSE_TIME 200
@@ -57,6 +61,7 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
+
 
 #define COMPASS_CALIBRATION_TIME 5000
 int MAG_OFFSET_X = 0;
@@ -154,6 +159,7 @@ void restoreState(){
     motorAllStop();
     idle_time = millis();
     report_time = millis();
+    atomic_time = millis();
 }
 
 // Main Functions: Setup, Loop and SerialEvent
@@ -326,13 +332,16 @@ void atomicHoloCommand(byte target_value){
             // copy new command into previous command
             command_buffer[target_value - 8 + i] = command_buffer[target_value - 4 + i];
         }
-        // restore previous state
-        buffer_index = target_value - 4;
-        bufferOverflow = buffer_index == 252 : bufferOverflow - 1 ? bufferOverflow;  
-        SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
+        restoreCommsState(target_value);
     }
 
 }
+void restoreCommsState(byte target_value){
+    buffer_index = target_value - 4;
+    bufferOverflow = buffer_index == 252 : bufferOverflow - 1 ? bufferOverflow;  
+    SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
+}
+
 
 void Communications() {
     // for targetting buffer checks so as not to do buffer[0 - 1]
@@ -388,37 +397,44 @@ void Communications() {
                         break;
                     
                     case CMD_GRAB:
-                        if (command_buffer[target_value - 3])
+                        if (command_buffer[target_value - 3]){
                             atomicGrab = 1;
+                            restoreCommsState(target_value);
+                        }
                         break;
                     
 
                     case CMD_UNGRAB:
-                        if (command_buffer[target_value - 3])
+                        if (command_buffer[target_value - 3]){
                             atomicUnGrab = 1;
+                            restoreCommsState(target_value);
+                        }
                         break;
                     
                     case CMD_HOLMOVE_1:
+                        // commsState is restored inside the function
                         atomicHoloCommand(target_value);
                         break;
 
 
                     case CMD_HOLMOVE_2:
+                        // commsState is restored inside the function
                         atomicHoloCommand(target_value);
                         break;
 
 
                     case CMD_HOLMOVE_3:
+                        // commsState is restored inside the function
                         atomicHoloCommand(target_value);
                         break;
 
 
                     case CMD_HOLMOVE_4:
+                        // commsState is restored inside the function
                         atomicHoloCommand(target_value);
                         break;
                 }
-
-              report_time += RESPONSE_TIME + 1;
+                report_time += RESPONSE_TIME + 1;
             }
             // report invalid command
             else{
