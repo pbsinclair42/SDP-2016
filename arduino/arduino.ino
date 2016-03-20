@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include "Accelerometer_Compass_LSM303D.h"
 
+
 // Motor Definitions
 #define MOTOR_LFT   3
 #define MOTOR_RGT   1
@@ -22,59 +23,58 @@
 #define GRABBER_POWER 255
 
 
-// temporal calibrations
+// temporal calibrations for grabber/ kicker
 #define KICK_TIME 550
 #define GRAB_TIME 650
 
 
-// Movement Constants
+// Movement and kicker Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
 #define KICKER_CONST 10.0  
 
 
 // COMMS API Byte Definitions
-#define CMD_ROTMOVE    B00000011 // Buffered: MSB 1 performs CCW rotation
-#define CMD_ROTMOVECCW B00001111 // Buffered: MSB 1 performs CCW rotation
-#define CMD_HOLMOVE_Q1 B00000010 // Buffered
-#define CMD_HOLMOVE_Q2 B01000010 // Buffered
-#define CMD_KICK       B00000100 // Buffered
-#define CMD_STOP       B00001000 // Buffered
-#define CMD_GRAB       B00010000 // Buffered
-#define CMD_UNGRAB     B00100000 // Buffered
+#define CMD_ROTMOVE    B00000011 // Buffered. Bits 2-3 indicate direction 
+#define CMD_ROTMOVECCW B00001111 // Buffered. Bits 2-3 indicate direction
+#define CMD_KICK       B00000100 // Buffered.
+#define CMD_STOP       B00001000 // Atomic.
+#define CMD_GRAB       B00010000 // Buffered or atomic dependent on next byte
+#define CMD_UNGRAB     B00100000 // Buffered or atomic dependent on next byte
 #define CMD_FLUSH      B01000000 // Immediate. Flushes the buffer and awaits new commands
-/* Sent by Arduino*/
-//define CMD_END        B11111101 // Buffered
-#define CMD_ERROR      B11111111 // Sent for errors
-#define CMD_FULL       B11111110 // Sent if buffer is full
-#define CMD_RESEND     B11111100 // if all commands haven't been received in 500 miliseconds
-#define CMD_ACK        B11111010 // Sent after command has been received
-#define CMD_FIN        B11111101 // Sent when command is finished
+#define CMD_HOLMOVE_1  B01111100 // Buffered. May be corrected via the same command. First 4 bits part of args
+#define CMD_HOLMOVE_2  B01111101 // Buffered. May be corrected via the same command. First 4 bits part of args
+#define CMD_HOLMOVE_3  B01111110 // Buffered. May be corrected via the same command. First 4 bits part of args
+#define CMD_HOLMOVE_4  B01111111 // Buffered. May be corrected via the same command. First 4 bits part of args
+#define CMD_ACK        B11111010 // Sent  back based on response time for encoded state representation feedback
 
 // Comms Tuning Parameters
 #define RESPONSE_TIME 200
-
 byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
+
 
 // utils
 #define BUFFERSIZE 256
 #define ROTARY_COUNT 3
 #define IDLE_STATE 0
 
-
-#define MAG_OFFSET_X -2881
-#define MAG_OFFSET_Y 1812
-#define MAG_OFFSET_Z -855
+#define COMPASS_CALIBRATION_TIME 5000
+int MAG_OFFSET_X = 0;
+int MAG_OFFSET_Y = 0;
+int MAG_OFFSET_Z = 0;
 
 
 // *** Globals ***
 // A finite state machine is required to provide concurrency between loop, sensor_poll and 
 // serialEvent functions which both support reading serial while moving and
 // rotary-encoder-based motion, plus sensor data-gathering
-
 byte MasterState = 0;
 byte finishGrabbing = 0;
 byte rotMoveGrabMode = 0;
+
+boolean atomicGrab = 0;
+boolean atomicUnGrab = 0;
+
 
 // positions of wheels based on rotary encoder values
 int positions[ROTARY_COUNT] = {0};
@@ -86,29 +86,35 @@ byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
 byte invalid_commands = 0;
 
+
 // temporal parameters used for the millis function.
 unsigned long serial_time; 
 unsigned long command_time;
 unsigned long idle_time;
 unsigned long report_time;
 
+
 // holonomic parameters
 int holo_vals[3];
 int holo_angle;
 float Rw_current;
 
+
 // rotation parameters
 int rotaryTarget;
 int rotaryBias;
+
 
 // circular buffer counters
 byte bufferOverflow = 0;
 byte commandOverflow = 0;
 
+
 // parameter targets for rotary encoders
 int rotary_target;
 int motion_target;
 int holono_target;
+
 
 // accelerometer variables
 float accel_targetx = 0;
@@ -125,6 +131,7 @@ int mag_min_y; // for calibration
 int mag_max_y; // for calibration
 int mag_min_z; // for calibration
 int mag_max_z; // for calibration
+byte calibrate_compass;
 
 int accel[3];                // we'll store the raw acceleration values here
 int mag[3];                  // raw magnetometer values stored here
@@ -152,17 +159,15 @@ void setup() {
     SDPsetup();
     restoreState();
     
-    // initialize Accelerometer/Compass sensor
+    // initialize Accelerometer/Compass sensor and get initial bias vals
     char init = 0;
     init = Lsm303d.initI2C();
     
     
     // get initial Accelerometer/Compass Data
     Lsm303d.getAccel(accel);
-    
     while(!Lsm303d.isMagReady());// wait for the magnetometer readings to be ready
     Lsm303d.getMag(mag);  // get the magnetometer values, store them in mag
-    
     for (int i=0; i<3; i++){
         realAccel[i] = accel[i] / pow(2, 15) * ACCELE_SCALE;  
     }
@@ -175,25 +180,38 @@ void setup() {
     mag_max_y = mag[1];
     mag_min_z = mag[2];
     mag_max_z = mag[2];
-    
+    calibrate_compass = 1;
+    correctLeft();
     /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
   }
   
 
 void loop() {
-  int state_end = 0;
+    int state_end = 0;
   
+    // automatic compass calibration first time arduino is turned on
+    if (calibrate_compass){
+        if (millis() - idle_time < COMPASS_CALIBRATION_TIME)
+            calibrateCompass();
+        else{
+            calibrate_compass = 0;
+            motorAllStop();
+        }
+        return;
+    } 
+
+  // Comms in and out
   Communications();
   CommsOut();
   
+  // Sensor FSM part
   pollAccComp();
-  // calibrateCompass();
+  updateMotorPositions(positions);
 
+  // Action fsm part
   // remove SEQ from command
   MasterState = MasterState & 127;
-
-  // Switch statement for the FSM state
   switch(MasterState){
         
         case IDLE_STATE:
@@ -276,7 +294,7 @@ void loop() {
           commandOverflow++;
       }
       // override report_time to respond immediately!
-      report_time += RESPONSE_TIME;
+      report_time += RESPONSE_TIME + 1;
       CommsOut();
       
   }
@@ -299,11 +317,22 @@ int calculateChecksum(int target_value){
     return 255 - check;
 }
 
+void atomicHoloCommand(byte target_value){
+    if (((command_buffer[target_value - 8] >> 2) << 3) == CMD_HOLMOVE_1){
+        for (int i = 0; i < 4; i++){
+            // copy new command into previous command
+            command_buffer[target_value - 8 + i] = command_buffer[target_value - 4 + i];
+        }
+        buffer_index = target_value - 4;
+        bufferOverflow = buffer_index == 252 : bufferOverflow - 1 ? bufferOverflow;  
+    }
+
+}
 
 void Communications() {
     // for targetting buffer checks so as not to do buffer[0 - 1]
     int target_value;
-    byte checksum = 0;
+    byte checksum = 0, command_id;
     char garbage;
     
     // to make sure Serial reading can get interrupted
@@ -336,19 +365,56 @@ void Communications() {
                 
                 invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
+                command_id = ((command_buffer[target_value - 4]) << 1) >> 1;
+                
+                // handle atomic operations
+                switch(command_id){
+                    case CMD_FLUSH:
+                        restoreState();
+                        break;
 
-                if (command_buffer[target_value - 4] == CMD_FLUSH){
-                    restoreState();
+                    
+                    case CMD_STOP:
+                        motorAllStop();
+                        rotMoveGrabMode = 0;
+                        MasterState = 0;
+                        command_index = target_value;
+                        commandOverflow = bufferOverflow;
+                        break;
+                    
+                    case CMD_GRAB:
+                        if (command_buffer[target_value - 3])
+                            atomicGrab = 1;
+                        break;
+                    
+
+                    case CMD_UNGRAB:
+                        if (command_buffer[target_value - 3])
+                            atomicUnGrab = 1;
+                        break;
+                    
+                    case CMD_HOLMOVE_1:
+                        atomicHoloCommand(target_value);
+                        break;
+
+
+                    case CMD_HOLMOVE_2:
+                        atomicHoloCommand(target_value);
+                        break;
+
+
+                    case CMD_HOLMOVE_3:
+                        atomicHoloCommand(target_value);
+                        break;
+
+
+                    case CMD_HOLMOVE_4:
+                        atomicHoloCommand(target_value);
+                        break;
                 }
-                else if (command_buffer[target_value - 4] == CMD_STOP){
-                    motorAllStop();
-                    rotMoveGrabMode = 0;
-                    MasterState = 0;
-                    command_index = target_value;
-                    commandOverflow = bufferOverflow;
-                }
-              // override report_time to respond immediately!   
-              report_time += RESPONSE_TIME;
+
+                
+              report_time += RESPONSE_TIME + 1;
             }
             // report invalid command
             else{
@@ -428,9 +494,7 @@ void pollAccComp(){
         mag[0] += MAG_OFFSET_X;
         mag[1] += MAG_OFFSET_Y;
         mag[2] += MAG_OFFSET_Z;
-        //for (int i = 0; i < 3; i++){
-        //  mag[i] -= mag_offset[i];
-        //}
+
         // angle between X and north
         heading = Lsm303d.getHeading(mag);
         
@@ -878,17 +942,11 @@ void calibrateCompass(){
     if(Lsm303d.isMagReady()){
         // get the magnetometer values, store them in mag
         Lsm303d.getMag(mag);
-        // uncomment during calibration
-        //mag[0] += MAG_OFFSET_X;
-        //mag[1] += MAG_OFFSET_Y;
-        //for (int i = 0; i < 3; i++){
-        //  mag[i] -= mag_offset[i];
-        //}
+
         // angle between X and north
-        heading = Lsm303d.getHeading(mag);
-        
+        // heading = Lsm303d.getHeading(mag);
         // tilt-compensated angle
-        titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
+        // titleHeading = Lsm303d.getTiltHeading(mag, realAccel);
         }
         
   if (mag[0] > mag_max_x){
@@ -909,7 +967,7 @@ void calibrateCompass(){
   if (mag[2] < mag_min_z){
       mag_min_z = mag[2];
   }
-
+  /* Outdated  calibration procedure. Useful for debugging
   if (millis() - idle_time > 5000){
     idle_time = millis();
     Serial.print("MIN X: ");
@@ -931,8 +989,10 @@ void calibrateCompass(){
     Serial.println(-0.5 * (mag_max_y + mag_min_y));
     Serial.print("BIAS_Z: ");
     Serial.println(-0.5 * (mag_max_z + mag_min_z));
-    
- }
+ }*/
+ MAG_OFFSET_X = int(-0.5 * (mag_max_x + mag_min_x));
+ MAG_OFFSET_Y = int(-0.5 * (mag_max_y + mag_min_y));
+ MAG_OFFSET_Z = int(-0.5 * (mag_max_z + mag_min_z));
 }
 
 // basic test functions for sanity!
