@@ -5,7 +5,7 @@ class RobotController(CommsThread):
 	def __init__(self):
 		self.grabbed = True
 
-	def move(angle_to_face, angle_to_move, distance_to_target, grab_target):
+	def move(self, angle_to_face, angle_to_move, distance_to_target, grab_target):
 		""" Overriding move function
 			
 		angle_to_move: Absolute magnetic angle towards which to move
@@ -32,3 +32,6 @@ class RobotController(CommsThread):
 			self.holo(angle_to_move, angle_to_face)
 
 
+if __name__ == "__main__":
+	r = RobotController()
+	r.move(100, 100, 50, 1)

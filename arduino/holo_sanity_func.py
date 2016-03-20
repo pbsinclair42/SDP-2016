@@ -4,17 +4,17 @@ def holo(angle):
     vy = math.sin(math.radians(angle))
     print ("Vx: ", vx)
     print ("Vy: ", vy)
-    v1 = -math.sin(math.radians(30)) * vx + math.cos(math.radians(30)) * vy
-    v2 = -math.sin(math.radians(150)) * vx + math.cos(math.radians(150)) * vy
-    v3 = -math.sin(math.radians(270)) * vx + math.cos(math.radians(270)) * vy
+    v1 = -math.sin(math.radians(30)) * vx + math.cos(math.radians(30)) * vy  + 0.5
+    v2 = -math.sin(math.radians(150)) * vx + math.cos(math.radians(150)) * vy + 0.5
+    v3 = -math.sin(math.radians(270)) * vx + math.cos(math.radians(270)) * vy + 0.5
     
     alpha = 0.001
     radius = 100
 
-    scaling_factor = 1 / max(abs(v1), abs(v2), abs(v3))
-    v1 *= scaling_factor
-    v2 *= scaling_factor
-    v3 *= scaling_factor
+   # scaling_factor = 1 / max(abs(v1), abs(v2), abs(v3))
+   # v1 *= scaling_factor
+   # v2 *= scaling_factor
+   # v3 *= scaling_factor
     
     motor_list = [v1, v2, v3]
     for idx, i in enumerate(motor_list):
@@ -64,6 +64,4 @@ def magnetic_to_holonomic(heading, holo_magnetic):
     angle = holo_magnetic - ref_point
     print angle
 if __name__ == "__main__":
-    magnetic_to_holonomic(273, 244)
-    magnetic_to_holonomic(273, 315)
-    magnetic_to_holonomic(30, 40)
+    holo(90)

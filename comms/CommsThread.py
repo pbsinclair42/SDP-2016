@@ -8,12 +8,13 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM0",
+                 port="/dev/ttyACM2",
                  baudrate=115200,
                  debug=False):
         """
             Initialize firware API and start the communications parallel process
         """
+        self.grabbed = True
         self.ack_counts = (0, 0)
         self.mag_heading = 0
         self.commands = 0
@@ -42,6 +43,31 @@ class CommsThread(object):
                                target=comms_thread,
                                args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
         self.process.start()
+    def move(self, angle_to_face, angle_to_move, distance_to_target, grab_target):
+        """ Overriding move function
+            
+        angle_to_move: Absolute magnetic angle towards which to move
+        angle_to_face: Absolute magnetic angle towards which to face (while moving) 
+        distance_to_target: Distance to target which we're moving towards
+        grab_target: whether we want to grab the target(e.g. the ball)
+        """
+        current_heading = self.get_mag_heading()
+
+        if abs(angle_to_face - current_heading) > 90:
+            self.rot_move(angle_to_face, 0)
+
+        if distance_to_target < 40 and grab_target and self.grabbed:
+            self.ungrab(True)
+            self.grabbed = False
+
+        if distance_to_target < 20 and abs(angle_to_face - current_heading) < 10 and not self.grabbed and grab_target:
+            self.grab(True)
+            self.grabbed = True
+
+        if distance_to_target < 5 and abs(angle_to_face - current_heading) < 5:
+            self.stop_robot()
+        else:
+            self.holo(angle_to_move, angle_to_face)
 
     def queue_command(self, command):
         """
@@ -53,7 +79,7 @@ class CommsThread(object):
         self.process_event.set()
         print "Queue-ing:", [ord(item) for item in command]
 
-    def move(self, distance, degrees=0):
+    def move_forward(self, distance, degrees=0):
         """
             A movement-only function for distance up-to 255 cm
         """
@@ -130,7 +156,7 @@ class CommsThread(object):
             command_byte += 1
             dist_vector = dist_vector - 180
         
-        if angular_vector > 180
+        if angular_vector > 180:
             command_byte += 2
             angular_vector = angular_vector - 180
 
@@ -320,10 +346,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if ack_count != prev_ack_count:
             pipe_out.send(ack_count)
             prev_ack_count = ack_count
-        if robot_state["mag_head"] != prev_mag_state
+        if robot_state["mag_head"] != prev_mag_state:
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
-        #print robot_state
+        print robot_state
         sleep(process_sleep_time)
 
 def process_data(commands, data, robot_state):
@@ -371,5 +397,6 @@ def sequence_command(command, seq):
 
 if __name__ == "__main__":
     c = CommsThread()
-
-    c.kick(255)
+    while True:
+        c.holo(180, 0)
+        sleep(7)

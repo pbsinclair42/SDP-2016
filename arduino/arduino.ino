@@ -230,10 +230,8 @@ void loop() {
                  commandOverflow < bufferOverflow) {
                 MasterState = command_buffer[command_index];
                 restoreMotorPositions(positions);
-                command_time = millis(); // for time-out
-
             }
-
+            command_time = millis(); // for time-out
             break;
         
 
@@ -298,8 +296,11 @@ void loop() {
             state_end = 1;
             break;
     }
-  
-  if (state_end || millis() - command_time > 5000){
+  if (millis() - command_time > 5000)
+      state_end = 1;
+
+  if (state_end ){
+        motorAllStop();
         MasterState = IDLE_STATE;
         command_index += 4;
 
@@ -637,7 +638,7 @@ int rotMoveStep(){
             rotaryTarget = (int) (MOTION_CONST * centimeters);
             
             restoreMotorPositions(positions);
-            delay(75);
+            delay(50);
             testForward();
              
             MoveMode = 3;
@@ -677,6 +678,7 @@ int rotMoveStep(){
                 }
             }
             else{
+                motorAllStop();
                 // exit if you've been in the zone enough time
                 if (in_the_zone){
                     if (millis() - correct_time > ROTATION_CORRECT_TIME){
@@ -721,6 +723,7 @@ int holoMoveStep(){
     movement_angle = movement_angle - (heading - 90);
     holo_math(movement_angle, Rw);
     turn_holo_motors();
+    delay(75);
     return 0;
     
 }
@@ -1163,3 +1166,4 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
