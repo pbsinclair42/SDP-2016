@@ -1,4 +1,5 @@
 import math
+import random
 def holo(angle):
     vx = math.cos(math.radians(angle))
     vy = math.sin(math.radians(angle))
@@ -59,9 +60,24 @@ def angles(a1, a2):
     print "Left: ", d if a1 < a2 else 360 - d
     print
 
-def magnetic_to_holonomic(heading, holo_magnetic):
+def magnetic_to_holonomic(angle_to_face, angle_to_move):
+    heading = random.choice(range(0, 360))
+    #print "Heading", heading
     ref_point = heading - 90
-    angle = holo_magnetic - ref_point
-    print angle
+    #print "Ref point", ref_point
+    angle = angle_to_move - ref_point
+    #print "Angle Clean", angle
+    if angle < 0:
+        angle = 360 + angle
+
+    if angle > 360:
+        angle = 360 - angle
+    #print "Angle", angle 
+    return angle
 if __name__ == "__main__":
-    holo(90)
+    test = True
+    for i in range(0, 360):
+        for j in range(0, 10000):
+            a = magnetic_to_holonomic(200, 200)
+            test = True and a >= 0 and a <= 360
+    print test
