@@ -1,7 +1,0 @@
-stop + 1111 + 1111
-holo + deg + cm + 1111 + 1111
-rot + cm + deg + 1111 + 1111
-comp + byte + 1111 + 1111
-kick + distance + 1111 + 1111
-flush + 1111 + 1111
-grab + 1111 + 1111
