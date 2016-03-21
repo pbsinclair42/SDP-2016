@@ -8,7 +8,7 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM8",
+                 port="/dev/ttyACM9",
                  baudrate=115200,
                  debug=False):
         """
@@ -77,6 +77,7 @@ class CommsThread(object):
         self.commands += 1
         self.parent_pipe_in.send((command,))
         self.process_event.set()
+        self.get_all_pipe_data()
         print "Queue-ing:", [ord(item) for item in command]
 
     def move_forward(self, distance, degrees=0):
@@ -150,6 +151,9 @@ class CommsThread(object):
             offset -= 255
 
     def holo(self, dist_vector, angular_vector):
+        dist_vector = self.absolute_to_magnetic(dist_vector)
+        angular_vector = self.absolute_to_magnetic(angular_vector)
+        
         command_byte = ord(self.command_dict["HOL_MOVE"])
         
         if dist_vector > 180:
@@ -245,6 +249,20 @@ class CommsThread(object):
         self.get_all_pipe_data()
         return self.mag_heading
 
+    def absolute_to_magnetic(self, angle):
+        mag_north = 166
+        # scale from 0 to 360
+        if angle < 0:
+            angle = 360 - abs(angle)
+
+        # reverse
+        angle = 360 - angle
+
+        angle = angle + mag_north
+
+        if angle > 360:
+            angle = abs(360 - abs(angle))
+        return angle
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
@@ -329,24 +347,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 comms.write(sequenced)
                 sleep(command_sleep_time)
             print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
-        """
-        try:
-            if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
-                # get first un-sent command or un-acknowledged, but send
-                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
-
-                # if the command is not received
-                if cmd_to_send[-2] == 0:
-                    sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
-                    for command_byte in sequenced:
-                        comms.write(sequenced)
-                        sleep(command_sleep_time)
-                    cmnd_list[cmd_index][-3] = 1
-                    print "Sending command: ", cmd_index, sequenced, "SEQ:", robot_state["seq_num"]
-        except StopIteration:
-            # don't do anything if there are no commands to send
-            pass
-        """
+        
         # computer ack count
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
        
@@ -358,7 +359,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
         print robot_state
-        sleep(process_sleep_time + 1)
+        sleep(process_sleep_time)
 
 def process_data(commands, data, robot_state):
     "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
@@ -426,12 +427,8 @@ def fetch_command(cmnd_list):
             # return None if there are no commands to find
             return None
 
+
+
 if __name__ == "__main__":
     c = CommsThread()
-    while True:
-        c.holo(1, 1);
-        sleep(3)
-        c.holo(120, 120);
-        sleep(3)
-        c.holo(240, 240);
-        sleep(3)
+    c.holo(0, 0)

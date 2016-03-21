@@ -64,7 +64,7 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define IDLE_STATE 0
 
 
-#define COMPASS_CALIBRATION_TIME 2000
+#define COMPASS_CALIBRATION_TIME 4000
 int MAG_OFFSET_X = 0;
 int MAG_OFFSET_Y = 0;
 int MAG_OFFSET_Z = 0;
@@ -1200,11 +1200,3 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
-
-
-
-
-
-
-
-
