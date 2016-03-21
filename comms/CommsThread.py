@@ -8,7 +8,7 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM2",
+                 port="/dev/ttyACM3",
                  baudrate=115200,
                  debug=False):
         """
@@ -21,8 +21,8 @@ class CommsThread(object):
         self.command_list = []
         self.command_dict = {
             "ROT_MOVE_POS" : chr(3  ),
-            "ROT_MOVE_NEG" : chr(15),
-            "HOL_MOVE"     : chr(124  ),
+            "ROT_MOVE_NEG" : chr(15 ),
+            "HOL_MOVE"     : chr(124),
             "KICK"         : chr(4  ),
             "STOP"         : chr(8  ),
             "GRAB"         : chr(16 ),
@@ -146,7 +146,7 @@ class CommsThread(object):
 
         # issue movement offset command
         while offset > 0:
-            self.move(255);
+            self.move_forward(255);
             offset -= 255
 
     def holo(self, dist_vector, angular_vector):

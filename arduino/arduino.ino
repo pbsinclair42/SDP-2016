@@ -721,6 +721,12 @@ int holoMoveStep(){
             Rw = right_angle / 90.0;
         }
     movement_angle = movement_angle - (heading - 90);
+    if (movement_angle < 0)
+        movement_angle = 360 + movement_angle;
+
+    if (movement_angle > 360)
+        movement_angle = 360 - movement_angle;
+    
     holo_math(movement_angle, Rw);
     turn_holo_motors();
     delay(75);
