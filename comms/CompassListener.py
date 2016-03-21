@@ -1,6 +1,6 @@
 from serial import Serial
 import time
-comms = Serial(port="/dev/ttyACM2", baudrate=115200)
+comms = Serial(port="/dev/ttyACM3", baudrate=115200)
 data = []
 data = ""
 print "start"

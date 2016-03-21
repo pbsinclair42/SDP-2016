@@ -62,7 +62,7 @@ def angles(a1, a2):
 
 def magnetic_to_holonomic(angle_to_face, angle_to_move):
     #heading = random.choice(range(0, 360))
-    heading = 327
+    heading = 266
     print "Heading", heading
     ref_point = heading - 90
     print "Ref point", ref_point
@@ -82,4 +82,4 @@ if __name__ == "__main__":
     #        a = magnetic_to_holonomic(200, 200)
     #        test = True and a >= 0 and a <= 360
     #print test
-    magnetic_to_holonomic(200, 200)
+    magnetic_to_holonomic(215, 215)

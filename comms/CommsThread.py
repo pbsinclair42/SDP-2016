@@ -8,7 +8,7 @@ class CommsThread(object):
         A thread-based API for the communication system. See the command_dict for command-based firmware API
     """
     def __init__(self,
-                 port="/dev/ttyACM3",
+                 port="/dev/ttyACM8",
                  baudrate=115200,
                  debug=False):
         """
@@ -322,6 +322,14 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 print "You did not manage to reset the arduino :/"
 
 
+        cmd_to_send = fetch_command(cmnd_list)
+        if cmd_to_send:
+            sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
+            for command_byte in sequenced:
+                comms.write(sequenced)
+                sleep(command_sleep_time)
+            print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
+        """
         try:
             if cmnd_list and robot_state["buffer"][1] / 4 != len(cmnd_list):
                 # get first un-sent command or un-acknowledged, but send
@@ -338,7 +346,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         except StopIteration:
             # don't do anything if there are no commands to send
             pass
-
+        """
         # computer ack count
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
        
@@ -350,7 +358,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
         print robot_state
-        sleep(process_sleep_time)
+        sleep(process_sleep_time + 1)
 
 def process_data(commands, data, robot_state):
     "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
@@ -395,8 +403,35 @@ def sequence_command(command, seq):
         checksum += sum([bit == '1' for bit in bin(cmd_byte)])
     return [sequence] + command[1:3] + [ord(chr(255 - checksum))]
 
+def fetch_command(cmnd_list):
+    total_commands = len(cmnd_list)
+    while True:
+        if total_commands and not cmnd_list[-1][-2]:
+            try:
+                #get first un-sent or un-acknowledged command
+                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+                # if it's holonomic and not the last command
+                if cmd_to_send[0] >= 124 and cmd_to_send[0] <= 127 and cmd_index + 1 < total_commands:
+                    cmnd_list[cmd_index][-3] = 1
+                    cmnd_list[cmd_index][-2] = 1
+                    cmnd_list[cmd_index][-1] = 1
+                else:
+                    cmnd_list[cmd_index][-3] = 1
+                    return cmd_to_send
+            except StopIteration:
+                # return None if there are no commands to be sent
+                return None
+
+        else:
+            # return None if there are no commands to find
+            return None
+
 if __name__ == "__main__":
     c = CommsThread()
     while True:
-        c.holo(180, 0)
-        sleep(7)
+        c.holo(1, 1);
+        sleep(3)
+        c.holo(120, 120);
+        sleep(3)
+        c.holo(240, 240);
+        sleep(3)

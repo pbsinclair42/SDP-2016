@@ -64,7 +64,7 @@ byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 #define IDLE_STATE 0
 
 
-#define COMPASS_CALIBRATION_TIME 5000
+#define COMPASS_CALIBRATION_TIME 2000
 int MAG_OFFSET_X = 0;
 int MAG_OFFSET_Y = 0;
 int MAG_OFFSET_Z = 0;
@@ -190,8 +190,14 @@ void setup() {
     mag_max_z = mag[2];
     calibrate_compass = 1;
     correctLeft();
-    /* Custom commands can be initialized below */
     delay(300); // delay to get first proper mag value
+    
+    /* Custom commands can be initialized below */
+    /*command_buffer[0] = CMD_HOLMOVE_4;
+    command_buffer[1] = 35;
+    command_buffer[2] = 35;
+    command_buffer[3] = 255;
+    buffer_index = 4;*/
   }
   
 
@@ -333,10 +339,12 @@ int calculateChecksum(int target_value){
 }
 
 void atomicHoloCommand(byte target_value){
-    if (((command_buffer[target_value - 8] >> 2) << 3) == CMD_HOLMOVE_1){
+
+    if ((command_buffer[target_value - 8] ^ CMD_HOLMOVE_1) <= 3){
         for (int i = 0; i < 4; i++){
             // copy new command into previous command
             command_buffer[target_value - 8 + i] = command_buffer[target_value - 4 + i];
+            command_time = millis();
         }
         restoreCommsState(target_value);
     }
@@ -385,8 +393,8 @@ void Communications() {
                 
                 invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
-                command_id = ((command_buffer[target_value - 4]) << 1) >> 1;
-                
+                command_id = command_buffer[target_value - 4] & 127;
+                command_buffer[target_value - 4] = command_id;
                 // handle atomic operations
                 switch(command_id){
                     case CMD_FLUSH:
@@ -440,6 +448,14 @@ void Communications() {
                         atomicHoloCommand(target_value);
                         break;
                 }
+                /*
+                for (int i = 0; i < 4; i++){
+                    Serial.print(i);
+                    Serial.print(": ");
+                    Serial.println(command_buffer[i]);
+                }
+                Serial.println("===========");
+                */    
                 report_time += RESPONSE_TIME + 1;
             }
             // report invalid command
@@ -700,36 +716,48 @@ int rotMoveStep(){
 int holoMoveStep(){
     // Note that values are absolute, and differences are based on absolute magnetic heading
     int left_angle, right_angle, movement_angle, facing_angle;
+    byte control_byte;
     float Rw = 0;
     
     movement_angle = command_buffer[command_index + 1];
     facing_angle = command_buffer[command_index + 2];
+    control_byte = command_buffer[command_index] & byte(3);
     
-    if (command_buffer[command_index] & 254)
-        facing_angle += 180;
-
-    if (command_buffer[command_index] & 253)
+    if (control_byte == byte(1)){
         movement_angle += 180;
-
-    if (calculateAngleDifference(heading, facing_angle) > 4)
-        left_angle = calculateLeftAngle(heading, target_angle);
-        right_angle = calculateRightAngle(heading, target_angle);
-        if (left_angle < right_angle){
-            Rw = -1 * (left_angle / 90.0);
-        }
-        else {
-            Rw = right_angle / 90.0;
-        }
+    }
+    else if (control_byte == byte(2)){
+        facing_angle += 180;
+    }
+    else if (control_byte == byte(3)){
+        movement_angle += 180;      
+        facing_angle += 180;
+    }
+    // calculate movement direction
     movement_angle = movement_angle - (heading - 90);
     if (movement_angle < 0)
         movement_angle = 360 + movement_angle;
 
     if (movement_angle > 360)
         movement_angle = 360 - movement_angle;
+
+    // calculate rotational direction
+    if (calculateAngleDifference(heading, facing_angle) > 4){
+        left_angle = calculateLeftAngle(heading, facing_angle);
+        right_angle = calculateRightAngle(heading, facing_angle);
+        if (left_angle < right_angle){
+            Rw = -1 * (left_angle / 90.0);
+        }
+        else {
+            Rw = right_angle / 90.0;
+        }
+    }
+    else
+        Rw = 0;
     
     holo_math(movement_angle, Rw);
     turn_holo_motors();
-    delay(75);
+    delay(50);
     return 0;
     
 }
@@ -770,7 +798,7 @@ void turn_holo_motors(){
     if (holo_vals[0] > 0)
         motorForward(MOTOR_LFT, byte(holo_vals[0]));
     else
-        motorBackward(MOTOR_RGT, byte(fabs(holo_vals[0])));
+        motorBackward(MOTOR_LFT, byte(fabs(holo_vals[0])));
             
     if (holo_vals[1] > 0)
         motorForward(MOTOR_RGT, byte(holo_vals[1]));
@@ -1172,4 +1200,11 @@ void testForward() {
     motorForward(MOTOR_RGT, POWER_RGT * 1);
     motorForward(MOTOR_BCK, POWER_BCK * 0); 
 }
+
+
+
+
+
+
+
 
