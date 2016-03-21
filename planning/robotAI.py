@@ -8,73 +8,50 @@ from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoa
 import world
 from CommsAPI import commsSystem
 
-api = world.WorldApi()
-#time.sleep(9)
-while not api.ready():
-    #print "READY BITCH"
-    sfgfdgd = 3
-print"READY BITCH"
-print
-try:
-    print api.ready()
-    print api.world['ally','green']['center']
-    print api.world['ally','green']['orientation']
-    print api.world['ball_center']
-    print api.world['ally','pink']['center']
-except:
-    print("woops")
-
 def updatePositions():
     # me = 0
     # ally = 1
     # enemyGreen = 2
     # enemyPink = 3
-    ALLY_COLOUR = "pink" if OUR_COLOUR == "green" else "green"
-    try:
-        me.update(Point(api.world['ally',OUR_COLOUR]['center'][0]/2,api.world['ally',OUR_COLOUR]['center'][1]/2))
-        me.updateRotation((api.world['ally',OUR_COLOUR]['orientation'][1]))
-        print me.currentRotation
-    except:
-        print "No me to update"
-    try:
-        ally.update(Point(api.world['ally',ALLY_COLOUR]['center'][0]/2,api.world['ally',ALLY_COLOUR]['center'][1]/2))
-        ally.updateRotation((api.world['ally',ALLY_COLOUR]['orientation'][1]))
-        print ally.currentRotation
-        print "AYE"
-    except:
-        print "No ally to update"
-    try:
-        enemyA.update(Point(api.world['enemy',ALLY_COLOUR]['center'][0]/2,api.world['enemy',ALLY_COLOUR]['center'][1]/2))
-    except:
-        print "No enemy a to update"
-    try:
-        enenmyB.update(Point(api.world['emeny',OUR_COLOUR]['center'][0]/2,api.world['enemy',OUR_COLOUR]['center'][1]/2))
-    except:
-        print "No enemy B to update"
 
 
-    #try:
-	print "set ball x"
-        ballX = api.world['ball_center'][0]/2
-	print "set ball y, the type is " + str(type (ballX))
-        ballY = api.world['ball_center'][1]/2
+    if api.getMyPosition() is not None:
+        mePosition = api.getMyPosition()
+        meOrientation = api.getMyOrientation()[1]
+        me.update(point(mePosition[0],mePosition[1]))
+    else :
+        print "Can't find me this tick :("
+    if api.getAllyPosition() is not None:
+        AllyPosition = api.getAllyPosition()
+        AllyOrientation = api.getAllyOrientation()[1]
+        ally.update(Point(allyPosition[0],allyPosition[1]))
+    else:
+        print "Can't find my friend this tick :("
+    if api.getEnemyPositions()[0] is not None:
+        enemy0Position = api.getEnemyPositions()[0]
+        emeny0Orientation =  api.getEnemyOrientation()[0][1]
+        ememyA.update(Point(enemy0Position[0],enemy0Position[1]))
+    else:
+        print "Can't find enemy 0 this tick :("
+    if api.getEnemyPositions()[1] is not None:
+        enemy1Position = api.getEnemyPositions()[1]
+        enemy1Orientation = api.getEnemyOrientation()[1][1]
+        enemyB.update(Point(enemy1Position[0],enemy1Position[1]))
+    else:
+        print "Enemy_0 Position: ", api.getEnemyPositions()[1]
+    if api.getBallCenter() is not None:
+        ballPosition =  api.getBallCenter()
+        ball.update(Point(ballPosition[0],ballPosition[1]))
+    else:
+        print "Shit! Where's thr ball gone"
 
-	print "set the global object"
-	p = Point(ballX, ballY)
-        print "the ball is at " + str(p)
-	print "ball is " + str(type(ball))
-        ball.update(p)
-    #except:
-
-    #    print("no ball update")
-    # update who has the ball - workaround until vision can tell us
-    try:
+    try:#see who has ball posesion - needs work
         if ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
-           ball.status = BallStatus.enemyA
+            ball.status = BallStatus.enemyA
         elif ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
-           ball.status = BallStatus.enemyB
+            ball.status = BallStatus.enemyB
         elif ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
-           ball.status = BallStatus.ally
+            ball.status = BallStatus.ally
         elif ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
             ball.status = BallStatus.me
         # if we can't see it, assume it's the same, otherwise if it's far enough from everything, it's free
@@ -129,6 +106,7 @@ def tick():
 
 # start it off
 if __name__ == "__main__":
+    api = WorldApi()
     tick()
 else:
     updatePositions()
