@@ -39,7 +39,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     while True:
         event.wait()
         # to account for processing delay in sleep cycles
-        start_time = time.time()
+        start_time = time()
 
         # get all pipe data
         while pipe_in.poll():
@@ -49,8 +49,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 # get a tuple to reduce risk of data damage,
                 # then turn to a list to support mutability
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
-                command = [ord(item) for item in pipe_data[0] + [0, 0 ,0]]
-                if is_holo(command) and is_holo(cmnd_list[-1]):
+                command = [ord(item) for item in pipe_data[0]] + [0, 0 ,0]
+                if cmnd_list and is_holo(command) and is_holo(cmnd_list[-1]):
                     cmnd_list[-1] = command
                 else:
                     cmnd_list.append(command)
@@ -109,7 +109,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         #handle atomic operations
         if atomic_status == "grab" and robot_state["grabber"] == False:
             # send atomic command with both possible sequence numbers.
-            atomic_command = [ord(item) for item in [16, 255, 255, 255)]:
+            atomic_command = [ord(item) for item in [16, 255, 255, 255]]
             sequenced = sequence_command(atomic_command, 0)
             for command_byte in sequenced:
                 comms.write(sequenced)
@@ -123,7 +123,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             print "Sending command: ", sequenced, "SEQ:", 1
         
         elif atomic_status == "ungrab" and robot_state["grabber"] == True:
-            atomic_command = [ord(item) for item in [32, 255, 255, 255)]:
+            atomic_command = [ord(item) for item in [32, 255, 255, 255]]
             sequenced = sequence_command(atomic_command, 0)
             for command_byte in sequenced:
                 comms.write(sequenced)
@@ -146,8 +146,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if robot_state["mag_head"] != prev_mag_state:
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
-        print robot_state
-        sleep(process_sleep_time)
+        #print robot_state
+        print cmnd_list
+        sleep(process_sleep_time + 1)
 
 def process_data(data, robot_state):
     "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
@@ -214,5 +215,5 @@ def is_holo(command):
     return command[0] >= 124 and command[0] <= 127
 if __name__ == "__main__":
     rs = {}
-    process_data([253, 0, 0, 0, 140, 120, 0, 209, 253, 4, 8, 12, 100, 100, 1, 195], rs)
+    process_data([253, 0, 0, 0, 154, 0, 228], rs)
     print rs
