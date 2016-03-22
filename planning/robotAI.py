@@ -43,16 +43,16 @@ def updatePositions():
         ballPosition =  api.getBallCenter()
         ball.update(Point(ballPosition[0],ballPosition[1]))
     else:
-        print "Shit! Where's thr ball gone"
+        print "Shit! Where's the ball gone"
 
     try:#see who has ball posesion - needs work
-        if ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
+        if enemyA.bearing(ball) == enemyA.currentRotation and ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.enemyA
-        elif ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
+        elif  enemyB.bearing(ball) == enemyB.currentRotation and ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.enemyB
-        elif ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
+        elif  ally.bearing(ball) == ally.currentRotation and ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.ally
-        elif ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
+        elif me.bearing(ball) == me.currentRotation and ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
             ball.status = BallStatus.me
         # if we can't see it, assume it's the same, otherwise if it's far enough from everything, it's free
         elif Point(api.world['ball_center'][0],api.world['ball_center'][1]) !=None:

@@ -89,3 +89,5 @@ def getHoloVariables(EWBR, EWBY, EWBX):
         multiplier = 1
 
     return theta, h, multiplier
+
+
