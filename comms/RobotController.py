@@ -269,4 +269,8 @@ class RobotController(object):
 if __name__ == "__main__":
     r = RobotController()
     deg = 0
-    r.holo(190, 190)
+    while True:
+        r.holo(190, 190)
+        sleep(1)
+        r.holo(10, 10)
+        sleep(1)

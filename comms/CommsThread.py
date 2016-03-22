@@ -34,7 +34,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             except Exception as e:
                 print "Failed to connect radio with port", str(port), str(e)
                 radio_connected = False
-                sleep(5)
     print "Radio On-line"
     
     while True:
@@ -148,6 +147,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
         print robot_state
+        print cmnd_list
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
@@ -171,15 +171,7 @@ def process_data(data, robot_state):
     return data
 def process_state(cmnd_list, robot_state):
     """Set command_list flags, based on robot state, parsed from incoming comms"""
-    # if this is the first command and it has not been sent
-    if cmnd_list and len(cmnd_list) == 1 and cmnd_list[0][-3:] == [0, 0, 0]:
-        if robot_state["buffer"] != [0, 0, 0]:
-            command_bias = robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4
-            for item in range(0, command_bias):
-                cmnd_list.insert(0, [255, 255, 255, 255, 1, 1, 1])
-            print "Corrected State", cmnd_list, range(0, command_bias)
-
-
+    
     # see if everything is received
     if cmnd_list:
         for idx in range(0, robot_state["buffer"][0] * 64 + robot_state["buffer"][1] / 4):
