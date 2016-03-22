@@ -51,7 +51,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
                 command = [ord(item) for item in pipe_data[0]] + [0, 0 ,0]
                 if cmnd_list and is_holo(command) and is_holo(cmnd_list[-1]):
+                    print "replacing last holo command"
                     cmnd_list[-1] = command
+                    print cmnd_list
                 else:
                     cmnd_list.append(command)
 
@@ -191,7 +193,7 @@ def sequence_command(command, seq):
 
 def fetch_command(cmnd_list):
     total_commands = len(cmnd_list)
-    if total_commands and not cmnd_list[-1][-2]:
+    if total_commands and not all(cmnd_list[-1][-3:-1]):
         try:
             #get first un-sent or un-acknowledged command
             cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()

@@ -271,6 +271,6 @@ if __name__ == "__main__":
     deg = 0
     while True:
         r.holo(190, 190)
-        sleep(1)
+        sleep(3)
         r.holo(10, 10)
-        sleep(1)
+        sleep(3)
