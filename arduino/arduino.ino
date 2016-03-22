@@ -498,7 +498,7 @@ void CommsOut(){
             args[4] = byte(int(heading));
             args[5] = 0;
         }
-        args[6] == GrabberStatus;
+        args[6] = GrabberStatus;
 
         for (int i = 0; i < 7; i++){
             checkarg += (args[i] & 1);
