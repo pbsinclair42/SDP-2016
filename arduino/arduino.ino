@@ -510,9 +510,9 @@ void CommsOut(){
             checkarg += (args[i] & 64)  >> 6;
             checkarg += (args[i] & 128) >> 7;
             checksum += checkarg * (i + 1);
-            checkarg = 0
+            checkarg = 0;
         }
-        for (int i = 0; i < 6; i++){
+        for (int i = 0; i < 7; i++){
             Serial.write(args[i]);
             delay(5);
         }
