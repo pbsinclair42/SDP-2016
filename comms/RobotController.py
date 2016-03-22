@@ -252,7 +252,7 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-        mag_north = 166
+        mag_north = 175
         # scale from 0 to 360
         if angle < 0:
             angle = 360 - abs(angle)
@@ -269,4 +269,4 @@ class RobotController(object):
 if __name__ == "__main__":
     r = RobotController()
     deg = 0
-    r.holo(0, 0)
+    r.holo(190, 190)

@@ -147,7 +147,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if robot_state["mag_head"] != prev_mag_state:
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
-        #print robot_state
+        print robot_state
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
