@@ -41,13 +41,15 @@ class RobotController(object):
                                target=comms_thread,
                                args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
         self.process.start()
-    def move(self, angle_to_face, angle_to_move, distance_to_target, grab_target):
+    def move(self, angle_to_face, angle_to_move, distance_to_target=0 , grab_target=False, rotate_in_place=False):
         """ Overriding move function
             
         angle_to_move: Absolute magnetic angle towards which to move
         angle_to_face: Absolute magnetic angle towards which to face (while moving) 
         distance_to_target: Distance to target which we're moving towards
         grab_target: whether we want to grab the target(e.g. the ball)
+        rotate_in_place: Whether we want the rotation to be in-place, e.g. not to move
+        
         """
         current_heading = self.get_mag_heading()
 
@@ -270,7 +272,8 @@ if __name__ == "__main__":
     r = RobotController()
     deg = 0
     while True:
-        r.holo(190, 190)
-        sleep(3)
-        r.holo(10, 10)
-        sleep(3)
+        
+        r.holo(deg, deg)
+        deg += 5
+        deg 
+        sleep(0.3)
