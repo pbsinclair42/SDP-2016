@@ -108,14 +108,19 @@ def process_data(commands, data, robot_state):
     "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
     for idx, item in enumerate(reversed(data)):
         if item == 253 and idx >  6:
-            checksum = 0
-            for cmd_byte in data[idx - 5: idx + 1]:
-                checksum += sum([bit == '1' for bit in bin(cmd_byte)])
+            checksum, locale = 0, 1
+            for cmd_idx in range(idx, idx  - 7, -1):
+                checksum += sum([bit == '1' for bit in bin(data[len(data) - 1 - cmd_idx])]) * locale
+                locale += 1
             checksum = 255 - checksum
-            if checksum ==  data[idx - 6]:
-                robot_state["buffer"] = [data[idx - 1], data[idx - 2], data[idx - 3]]
-                robot_state["mag_head"] = data[idx - 4] + data[idx - 5]
-                robot_state["seq_num"] = data[idx - 2] / 4 % 2
+            if checksum ==  data[len(data) - 1 - idx + 7]:
+                offset = len(data) - 1
+                robot_state["buffer"] = [data[offset - idx + 1], data[offset - idx + 2], data[offset - idx + 3]]
+                robot_state["mag_head"] = data[offset - idx + 4] + data[offset - idx + 5]
+                robot_state["seq_num"] = data[offset - idx + 2] / 4 % 2
+                robot_state["grabber"] = data[offset - idx + 6] == 1
+                robot_state["active"] = True
+                del data
                 return []
     return data
 def process_state(cmnd_list, robot_state):
@@ -172,5 +177,6 @@ def fetch_command(cmnd_list):
 
 
 if __name__ == "__main__":
-    c = CommsThread()
-    c.holo(0, 0)
+    rs = {}
+    process_data(None, [253, 0, 0, 0, 140, 120, 0, 209, 253, 4, 8, 12, 100, 100, 1, 195], rs)
+    print rs
