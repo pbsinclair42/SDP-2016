@@ -1,5 +1,6 @@
 from CommsThread import comms_thread
 from multiprocessing import Process, Pipe, Event
+from time import sleep
 class RobotController(object):
     """
         A thread-based API for the communication system. See the command_dict for command-based firmware API
@@ -266,5 +267,11 @@ class RobotController(object):
         return angle
 
 if __name__ == "__main__":
-	r = RobotController()
-	r.move(100, 100, 50, 1)
+    r = RobotController()
+    for idx in range(0, 360, 45):
+        r.holo(idx, idx)
+        sleep(2.5)
+        r.stop_robot()
+        r.grab()
+        r.ungrab()
+        sleep(2.5)
