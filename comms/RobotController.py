@@ -77,7 +77,7 @@ class RobotController(object):
         self.commands += 1
         self.parent_pipe_in.send((command,))
         self.process_event.set()
-        self.get_all_pipe_data()
+        self.synchronize()
         print "Queue-ing:", [ord(item) for item in command]
 
     def move_forward(self, distance, degrees=0):
@@ -230,7 +230,7 @@ class RobotController(object):
             Return a report of sent commands and currently-buffered data
         """
         self.parent_pipe_in.send("rprt")
-    def get_all_pipe_data(self):
+    def synchronize(self):
         while self.parent_pipe_out.poll():
             item = self.parent_pipe_out.recv()
             if isinstance(item, tuple):
@@ -243,18 +243,18 @@ class RobotController(object):
         self.parent_pipe_in.send("restart");
 
     def am_i_done(self):
-        self.get_all_pipe_data()
+        self.synchronize()
         if self.ack_counts[0] == self.commands and self.ack_counts[1] == self.commands:
             #print self.ack_counts, self.commands
             return True
         else:
             return False
     def get_mag_heading(self):
-        self.get_all_pipe_data()
+        self.synchronize()
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-        mag_north = 175
+        mag_north = 157
         # scale from 0 to 360
         if angle < 0:
             angle = 360 - abs(angle)
@@ -271,9 +271,22 @@ class RobotController(object):
 if __name__ == "__main__":
     r = RobotController()
     deg = 0
+    #test for stopping and resuming movement
+    # while True:
+    #     r.holo(deg, deg)
+    #     sleep(3)
+    #     r.stop_robot()
+    #     sleep(3)
+    #     deg += 15
+    #     deg %= 360
     while True:
-        
         r.holo(deg, deg)
-        deg += 5
-        deg 
-        sleep(0.3)
+        sleep(3)
+        r.stop_robot()
+        sleep(1)
+        r.ungrab()
+        sleep(1)
+        r.grab()
+        sleep(1)
+        deg += 40
+        deg %= 360

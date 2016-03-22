@@ -193,15 +193,17 @@ def sequence_command(command, seq):
 
 def fetch_command(cmnd_list):
     total_commands = len(cmnd_list)
-    if total_commands and not all(cmnd_list[-1][-3:-1]):
+    if total_commands:
         try:
             #get first un-sent or un-acknowledged command
-            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if not all(command[-3:-1])).next()
             cmnd_list[cmd_index][-3] = 1
             return cmd_to_send
         except StopIteration:
-            # return None if there are no commands to be sent
-            return None
+            if is_holo(cmnd_list[-1]):
+                return cmnd_list[-1]
+            else:
+                return None
     else:
         # return None if there are no commands to find
         return None
