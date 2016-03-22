@@ -484,7 +484,7 @@ void Communications() {
 }
 
 void CommsOut(){
-    byte args[7], checksum = 0;
+    byte args[7], checksum = 0, checkarg = 0;
     if (millis() - report_time > RESPONSE_TIME){
         args[0] = CMD_FIN;
         args[1] = bufferOverflow;
@@ -498,18 +498,19 @@ void CommsOut(){
             args[4] = byte(int(heading));
             args[5] = 0;
         }
-        if (AtomicUnGrab):
+        args[6] == GrabberStatus;
 
-
-        for (int i = 0; i < 6; i++){
-            checksum += (args[i] & 1);
-            checksum += (args[i] & 2)   >> 1;
-            checksum += (args[i] & 4)   >> 2;
-            checksum += (args[i] & 8)   >> 3;
-            checksum += (args[i] & 16)  >> 4;
-            checksum += (args[i] & 32)  >> 5;
-            checksum += (args[i] & 64)  >> 6;
-            checksum += (args[i] & 128) >> 7;
+        for (int i = 0; i < 7; i++){
+            checkarg += (args[i] & 1);
+            checkarg += (args[i] & 2)   >> 1;
+            checkarg += (args[i] & 4)   >> 2;
+            checkarg += (args[i] & 8)   >> 3;
+            checkarg += (args[i] & 16)  >> 4;
+            checkarg += (args[i] & 32)  >> 5;
+            checkarg += (args[i] & 64)  >> 6;
+            checkarg += (args[i] & 128) >> 7;
+            checksum += checkarg * (i + 1);
+            checkarg = 0
         }
         for (int i = 0; i < 6; i++){
             Serial.write(args[i]);
