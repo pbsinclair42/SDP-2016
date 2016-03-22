@@ -185,7 +185,9 @@ class RobotController(object):
         if not atomic:
             command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
         else:
-            command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+            #command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+            command = "grab"
+            self.commands -= 1
         self.queue_command(command)
 
     def ungrab(self, atomic=False):
@@ -195,7 +197,9 @@ class RobotController(object):
         if not atomic:
             command = self.command_dict["UNGRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
         else:
-            command = self.command_dict["UNGRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+            #command = self.command_dict["UNGRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+            command = "ungrab"
+            self.commands -= 1
         self.queue_command(command)
 
     def flush(self):
