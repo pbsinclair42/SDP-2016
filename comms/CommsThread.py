@@ -10,7 +10,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     prev_ack_count = ack_count
     seq_num = 0
     command_sleep_time = 0.005 # sleep time between sending each byte
-    process_sleep_time = 0.1 # sleep time for process
+    process_sleep_time = 0.05 # sleep time for process
     # robot state parameters
     robot_state = {
         "mag_head" : 0,
@@ -24,16 +24,17 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
     # perform setup
     while not radio_connected:
-        try:
-            for item in range(0, 10):
+        
+        for item in range(0, 10):
+            try:
                 port = port[:-1] + str(item)
                 comms = Serial(port=port, baudrate=baudrate)
                 radio_connected = True
                 break
-        except Exception as e:
-            print "Failed to connect radio with port", str(port), str(e)
-            radio_connected = False
-            sleep(5)
+            except Exception as e:
+                print "Failed to connect radio with port", str(port), str(e)
+                radio_connected = False
+                sleep(5)
     print "Radio On-line"
     
     while True:
@@ -147,8 +148,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
         #print robot_state
-        print cmnd_list
-        sleep(process_sleep_time + 1)
+        sleep(process_sleep_time)
 
 def process_data(data, robot_state):
     "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"

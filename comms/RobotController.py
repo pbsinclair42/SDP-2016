@@ -268,10 +268,5 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    for idx in range(0, 360, 45):
-        r.holo(idx, idx)
-        sleep(2.5)
-        r.stop_robot()
-        r.grab()
-        r.ungrab()
-        sleep(2.5)
+    deg = 0
+    r.holo(0, 0)

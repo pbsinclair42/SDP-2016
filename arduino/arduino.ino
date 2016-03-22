@@ -346,6 +346,9 @@ void atomicHoloCommand(byte target_value){
             // copy new command into previous command
             command_buffer[target_value - 8 + i] = command_buffer[target_value - 4 + i];
             command_time = millis();
+            // if the command was finished - "UN-finish it"
+            if (command_index == target_value - 4)
+                command_index -= 4;
         }
         restoreCommsState(target_value);
     }
@@ -409,6 +412,7 @@ void Communications() {
                         MasterState = 0;
                         command_index = target_value;
                         commandOverflow = bufferOverflow;
+                        SEQ_NUM = (target_value / 4) % 2;
                         break;
                     
                     case CMD_GRAB:
