@@ -82,6 +82,7 @@ boolean AtomicGrab = 0;
 byte AtomicGrabMode = 0;
 boolean AtomicUnGrab = 0;
 byte AtomicUnGrabMode = 0;
+boolean GrabberStatus = 0;
 
 
 // positions of wheels based on rotary encoder values
@@ -483,7 +484,7 @@ void Communications() {
 }
 
 void CommsOut(){
-    byte args[6], checksum = 0;
+    byte args[7], checksum = 0;
     if (millis() - report_time > RESPONSE_TIME){
         args[0] = CMD_FIN;
         args[1] = bufferOverflow;
@@ -497,6 +498,9 @@ void CommsOut(){
             args[4] = byte(int(heading));
             args[5] = 0;
         }
+        if (AtomicUnGrab):
+
+
         for (int i = 0; i < 6; i++){
             checksum += (args[i] & 1);
             checksum += (args[i] & 2)   >> 1;
@@ -526,12 +530,13 @@ void handleAtomicActions(){
                 break;
             
 
-            // finish grabbing
+            // finish ungrabbing
             case 1:
                 if (millis() - atomic_time > GRAB_TIME){
                     motorForward(GRABBER, 0);
                     AtomicUnGrabMode = 0;
                     AtomicUnGrab = 0;
+                    GrabberStatus = 1;
                     atomic_time = millis();
                 }
                 break;
@@ -555,6 +560,7 @@ void handleAtomicActions(){
                     motorBackward(GRABBER, 0);
                     AtomicGrabMode = 0;
                     AtomicGrab = 0;
+                    GrabberStatus = 0;
                     atomic_time = millis();
                 }
                 break;
@@ -814,12 +820,12 @@ void turn_holo_motors(){
 
 int kickStep(){
     byte kick_val;
-    switch(MoveMode){
+    switch(GrabMode){
         // initial state which starts ungrabbing
         case 0:
             command_time = millis();
             motorForward(GRABBER, GRABBER_POWER);
-            MoveMode = 1;
+            GrabMode = 1;
             return 0;
         
 
@@ -828,7 +834,7 @@ int kickStep(){
             if (millis() - command_time > GRAB_TIME){
                 motorBackward(GRABBER, 0);
                 motorForward(KICKER, (int) command_buffer[command_index + 1]);
-                MoveMode = 2;
+                GrabMode = 2;
                 command_time = millis(); // restore current time
             }
             return 0;
@@ -838,7 +844,7 @@ int kickStep(){
         case 2:
             if (millis() - command_time > KICK_TIME){
                 motorBackward(KICKER, 189);
-                MoveMode = 3;
+                GrabMode = 3;
                 command_time = millis(); // restore current time
             }
             return 0;
@@ -849,7 +855,7 @@ int kickStep(){
             if (millis() - command_time > KICK_TIME){
                 motorBackward(KICKER, 0);
                 motorBackward(GRABBER, GRABBER_POWER);
-                MoveMode = 4;
+                GrabMode = 4;
                 command_time = millis(); // restore current time
             }
             return 0;
@@ -859,7 +865,7 @@ int kickStep(){
         case 4:
             if (millis() - command_time > GRAB_TIME){
                 motorBackward(GRABBER, 0);
-                MoveMode = 0;
+                GrabMode = 0;
                 return 1; // make sure that the only way to return from this function is to 
             }
             return 0;
@@ -867,24 +873,25 @@ int kickStep(){
 
         default:
             //Serial.writeln("BAD KICK");
-            MoveMode = 0;
-            return -1;
+            GrabMode = 0;
+            return 1;
     }
     return -1;
 }
 
 int grabStep(){
-    switch(MoveMode){
+    switch(GrabMode){
         case 0:
             motorBackward(GRABBER, GRABBER_POWER);
             command_time = millis();
-            MoveMode = 1;
+            GrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
                 motorBackward(GRABBER, 0);
-                MoveMode = 0;
+                GrabMode = 0;
                 finishGrabbing = 0;
+                GrabberStatus = 0;
                 return 1;
             }
             return 0;
@@ -892,16 +899,17 @@ int grabStep(){
 }
 
 int unGrabStep(){
-    switch(MoveMode){
+    switch(GrabMode){
         case 0:
             motorForward(GRABBER, GRABBER_POWER);
             command_time = millis();
-            MoveMode = 1;
+            GrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
                 motorForward(GRABBER, 0);
-                MoveMode = 0;
+                GrabMode = 0;
+                GrabberStatus = 1;
                 return 1;
 
             }
