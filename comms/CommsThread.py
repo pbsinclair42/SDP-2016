@@ -4,8 +4,7 @@ from time import sleep, time
 
 def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
-    cmnd_list = []
-    data_buffer = []
+    cmnd_list, data_buffer = [], []
     radio_connected = False
     ack_count = (0, 0)
     prev_ack_count = ack_count
@@ -16,8 +15,11 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     robot_state = {
         "mag_head" : 0,
         "buffer"   : [0, 0, 0], # Overflow, buffer, command index
-        "seq_num"  : 0
+        "seq_num"  : 0,
+        "grabber"  : 0, # 0: closed, 1: open,
+        "active"   : False
     }
+    atomic_status = None
     prev_mag_state = robot_state["mag_head"]
 
     # perform setup
@@ -33,14 +35,13 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             radio_connected = False
             sleep(5)
     print "Radio On-line"
-    sleep(1)
     
     while True:
         event.wait()
+        # to account for processing delay in sleep cycles
+        start_time = time.time()
+
         # get all pipe data
-
-
-
         while pipe_in.poll():
             pipe_data = pipe_in.recv()
 
@@ -48,7 +49,11 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 # get a tuple to reduce risk of data damage,
                 # then turn to a list to support mutability
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
-                cmnd_list.append([ord(item) for item in pipe_data[0]] + [0, 0 ,0])
+                command = [ord(item) for item in pipe_data[0] + [0, 0 ,0]]
+                if is_holo(command) and is_holo(cmnd_list[-1]):
+                    cmnd_list[-1] = command
+                else:
+                    cmnd_list.append(command)
 
             # non-command-inputs:
             elif pipe_data == "exit":
@@ -68,6 +73,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 ack_count = (0, 0)
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
+            
+            elif pipe_data in ["grab", "ungrab"]:
+                atomic_status = pipe_data
+
 
         # get all data
         while comms.in_waiting:
@@ -76,14 +85,20 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         try:
         # ensure data has been processed before attempting to send data
-            data_buffer = process_data(cmnd_list, data_buffer, robot_state)
+            data_buffer = process_data(data_buffer, robot_state)
             process_state(cmnd_list, robot_state)
         except IndexError:
             for i in range(0, 1000):
                 print "You did not manage to reset the arduino :/"
 
+        if not robot_state["active"]:
+            print "comms: arduino not responding yet"
+            sleep(1) # sleep and try to connect to arduino again
+            continue
+
 
         cmd_to_send = fetch_command(cmnd_list)
+        
         if cmd_to_send:
             sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
             for command_byte in sequenced:
@@ -91,6 +106,36 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 sleep(command_sleep_time)
             print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
         
+        #handle atomic operations
+        if atomic_status == "grab" and robot_state["grabber"] == False:
+            # send atomic command with both possible sequence numbers.
+            atomic_command = [ord(item) for item in [16, 255, 255, 255)]:
+            sequenced = sequence_command(atomic_command, 0)
+            for command_byte in sequenced:
+                comms.write(sequenced)
+                sleep(command_sleep_time)
+            print "Sending command: ", sequenced, "SEQ:", 0
+            
+            sequenced = sequence_command(atomic_command, 1)
+            for command_byte in sequenced:
+                comms.write(sequenced)
+                sleep(command_sleep_time)
+            print "Sending command: ", sequenced, "SEQ:", 1
+        
+        elif atomic_status == "ungrab" and robot_state["grabber"] == True:
+            atomic_command = [ord(item) for item in [32, 255, 255, 255)]:
+            sequenced = sequence_command(atomic_command, 0)
+            for command_byte in sequenced:
+                comms.write(sequenced)
+                sleep(command_sleep_time)
+            print "Sending command: ", sequenced, "SEQ:", 0
+            
+            sequenced = sequence_command(atomic_command, 1)
+            for command_byte in sequenced:
+                comms.write(sequenced)
+                sleep(command_sleep_time)
+            print "Sending command: ", sequenced, "SEQ:", 1
+
         # computer ack count
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
        
@@ -104,7 +149,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         print robot_state
         sleep(process_sleep_time)
 
-def process_data(commands, data, robot_state):
+def process_data(data, robot_state):
     "Reverse all the incoming data, find the *LAST* valid command, and delete the rest"
     for idx, item in enumerate(reversed(data)):
         if item == 253 and idx >  6:
@@ -153,30 +198,21 @@ def sequence_command(command, seq):
 
 def fetch_command(cmnd_list):
     total_commands = len(cmnd_list)
-    while True:
-        if total_commands and not cmnd_list[-1][-2]:
-            try:
-                #get first un-sent or un-acknowledged command
-                cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
-                # if it's holonomic and not the last command
-                if cmd_to_send[0] >= 124 and cmd_to_send[0] <= 127 and cmd_index + 1 < total_commands:
-                    cmnd_list[cmd_index][-3] = 1
-                    cmnd_list[cmd_index][-2] = 1
-                    cmnd_list[cmd_index][-1] = 1
-                else:
-                    cmnd_list[cmd_index][-3] = 1
-                    return cmd_to_send
-            except StopIteration:
-                # return None if there are no commands to be sent
-                return None
-
-        else:
-            # return None if there are no commands to find
+    if total_commands and not cmnd_list[-1][-2]:
+        try:
+            #get first un-sent or un-acknowledged command
+            cmd_index, cmd_to_send = ((idx, command) for (idx, command) in enumerate(cmnd_list) if command[-3] == 0 or command[-2] == 0).next()
+            cmnd_list[cmd_index][-3] = 1
+            return cmd_to_send
+        except StopIteration:
+            # return None if there are no commands to be sent
             return None
-
-
-
+    else:
+        # return None if there are no commands to find
+        return None
+def is_holo(command):
+    return command[0] >= 124 and command[0] <= 127
 if __name__ == "__main__":
     rs = {}
-    process_data(None, [253, 0, 0, 0, 140, 120, 0, 209, 253, 4, 8, 12, 100, 100, 1, 195], rs)
+    process_data([253, 0, 0, 0, 140, 120, 0, 209, 253, 4, 8, 12, 100, 100, 1, 195], rs)
     print rs
