@@ -6,7 +6,7 @@
 
 
 // Motor Definitions
-#define MOTOR_LFT   3
+#define MOTOR_LFT   0
 #define MOTOR_RGT   1
 #define MOTOR_BCK   2
 #define GRABBER     4
@@ -20,7 +20,7 @@
 #define KICKER_PWR 255
 #define KICKER_LFT_POWER 255
 #define KICKER_RGT_POWER 255
-#define GRABBER_POWER 255
+#define GRABBER_POWER 150
 
 
 // temporal calibrations for grabber/ kicker
