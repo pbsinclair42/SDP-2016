@@ -51,16 +51,20 @@ class RobotController(object):
         rotate_in_place: Whether we want the rotation to be in-place, e.g. not to move
         
         """
+        self.synchronize()
         current_heading = self.get_mag_heading()
+        angle_to_face = absolute_to_magnetic(angle_to_face)
+        angle_to_move = absolute_to_magnetic(angle_to_move)
 
-        if abs(angle_to_face - current_heading) > 90:
-            self.rot_move(angle_to_face, 0)
+        #if abs(angle_to_face - current_heading) > 90:
+        #    self.rot_move(angle_to_face, 0)
 
         if distance_to_target < 40 and grab_target and self.grabbed:
             self.ungrab(True)
             self.grabbed = False
 
         if distance_to_target < 20 and abs(angle_to_face - current_heading) < 10 and not self.grabbed and grab_target:
+            self.stop_robot()
             self.grab(True)
             self.grabbed = True
 
@@ -68,6 +72,10 @@ class RobotController(object):
             self.stop_robot()
         else:
             self.holo(angle_to_move, angle_to_face)
+
+        if rotate_in_place:
+            self.rot_move(abs(current_heading) - angle_to_face, 0)
+
 
     def queue_command(self, command):
         """
