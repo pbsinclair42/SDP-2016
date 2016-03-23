@@ -282,6 +282,10 @@ if __name__ == "__main__":
     #     sleep(3)
     #     deg += 15
     #     deg %= 360
-    r.holo(deg, deg)
-    sleep(3)
+    r.holo(180, 180)
+    sleep(10)
+    r.ungrab(True)
+    sleep(10)
     r.grab(True)
+    sleep(10)
+    r.ungrab(True)
