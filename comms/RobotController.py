@@ -187,11 +187,13 @@ class RobotController(object):
         """
         if not atomic:
             command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
+            self.queue_command(command)
         else:
             #command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
             command = "grab"
-            self.commands -= 1
-        self.queue_command(command)
+            self.parent_pipe_in.send("grab")
+            
+        
 
     def ungrab(self, atomic=False):
         """
@@ -199,11 +201,12 @@ class RobotController(object):
         """
         if not atomic:
             command = self.command_dict["UNGRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
+            self.queue_command(command)
         else:
             #command = self.command_dict["UNGRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
             command = "ungrab"
-            self.commands -= 1
-        self.queue_command(command)
+            self.parent_pipe_in.send("ungrab")
+        
 
     def flush(self):
         """
@@ -279,14 +282,6 @@ if __name__ == "__main__":
     #     sleep(3)
     #     deg += 15
     #     deg %= 360
-    while True:
-        r.holo(deg, deg)
-        sleep(3)
-        r.stop_robot()
-        sleep(1)
-        r.ungrab()
-        sleep(1)
-        r.grab()
-        sleep(1)
-        deg += 40
-        deg %= 360
+    r.holo(deg, deg)
+    sleep(3)
+    r.grab(True)

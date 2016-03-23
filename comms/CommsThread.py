@@ -111,7 +111,9 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         #handle atomic operations
         if atomic_status == "grab" and robot_state["grabber"] == False:
             # send atomic command with both possible sequence numbers.
-            atomic_command = [ord(item) for item in [16, 255, 255, 255]]
+            atomic_command = [item for item in [ord(16), ord(255), ord(255), ord(255)]]
+            print 80 * "="
+            print atomic_command
             sequenced = sequence_command(atomic_command, 0)
             for command_byte in sequenced:
                 comms.write(sequenced)
@@ -125,7 +127,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             print "Sending command: ", sequenced, "SEQ:", 1
         
         elif atomic_status == "ungrab" and robot_state["grabber"] == True:
-            atomic_command = [ord(item) for item in [32, 255, 255, 255]]
+            atomic_command = [item for item in [ord(32), ord(255), ord(255), ord(255)]]
             sequenced = sequence_command(atomic_command, 0)
             for command_byte in sequenced:
                 comms.write(sequenced)
