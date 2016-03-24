@@ -87,7 +87,7 @@ def tick():
     updatePositions()
     playBall()
     executePlan()
-    print me.plan
+    print ball.status
     threading.Timer(TICK_TIME, tick).start()
 
 # start it off
