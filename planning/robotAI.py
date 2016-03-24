@@ -6,7 +6,7 @@ from helperClasses import BallStatus, Goals, Point
 from actions import executePlan
 from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 from strategy import playBall
-import world
+from world import WorldApi
 from CommsAPI import commsSystem
 
 
@@ -116,6 +116,8 @@ def tick():
     executePlan()
     print ball.status
     threading.Timer(TICK_TIME, tick).start()
+
+api = WorldApi()
 
 # start it off
 if __name__ == "__main__":
