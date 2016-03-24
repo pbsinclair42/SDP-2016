@@ -19,7 +19,7 @@ def essentiallyEqual(a,b):
         return abs(a-b)<=ANGLE_ACCURACY or abs(a+360-b)<=ANGLE_ACCURACY or abs(a-360-b)<=ANGLE_ACCURACY
 
 
-def nearEnough(a,b):
+def nearEnough(a,b, near_enough_angle=ITLL_DO_ANGLE, near_enough_point=ITLL_DO_POINT):
     """Checks whether two points or two angles are similar enough that we'll work with it
 
     Args:
@@ -30,9 +30,9 @@ def nearEnough(a,b):
         bool of whether the two points are similar enough that we'll work with it
     """
     try:
-        return abs(a.x-b.x)<=ITLL_DO_POINT and abs(a.y-b.y)<=ITLL_DO_POINT
+        return abs(a.x-b.x)<=near_enough_point and abs(a.y-b.y)<=near_enough_point
     except AttributeError:
-        return abs(a-b)<=ITLL_DO_ANGLE or abs(a+360-b)<=ITLL_DO_ANGLE or abs(a-360-b)<=ITLL_DO_ANGLE
+        return abs(a-b)<=near_enough_angle or abs(a+360-b)<=near_enough_angle or abs(a-360-b)<=near_enough_angle
 
 
 def sin(angle):

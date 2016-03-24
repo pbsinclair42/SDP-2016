@@ -2,43 +2,70 @@ import threading
 
 from constants import *
 from globalObjects import me, ally, enemies, robots, ball
-from helperClasses import BallStatus, Goals
+from helperClasses import BallStatus, Goals, Point
 from actions import executePlan
-from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, receiveAndPass
+from goals import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 from strategy import playBall
-import visionAPI
+import world
 from CommsAPI import commsSystem
 
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
     # get the info on the robots from the vision system
+    if api.getMyPosition() is not None:
+        mePosition = api.getMyPosition()
+        # may crash if we can get our position but not orientation?
+        meOrientation = api.getMyOrientation()[1]
+        me.update(Point(mePosition[0],mePosition[1]))
+        me.updateRotation(meOrientation)
+    else:
+        print "Can't find me this tick :("
 
-    # old version:
-    details = visionAPI.getAllRobotDetails()
-    # update the system's beliefs about the robots
-    for i in range(0,len(robots)):
-        robots[i].update(details[i][0])
-        robots[i].updateRotation(details[i][1])
-    # get the info on the ball from the vision system and update the system's beliefs about the ball
-    currentBallCoords = visionAPI.getBallCoords()
-    ball.update(currentBallCoords)
+    if api.getAllyPosition() is not None:
+        AllyPosition = api.getAllyPosition()
+        AllyOrientation = api.getAllyOrientation()[1]
+        ally.update(Point(allyPosition[0],allyPosition[1]))
+        ally.updateRotation(allyOrientation)
+    else:
+        print "Can't find my friend this tick :("
 
-    # new version:
-    # visionAPI = WorldApi()
+    if api.getEnemyPositions()[0] is not None:
+        enemy0Position = api.getEnemyPositions()[0]
+        emeny0Orientation =  api.getEnemyOrientation()[0][1]
+        enemies[0].update(Point(enemy0Position[0],enemy0Position[1]))
+        enemies[0].updateRotation(emeny0Orientation)
+    else:
+        print "Can't find enemy 0 this tick :("
 
-    # update who has the ball - workaround until vision can tell us
-    try:
-        if ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
-           ball.status = BallStatus.enemyA
-        elif ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
-           ball.status = BallStatus.enemyB
-        elif ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
-           ball.status = BallStatus.ally
-        elif ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
+    if api.getEnemyPositions()[1] is not None:
+        enemy1Position = api.getEnemyPositions()[1]
+        enemy1Orientation = api.getEnemyOrientation()[1][1]
+        enemies[1].update(Point(enemy1Position[0],enemy1Position[1]))
+        enemies[1].updateRotation(enemy1Orientation)
+    else:
+        print "Enemy_0 Position: ", api.getEnemyPositions()[1]
+
+    if api.getBallCenter() is not None:
+        ballPosition =  api.getBallCenter()
+        ball.update(Point(ballPosition[0],ballPosition[1]))
+    else:
+        print "Shit! Where's the ball gone"
+
+    try:#see who has ball posesion - needs work
+        if nearEnough(enemies[0].bearing(ball),enemies[0].currentRotation, near_enough_angle=30) and ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
+            ball.status = BallStatus.enemyA
+        elif nearEnough(enemies[1].bearing(ball),enemies[1].currentRotation, near_enough_angle=30) and  ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
+            ball.status = BallStatus.enemyB
+        elif nearEnough(ally.bearing(ball),ally.currentRotation, near_enough_angle=30) and  ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
+            ball.status = BallStatus.ally
+        elif nearEnough(me.bearing(ball), me.currentRotation, near_enough_angle=30) and ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
             ball.status = BallStatus.me
-        # if we can't see it, assume it's the same, otherwise if it's far enough from everything, it's free
-        elif currentBallCoords!=None:
+        # if we can't see it, assume it's the same
+        elif api.world['ball_center']==None:
+            pass
+        # if it's far enough from everything, it's free
+        else:
             ball.status = BallStatus.free
     except (TypeError, AttributeError):
         print("Location of some objects unknown")
