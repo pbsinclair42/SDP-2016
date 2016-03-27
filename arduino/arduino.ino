@@ -189,7 +189,7 @@ void setup() {
     mag_min_z = mag[2];
     mag_max_z = mag[2];
     calibrate_compass = 1;
-    correctLeft();
+    rotateLeft(100.0);
     delay(300); // delay to get first proper mag value
     
     /* Custom commands can be initialized below */
@@ -241,7 +241,7 @@ void loop() {
             break;
         
 
-        case ROT_PLACE:
+        case CMD_ROTPLACE:
             state_end = rotPlaceStep();
             break;
 
@@ -333,7 +333,7 @@ int calculateChecksum(int target_value){
 
 void atomicRotCommand(byte target_value){
     // if prevous command was rotational and we're still performing it
-    if ((command_buffer[target_value - 8] == CMD_ROTPLACE && command_index == target_value - 8){
+    if (command_buffer[target_value - 8] == CMD_ROTPLACE && command_index == target_value - 8){
         // copy new command into previous command
         for (int i = 0; i < 4; i++){
             command_buffer[target_value - 8 + i] = command_buffer[target_value - 4 + i];
