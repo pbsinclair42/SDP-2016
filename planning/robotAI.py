@@ -101,7 +101,7 @@ def tick():
         commsSystem.tick()
     updatePositions()
     makePlan()
-    executePlan()
+    #executePlan()
     threading.Timer(TICK_TIME, tick).start()
 
 # start it off
