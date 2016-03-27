@@ -1,6 +1,13 @@
 from CommsThread import comms_thread
 from multiprocessing import Process, Pipe, Event
 from time import sleep
+
+# the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
+GRAB_DISTANCE = 5.0
+# the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
+UNGRAB_DISTANCE = 30.0
+
+
 class RobotController(object):
     """
         A thread-based API for the communication system. See the command_dict for command-based firmware API
@@ -19,7 +26,6 @@ class RobotController(object):
         self.command_list = []
         self.command_dict = {
             "ROT_MOVE_POS" : chr(3  ),
-            "ROT_MOVE_NEG" : chr(15 ),
             "HOL_MOVE"     : chr(124),
             "KICK"         : chr(4  ),
             "STOP"         : chr(8  ),
@@ -41,11 +47,11 @@ class RobotController(object):
                                target=comms_thread,
                                args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
         self.process.start()
-    def move(self, angle_to_face, angle_to_move, distance_to_target=0 , grab_target=False, rotate_in_place=False):
+    def move(self, angle_to_face=None, angle_to_move=None, distance_to_target=0 , grab_target=False, rotate_in_place=False):
         """ Overriding move function
             
-        angle_to_move: Absolute magnetic angle towards which to move
-        angle_to_face: Absolute magnetic angle towards which to face (while moving) 
+        angle_to_move: Absolute vision angle towards which to move
+        angle_to_face: Absolute vision angle towards which to face (while moving) 
         distance_to_target: Distance to target which we're moving towards
         grab_target: whether we want to grab the target(e.g. the ball)
         rotate_in_place: Whether we want the rotation to be in-place, e.g. not to move
@@ -59,23 +65,23 @@ class RobotController(object):
         #if abs(angle_to_face - current_heading) > 90:
         #    self.rot_move(angle_to_face, 0)
 
-        if distance_to_target < 40 and grab_target and self.grabbed:
+        if angle_to_face is None and angle_to_move is not None and not rotate_in_place:
+	        if distance_to_target < 5 and abs(angle_to_face - current_heading) < 5:
+	            self.stop_robot()
+	        else:
+	            self.holo(angle_to_move, angle_to_face)
+	    
+	    elif angle_to_face is not None and rotate_in_place:
+	    	self.rot_move(angle_to_face)
+
+        if distance_to_target <= UNGRAB_DISTANCE and grab_target and self.grabbed:
             self.ungrab(True)
             self.grabbed = False
 
-        if distance_to_target < 20 and abs(angle_to_face - current_heading) < 10 and not self.grabbed and grab_target:
+        if distance_to_target <= GRAB_DISTANCE and abs(angle_to_face - current_heading) < 10 and not self.grabbed and grab_target:
             self.stop_robot()
             self.grab(True)
             self.grabbed = True
-
-        if distance_to_target < 5 and abs(angle_to_face - current_heading) < 5:
-            self.stop_robot()
-        else:
-            self.holo(angle_to_move, angle_to_face)
-
-        if rotate_in_place:
-            self.rot_move(abs(current_heading) - angle_to_face, 0)
-
 
     def queue_command(self, command):
         """
@@ -88,76 +94,17 @@ class RobotController(object):
         self.synchronize()
         print "Queue-ing:", [ord(item) for item in command]
 
-    def move_forward(self, distance, degrees=0):
-        """
-            A movement-only function for distance up-to 255 cm
-        """
-        assert distance <= 255, "Distance should not be longer than 255"
-        if degrees:
-            self.rot_move(distance, degrees)
-
-        else:
-            # add extra commands
-            while distance > 255:
-                self.queue_command(self.command_dict["ROT_MOVE_POS"] + chr(0) + chr(255) + self.command_dict["END"])
-                distance -= 255
-
-            command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(distance) + self.command_dict["END"]
-            self.queue_command(command)
-
-    def rotate(self, degrees, distance=0):
+    def rotate(self, degrees):
         """
             A rotation-only function for angles up-to 255 deg
         """
-        assert degrees <= 255 and degrees >= -255, "Degrees should be in range of [-255, 255]"
-
-        if distance:
-            self.rot_move(distance, degrees)
-
-        else:
-            if degrees >= 0:
-                command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(0) + self.command_dict["END"]
-
-            else:
-                command = self.command_dict["ROT_MOVE_NEG"] + chr((-1 * degrees)) + chr(0) + self.command_dict["END"]
-
-            self.queue_command(command)
-
-    def rot_move(self, degrees, distance):
-        """
-            Perform movement and/or rotation for any degrees and any distance.
-            Assumes both are passed as integers
-        """
-
-        offset = 0
-
-        # add positive offset
-        while degrees > 255:
-            self.rotate(255)
-            degrees -= 255
-
-        # add negative offset
-        while degrees < -255:
-            self.rotate(-255)
-            degrees += 255
-
-        # calculate movement offset
-        while distance > 255:
-            offset += 255
-            distance -= 255
-
-        # issue command
-        if degrees >= 0:
-            command = self.command_dict["ROT_MOVE_POS"] + chr(int(degrees)) + chr(int(distance)) + self.command_dict["END"]
-        else:
-            command = self.command_dict["ROT_MOVE_NEG"] + chr(int(-1 * degrees)) + chr(int(distance)) + self.command_dict["END"]
+        degrees1 = absolute_to_magnetic(degrees)
+        degrees2 = 0
+        if degrees1 > 180:
+        	degrees2 = 180
+        	degrees1 = 180 - degrees1 
+        command = self.command_dict(self.command_dict["ROT_MOVE_POS"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"])
         self.queue_command(command)
-
-        # issue movement offset command
-        while offset > 0:
-            self.move_forward(255);
-            offset -= 255
-
     def holo(self, dist_vector, angular_vector):
         dist_vector = self.absolute_to_magnetic(dist_vector)
         angular_vector = self.absolute_to_magnetic(angular_vector)
@@ -265,7 +212,10 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-        mag_north = 157
+    	mag_north = 157
+
+    	if angle is None:
+    		return None
         # scale from 0 to 360
         if angle < 0:
             angle = 360 - abs(angle)
