@@ -59,20 +59,21 @@ class RobotController(object):
         """
         self.synchronize()
         current_heading = self.get_mag_heading()
-        angle_to_face = absolute_to_magnetic(angle_to_face)
-        angle_to_move = absolute_to_magnetic(angle_to_move)
+        mag_to_face = self.absolute_to_magnetic(angle_to_face)
+        mag_to_move = self.absolute_to_magnetic(angle_to_move)
 
         #if abs(angle_to_face - current_heading) > 90:
         #    self.rot_move(angle_to_face, 0)
-
-        if angle_to_face is None and angle_to_move is not None and not rotate_in_place:
+        print "stats", angle_to_face, angle_to_move, rotate_in_place, current_heading
+        if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
 	        if distance_to_target < 5 and abs(angle_to_face - current_heading) < 5:
 	            self.stop_robot()
 	        else:
+                    print "move moved holonomically"
 	            self.holo(angle_to_move, angle_to_face)
 	    
-	    elif angle_to_face is not None and rotate_in_place:
-	    	self.rot_move(angle_to_face)
+        elif angle_to_face is not None and rotate_in_place:
+	    self.rot_move(mag_to_face)
 
         if distance_to_target <= UNGRAB_DISTANCE and grab_target and self.grabbed:
             self.ungrab(True)
@@ -232,18 +233,8 @@ class RobotController(object):
 if __name__ == "__main__":
     r = RobotController()
     deg = 0
-    #test for stopping and resuming movement
-    # while True:
-    #     r.holo(deg, deg)
-    #     sleep(3)
-    #     r.stop_robot()
-    #     sleep(3)
-    #     deg += 15
-    #     deg %= 360
-    r.holo(180, 180)
-    sleep(10)
-    r.ungrab(True)
-    sleep(10)
-    r.grab(True)
-    sleep(10)
-    r.ungrab(True)
+    while True:
+        deg += 30
+        deg %= 360
+        r.move(angle_to_move=deg, angle_to_face=deg, distance_to_target=None, grab_target=False, rotate_in_place=False)
+        sleep(1)

@@ -1,10 +1,11 @@
 from constants import *
 from globalObjects import *
 from helperClasses import Point, Goals, Actions
-from helperFunctions import sin, cos
-import RobotController as controller
+from helperFunctions import sin, cos, tan
+from RobotController import RobotController
 import time
-
+import math
+controller = RobotController()
 """TODO
 Position to receive pass - Speak to Other Team About that
 Guard goal
@@ -15,10 +16,17 @@ Tell teammate plans (?)
 def collectBall():
     """Make `collectBall` the goal of our robot,
     and implement the plan for achieving this"""
-    angle_to_face = ball.bearing(Point(0,0))
+    diff_x = ball.currentPoint.x - me.currentPoint.x
+    diff_y = ball.currentPoint.y - me.currentPoint.y
+    angle_to_face = math.atan2(-diff_y,diff_x) * (180/3.14)
+    print angle_to_face
+    print me.currentPoint
+    print ball.currentPoint
+    print "^^^^^^^^^^^^^^^^^^^^"
+    #angle_to_face = ball.bearing(Point(0,0))
     angle_to_move = angle_to_face
     distance_to_move = me.distance(ball.currentPoint)
-    controller.move(angle_to_face,angle_to_move,distance_to_move,True)
+    controller.holo(angle_to_face,angle_to_move)#,distance_to_move,True)
 
 
     """me.plan = [{'action': Actions.moveToPoint, 'targetFunction': ungrabHere},
@@ -50,6 +58,47 @@ def passBall():
 
     """me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': rotate},
                {'action': Actions.kick, 'targetFunction': kickToAlly}]"""
+    if api.getMyPosition() is not None:
+        try:
+            mePosition = api.getMyPosition()
+            meOrientation = api.getMyOrientation()[1]
+            me.update(point(mePosition[0],mePosition[1]))
+        except:
+            print "I don't exist"
+    else :
+        print "Can't find me this tick :("
+    if api.getAllyPosition() is not None:
+        try:
+            AllyPosition = api.getAllyPosition()
+            AllyOrientation = api.getAllyOrientation()[1]
+            ally.update(Point(allyPosition[0],allyPosition[1]))
+        except:
+            print "ally don't exist"
+    else:
+        print "Can't find my friend this tick :("
+    if api.getEnemyPositions()[0] is not None:
+        try:
+            enemy0Position = api.getEnemyPositions()[0]
+            emeny0Orientation =  api.getEnemyOrientation()[0][1]
+            ememyA.update(Point(enemy0Position[0],enemy0Position[1]))
+        except:
+            print "enemy1 don't exist"
+    else:
+        print "Can't find enemy 0 this tick :("
+    if api.getEnemyPositions()[1] is not None:
+        try:
+            enemy1Position = api.getEnemyPositions()[1]
+            enemy1Orientation = api.getEnemyOrientation()[1][1]
+            enemyB.update(Point(enemy1Position[0],enemy1Position[1]))
+        except:
+            print "enemy2 don't exist"
+    else:
+        print "Enemy_0 Position: ", api.getEnemyPositions()[1]
+    if api.getBallCenter() is not None:
+        ballPosition =  api.getBallCenter()
+        ball.update(Point(ballPosition[0],ballPosition[1]))
+    else:
+        print "Shit! Where's the ball gone"
 
 
 def receivePass():
