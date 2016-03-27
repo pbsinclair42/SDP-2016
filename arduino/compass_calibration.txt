@@ -1,0 +1,19 @@
+To calibrate the compass: 
+
+1. Open the arduino code and go to the main loop function. There you can find:
+
+199: pollAccComp();
+200: // calibrateCompass();
+
+2. Comment out the first one - uncomment out the second one;
+
+3. Then, take the robot to a non-EM interference area (E.G. Away from computers and fastly moving robots, preferably the center of the pitch. DON'T tilt it!)
+
+
+4. slowly rotate it 360 degrees in either direction (preferably both)
+
+ 
+5. it will then print out the correct biasing values every 5sec which you can change in the arduino code, revert to the correct version and have a well-calibrated compass. The values you need to change are MAG_OFFSET_X, MAG_OFFSET_Y, MAG_OFFSET_Z in the top defines. Then, undo the changes in step one, and reprogram the arduino
+
+Note:
+If you're doing it with a USB cable - use the long one we have, not the short one otherwise - I have added a compass-listener in firmware which you can use with RF - it simply reads serial ascii and prints it out (you can also do this with the serial monitor and the rf stick)
