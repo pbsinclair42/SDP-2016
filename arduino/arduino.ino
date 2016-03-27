@@ -36,8 +36,7 @@
 
 
 /****** COMMS API Byte Definitions  ******/
-#define CMD_ROTMOVE    B00000011 // Buffered. Bits 2-3 indicate direction 
-#define CMD_ROTMOVECCW B00001111 // Buffered. Bits 2-3 indicate direction
+#define CMD_ROTPLACE   B00000011 // Buffered. Bits 2-3 indicate direction
 
 #define CMD_STOP       B00001000 // Atomic.
 #define CMD_KICK       B00000100 // Buffered.
@@ -54,7 +53,7 @@
 
 
 // Comms Tuning Parameters
-#define RESPONSE_TIME 200
+#define RESPONSE_TIME 50
 byte SEQ_NUM = 0; // Sequence number, flipped between 1 and 0
 
 
@@ -190,7 +189,7 @@ void setup() {
     mag_min_z = mag[2];
     mag_max_z = mag[2];
     calibrate_compass = 1;
-    correctLeft();
+    rotateLeft(100.0);
     delay(300); // delay to get first proper mag value
     
     /* Custom commands can be initialized below */
@@ -242,15 +241,9 @@ void loop() {
             break;
         
 
-        case CMD_ROTMOVE:
-            state_end = rotMoveStep();
+        case CMD_ROTPLACE:
+            state_end = rotPlaceStep();
             break;
-        
-
-        case CMD_ROTMOVECCW:
-            state_end = rotMoveStep();
-            break;
-        
 
         case CMD_HOLMOVE_1:
             state_end = holoMoveStep();
@@ -320,7 +313,6 @@ void loop() {
       CommsOut();
       
   }
-
 }
 
 
@@ -339,20 +331,34 @@ int calculateChecksum(int target_value){
     return 255 - check;
 }
 
-void atomicHoloCommand(byte target_value){
-
-    if ((command_buffer[target_value - 8] ^ CMD_HOLMOVE_1) <= 3){
+void atomicRotCommand(byte target_value){
+    // if prevous command was rotational and we're still performing it
+    if (command_buffer[target_value - 8] == CMD_ROTPLACE && command_index == target_value - 8){
+        // copy new command into previous command
         for (int i = 0; i < 4; i++){
-            // copy new command into previous command
             command_buffer[target_value - 8 + i] = command_buffer[target_value - 4 + i];
-            command_time = millis();
-            // if the command was finished - "UN-finish it"
-            if (command_index == target_value - 4)
-                command_index -= 4;
         }
+        command_time = millis();
         restoreCommsState(target_value);
     }
+    return;    
+}
 
+void atomicHoloCommand(byte target_value){
+    if ((command_buffer[target_value - 8] ^ CMD_HOLMOVE_1) <= 3){
+        // copy new command into previous command
+        for (int i = 0; i < 4; i++){
+            command_buffer[target_value - 8 + i] = command_buffer[target_value - 4 + i];
+            }
+
+        command_time = millis();
+        // if the command was finished - "UN-finish it"
+        if (command_index == target_value - 4)
+            command_index -= 4;
+        
+        restoreCommsState(target_value);
+    }
+    return;
 }
 void restoreCommsState(byte target_value){
     buffer_index = target_value - 4;
@@ -421,7 +427,6 @@ void Communications() {
                             restoreCommsState(target_value);
                         }
                         break;
-                    
 
                     case CMD_UNGRAB:
                         if (command_buffer[target_value - 3]){
@@ -430,6 +435,11 @@ void Communications() {
                         }
                         break;
                     
+                    case CMD_ROTPLACE:
+                        // commsState is restored inside the function
+                        atomicRotCommand(target_value);
+                        break;
+
                     case CMD_HOLMOVE_1:
                         // commsState is restored inside the function
                         atomicHoloCommand(target_value);
@@ -452,15 +462,7 @@ void Communications() {
                         // commsState is restored inside the function
                         atomicHoloCommand(target_value);
                         break;
-                }
-                /*
-                for (int i = 0; i < 4; i++){
-                    Serial.print(i);
-                    Serial.print(": ");
-                    Serial.println(command_buffer[i]);
-                }
-                Serial.println("===========");
-                */    
+                }    
                 report_time += RESPONSE_TIME + 1;
             }
             // report invalid command
@@ -580,7 +582,7 @@ void handleAtomicActions(){
     }
 }
 
-int rotMoveStep(){
+int rotPlaceStep(){
     // values for target calculation
     int left, left_angle, right_angle;
     byte degrees, centimeters;
@@ -589,133 +591,48 @@ int rotMoveStep(){
 
         // calculate rotation target and start rotating
         case 0 :
-            degrees = command_buffer[command_index + 1];
-            left = (MasterState >> 3) & 127; // left becomes MSB of master state/current command
-            left = left == 0 ? 1 : -1;
-
-            if (!degrees){
-                MoveMode = 2;
-                return 0;
+            target_angle = command_buffer[command_index + 1] + command_buffer[command_index + 2];
+            
+            left_angle = calculateLeftAngle(heading, target_angle);
+            right_angle = calculateRightAngle(heading, target_angle);
+            if (left_angle < right_angle){
+                rotateRight(left_angle);
             }
-            
-            /** Use bottom commented-out code for rotary stuff */
-            // calculate target based on piece-wise linear approximation for
-            // know values of 30, 45, 60, 90, 120, 180 degrees
-            //rotaryTarget = (int) (calculateRotaryTarget(degrees) * degrees);  
-            // restore and update motor positions to account for initial bias
-            // based on wheels & rotary encoders;
-            //restoreMotorPositions(positions);
-            //updateMotorPositions(positions);
-            //rotaryBias = positions[0] + positions[1] + positions[2];
-            
-            target_angle = normalize_angle(heading - (float(degrees) * left));
-            
-            // got straight to correction for low angles
-            
-            if (left == 1)
-                rotateLeft();
-            else
-                rotateRight();
-
+            else{
+                rotateLeft(right_angle);
+            }
             MoveMode = 1;
-            
-            // manual override for VERY small angles
-            if (degrees < 15){
-                delay(degrees * 25);
-                motorAllStop();
-                MoveMode = 2;
-                return 0;
-            }
-
-            return 0;
-        
-        // chck whether to stop during rotation;
-        case 1 :
-            left = (MasterState >> 3) & 127; // left becomes MSB of master state/current command
-            left = left == 0 ? 1 : -1;
-            
-            angle_difference = calculateAngleDifference(heading, target_angle);
-            degrees = command_buffer[command_index + 1];
-            if (angle_difference < 20){
-                motorAllStop();
-                MoveMode = 4;
-                delay(150);
-                command_time = millis();
-                correct_time = millis();
-            }
-            
-            else{
-                // delay to make sure motor actions are not being performed too quckly
-                // to ensure data sent to motors is not corrupted
-                updateMotorPositions(positions);
-                MoveMode = 1;
-            }
-
-            return 0;
-        
-        // calculate movement target and start moving forward
-        case 2 :
-            centimeters = command_buffer[command_index + 2];
-            command_time = millis();
-            if (centimeters == 0){
-                MoveMode = 0;
-                return 1;
-            }
-            // calculate rotary encoder target based on motion constant
-            rotaryTarget = (int) (MOTION_CONST * centimeters);
-            
-            restoreMotorPositions(positions);
             delay(50);
-            testForward();
-             
-            MoveMode = 3;
             return 0;
-
-        // perform movement
-        case 3 :
-            centimeters = command_buffer[command_index + 2];
-            if ((millis() - command_time > 1500) && centimeters < 35){
-                motorAllStop();
-                restoreMotorPositions(positions);
-                MoveMode = 0;
-                return 1;
-            }
-            if (-1 * positions[MOTOR_LFT] < rotaryTarget && positions[MOTOR_RGT] < rotaryTarget){
-                updateMotorPositions(positions);
-                return 0;
-            }
-            else{
-                motorAllStop();
-                restoreMotorPositions(positions);
-                MoveMode = 0;
-                return 1;
-            }
-
-        // rotation correction
-        case 4 :
+        
+        // rotation correction and stoppage;
+        case 1 :
             if (calculateAngleDifference(heading, target_angle) > 5){
                 in_the_zone = 0;
                 left_angle = calculateLeftAngle(heading, target_angle);
                 right_angle = calculateRightAngle(heading, target_angle);
                 if (left_angle < right_angle){
-                    correctRight();
+                    rotateRight(left_angle);
                 }
-                else {
-                    correctLeft();
+                else{
+                    rotateLeft(right_angle);
                 }
+                delay(50);
             }
             else{
-                motorAllStop();
                 // exit if you've been in the zone enough time
                 if (in_the_zone){
                     if (millis() - correct_time > ROTATION_CORRECT_TIME){
-                        MoveMode = 2;
-                        in_the_zone = 0;
+                        return 1;
+                    }
+                    else{
+                        return 0;
                     }
                 }
                 else{
                     in_the_zone = 1;
                     correct_time = millis();
+                    motorAllStop();
                 }
           }
           return 0;
@@ -922,53 +839,6 @@ int unGrabStep(){
     }
 }
 
-float calculateRotaryTarget(float x3){
-    // linear function approximation, e.g. finding y3 based on y1, y2, x1, x2, x3
-    // for fixed rotational value calibrations
-    
-    // TODO: Add values for dynamic calibration in each state based
-    // on overshoot/undershoot and compass/gyro feedback for each 
-    // approximation case
-
-    float x1, x2;
-    float y1, y2;
-    
-    if (x3 <= 30) {
-        x1 = 0.75;
-        x2 = 30;
-        y1 = 0;
-        y2 = 1.7;
-    } else if (x3 <= 45){
-        x1 = 30;
-        x2 = 45;
-        y1 = 1.7;
-        y2 = 1.75;
-    } else if (x3 <= 60){
-        x1 = 45;
-        x2 = 60;
-        y1 = 1.75;
-        y2 = 1.95;
-    } else if (x3 <= 90){
-        x1 = 60;
-        x2 = 90;
-        y1 = 1.95;
-        y2 = 2.17;
-    } else if (x3 <= 120){
-        x1 = 90;
-        x2 = 120;
-        y1 = 2.17;
-        y2 = 2.85;
-    } else if (x3 <= 180){
-        x1 = 120;
-        x2 = 180;
-        y1 = 2.85;
-        y2 = 3.675;
-    } else {
-        return 4;
-    }
-    return y1 + (y2 - y1) * ((x3 - x1) / (x2 - x1));
-}
-
 float normalize_angle(float angle){
     if (angle > 360)
         angle -= 360;
@@ -1099,48 +969,6 @@ void calibrateCompass(){
  MAG_OFFSET_Z = int(-0.5 * (mag_max_z + mag_min_z));
 }
 
-// basic test functions for sanity!
-void fullMotorTest(){
-    // Performs a test of all basic motions.
-    // Each is executed in 5 seconds.
-    // Subject to battery power, the robot should end up
-    // roughly wherever it started
-
-    testForward();
-    delay(3000);
-    motorAllStop();
-    
-    testBackward();
-    delay(3000);
-    motorAllStop();
-
-    testLeft();
-    delay(3000);
-    motorAllStop();
-
-    testRight();
-    delay(3000);
-    motorAllStop();
-
-    testLeftForward();
-    delay(3000);
-    motorAllStop();
-
-    testRightBackward();
-    delay(3000);
-    motorAllStop();
-
-    testRightForward();
-    delay(3000);
-    motorAllStop();
-
-    testLeftBackward();
-    delay(3000);
-    motorAllStop();
-    
-    return;
-}
-
 void testRightBackward() {
     motorForward(MOTOR_LFT, POWER_LFT * 1);
     motorForward(MOTOR_RGT, POWER_RGT * 0);
@@ -1153,63 +981,28 @@ void testLeftBackward() {
     motorForward(MOTOR_BCK, POWER_BCK * 1);
 }
 
-void rotateRight() {
-    motorBackward(MOTOR_LFT, (int)(POWER_LFT * 1));
-    motorBackward(MOTOR_RGT, (int)(POWER_RGT * 1));
-    motorBackward(MOTOR_BCK, (int)(POWER_BCK * 1));    
+void rotateRight(float target_angle) {
+    int power_value = 0;
+    if (target_angle > 90){
+        power_value = 255;
+    }
+    else{
+        power_value = (int) 1.7 * target_angle + 102;
+    }
+    motorBackward(MOTOR_LFT, power_value);
+    motorBackward(MOTOR_RGT, power_value);
+    motorBackward(MOTOR_BCK, power_value);
 }
 
-void correctRight(){
-    motorBackward(MOTOR_LFT, (int)(POWER_LFT * 0.7));
-    motorBackward(MOTOR_RGT, (int)(POWER_RGT * 0.7));
-    motorBackward(MOTOR_BCK, (int)(POWER_BCK * 0.7));    
-}
-
-void rotateLeft() {
-    motorForward(MOTOR_LFT, (int)(POWER_LFT * 1));
-    motorForward(MOTOR_RGT, (int)(POWER_RGT * 1));
-    motorForward(MOTOR_BCK, (int)(POWER_BCK * 1));    
-}
-
-void correctLeft(){
-    motorForward(MOTOR_LFT, (int)(POWER_LFT * 0.7));
-    motorForward(MOTOR_RGT, (int)(POWER_RGT * 0.7));
-    motorForward(MOTOR_BCK, (int)(POWER_BCK * 0.7));    
-}
-
-void testRightForward() {
-    motorBackward(MOTOR_LFT, POWER_LFT * 1);
-    motorForward(MOTOR_RGT, POWER_RGT * 0);
-    motorForward(MOTOR_BCK, POWER_BCK * 1);
-}
-
-void testLeftForward() {
-    motorBackward(MOTOR_LFT, POWER_LFT * 0); 
-    motorForward(MOTOR_RGT, POWER_RGT * 1);
-    motorBackward(MOTOR_BCK, POWER_BCK * 1);
-}
-
-void testRight(){
-    motorBackward(MOTOR_LFT, POWER_LFT * 0.51);
-    motorBackward(MOTOR_RGT, POWER_RGT * 0.51);
-    motorForward(MOTOR_BCK, POWER_BCK * 0.98);
- 
-}
-
-void testLeft() {
-    motorForward(MOTOR_LFT, POWER_LFT * 0.51);
-    motorForward(MOTOR_RGT, POWER_RGT * 0.51);
-    motorBackward(MOTOR_BCK, POWER_BCK * 0.98);
-}
-
-void testBackward(){
-    motorForward(MOTOR_LFT, POWER_LFT * 1);
-    motorBackward(MOTOR_RGT, POWER_RGT * 1);
-    motorForward(MOTOR_BCK, POWER_BCK * 0);
-}
-
-void testForward() {
-    motorBackward(MOTOR_LFT, POWER_LFT * 1);
-    motorForward(MOTOR_RGT, POWER_RGT * 1);
-    motorForward(MOTOR_BCK, POWER_BCK * 0); 
+void rotateLeft(float target_angle) {
+    int power_value = 0;
+    if (target_angle > 90){
+        power_value = 255;
+    }
+    else{
+        power_value = (int) 1.7 * target_angle + 102;
+    }
+    motorForward(MOTOR_LFT, power_value);
+    motorForward(MOTOR_RGT, power_value);
+    motorForward(MOTOR_BCK, power_value);    
 }
