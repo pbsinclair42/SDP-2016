@@ -25,7 +25,7 @@ class RobotController(object):
         self.commands = 0
         self.command_list = []
         self.command_dict = {
-            "ROT_MOVE_POS" : chr(3  ),
+            "ROT_MOVE" : chr(3  ),
             "HOL_MOVE"     : chr(124),
             "KICK"         : chr(4  ),
             "STOP"         : chr(8  ),
@@ -47,7 +47,7 @@ class RobotController(object):
                                target=comms_thread,
                                args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
         self.process.start()
-    def move(self, angle_to_face=None, angle_to_move=None, distance_to_target=0 , grab_target=False, rotate_in_place=False):
+    def move(self, angle_to_face=None, angle_to_move=None, distance_to_target=None , grab_target=None, rotate_in_place=None):
         """ Overriding move function
             
         angle_to_move: Absolute vision angle towards which to move
@@ -59,32 +59,37 @@ class RobotController(object):
         """
         self.synchronize()
         current_heading = self.get_mag_heading()
-        mag_to_face = self.absolute_to_magnetic(angle_to_face)
-        mag_to_move = self.absolute_to_magnetic(angle_to_move)
 
-        #if abs(angle_to_face - current_heading) > 90:
-        #    self.rot_move(angle_to_face, 0)
-        """
-        print "stats", angle_to_face, angle_to_move, rotate_in_place, current_heading
+        # case for grabbing or ungrabbing the ball
+        if grab_target:
+        	if distance_to_target <= UNGRAB_DISTANCE and self.grabbed:
+        		self.ungrab(True)
+        		self.grabbed = False
+
+        	if distance_to_target <= GRAB_DISTANCE and not self.grabbed:
+        		self.stop_robot()
+        		self.grab(True)
+        		self.grabbed = True
+
+        # case for moving
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
-	        if distance_to_target < 5 and abs(angle_to_face - current_heading) < 5:
+	        # stop if you're too close
+	        if distance_to_target < 10 and abs(angle_to_face - current_heading) < 5:
 	            self.stop_robot()
+	        
+	        # rotate in place if you're too far
+	        elif abs(current_heading - angle_to_face) > 60:
+	        	self.rotate(angle_to_face)
+	        
+	        # move holonomically if you're roughly in the right direction and correct on robot-side magnet
 	        else:
-                print "move moved holonomically"
 	            self.holo(angle_to_move, angle_to_face)
-	    
+        
         elif angle_to_face is not None and rotate_in_place:
-	        self.rot_move(mag_to_face)
-        """
-        print "controller stats", distance_to_target, grab_target, self.grabbed
-        if distance_to_target <= UNGRAB_DISTANCE and grab_target and self.grabbed:
-            self.ungrab(True)
-            self.grabbed = False
-
-        if distance_to_target <= GRAB_DISTANCE and abs(angle_to_face - current_heading) < 10 and not self.grabbed and grab_target:
-            self.stop_robot()
-            self.grab(True)
-            self.grabbed = True
+	        self.rotate(angle_to_face)
+	    
+	    else:
+	    	print "Warning: move didn't move!"
 
     def queue_command(self, command):
         """
@@ -106,7 +111,7 @@ class RobotController(object):
         if degrees1 > 180:
         	degrees2 = 180
         	degrees1 = 180 - degrees1 
-        command = self.command_dict(self.command_dict["ROT_MOVE_POS"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"])
+        command = self.command_dict(self.command_dict["ROT_MOVE"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"])
         self.queue_command(command)
     def holo(self, dist_vector, angular_vector):
         dist_vector = self.absolute_to_magnetic(dist_vector)
