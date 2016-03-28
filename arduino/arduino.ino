@@ -461,7 +461,7 @@ void Communications() {
             }
             // report invalid command
             else{
-                buffer_index = next_valid_byte
+                buffer_index = next_valid_byte;
                 
                 if (buffer_index == 252){
                     bufferOverflow -= 1;
@@ -626,7 +626,7 @@ int rotPlaceStep(){
                     stopWheels();
                     delay(25);
                     in_the_zone = 0;
-                    moveMode = 0;
+                    MoveMode = 0;
                     return 1;
                 }
 

@@ -62,34 +62,34 @@ class RobotController(object):
 
         # case for grabbing or ungrabbing the ball
         if grab_target:
-        	if distance_to_target <= UNGRAB_DISTANCE and self.grabbed:
-        		self.ungrab(True)
-        		self.grabbed = False
+            if distance_to_target <= UNGRAB_DISTANCE and self.grabbed:
+                self.ungrab(True)
+                self.grabbed = False
 
-        	if distance_to_target <= GRAB_DISTANCE and not self.grabbed:
-        		self.stop_robot()
-        		self.grab(True)
-        		self.grabbed = True
+            if distance_to_target <= GRAB_DISTANCE and not self.grabbed:
+                self.stop_robot()
+                self.grab(True)
+                self.grabbed = True
 
         # case for moving
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
-	        # stop if you're too close
-	        if distance_to_target < 10 and abs(angle_to_face - current_heading) < 5:
-	            self.stop_robot()
-	        
-	        # rotate in place if you're too far
-	        elif abs(current_heading - angle_to_face) > 60:
-	        	self.rotate(angle_to_face)
-	        
-	        # move holonomically if you're roughly in the right direction and correct on robot-side magnet
-	        else:
-	            self.holo(angle_to_move, angle_to_face)
+            # stop if you're too close
+            if distance_to_target < 10 and abs(angle_to_face - current_heading) < 5:
+                self.stop_robot()
+            
+            # rotate in place if you're too far
+            elif abs(current_heading - angle_to_face) > 60:
+                self.rotate(angle_to_face)
+            
+            # move holonomically if you're roughly in the right direction and correct on robot-side magnet
+            else:
+                self.holo(angle_to_move, angle_to_face)
         
         elif angle_to_face is not None and rotate_in_place:
-	        self.rotate(angle_to_face)
-	    
-	    else:
-	    	print "Warning: move didn't move!"
+            self.rotate(angle_to_face)
+        
+        else:
+            print "Warning: move didn't move!"
 
     def queue_command(self, command):
         """
@@ -109,8 +109,8 @@ class RobotController(object):
         degrees1 = absolute_to_magnetic(degrees)
         degrees2 = 0
         if degrees1 > 180:
-        	degrees2 = 180
-        	degrees1 = 180 - degrees1 
+            degrees2 = 180
+            degrees1 = 180 - degrees1 
         command = self.command_dict(self.command_dict["ROT_MOVE"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"])
         self.queue_command(command)
     def holo(self, dist_vector, angular_vector):
@@ -220,10 +220,10 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-    	mag_north = 157
+        mag_north = 157
 
-    	if angle is None:
-    		return None
+        if angle is None:
+            return None
         # scale from 0 to 360
         if angle < 0:
             angle = 360 - abs(angle)
@@ -235,7 +235,7 @@ class RobotController(object):
 
         if angle > 360:
             angle = abs(360 - abs(angle))
-        return angle
+        return angles
 
 if __name__ == "__main__":
     r = RobotController()
