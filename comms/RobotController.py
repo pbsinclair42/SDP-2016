@@ -3,9 +3,9 @@ from multiprocessing import Process, Pipe, Event
 from time import sleep
 
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
-GRAB_DISTANCE = 10.0
+GRAB_DISTANCE = 30.0
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
-UNGRAB_DISTANCE = 30.0
+UNGRAB_DISTANCE = 60.0
 
 
 class RobotController(object):
