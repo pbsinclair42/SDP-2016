@@ -3,7 +3,7 @@ from multiprocessing import Process, Pipe, Event
 from time import sleep
 
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
-GRAB_DISTANCE = 5.0
+GRAB_DISTANCE = 10.0
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
 UNGRAB_DISTANCE = 30.0
 
@@ -64,17 +64,19 @@ class RobotController(object):
 
         #if abs(angle_to_face - current_heading) > 90:
         #    self.rot_move(angle_to_face, 0)
+        """
         print "stats", angle_to_face, angle_to_move, rotate_in_place, current_heading
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
 	        if distance_to_target < 5 and abs(angle_to_face - current_heading) < 5:
 	            self.stop_robot()
 	        else:
-                    print "move moved holonomically"
+                print "move moved holonomically"
 	            self.holo(angle_to_move, angle_to_face)
 	    
         elif angle_to_face is not None and rotate_in_place:
-	    self.rot_move(mag_to_face)
-
+	        self.rot_move(mag_to_face)
+        """
+        print "controller stats", distance_to_target, grab_target, self.grabbed
         if distance_to_target <= UNGRAB_DISTANCE and grab_target and self.grabbed:
             self.ungrab(True)
             self.grabbed = False

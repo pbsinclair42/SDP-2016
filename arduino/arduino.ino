@@ -623,9 +623,11 @@ int rotPlaceStep(){
                 // exit if you've been in the zone enough time
                 if (in_the_zone){
                     if (millis() - correct_time > ROTATION_CORRECT_TIME){
+                        MoveMode = 0;
                         return 1;
                     }
                     else{
+                        MoveMode = 1;
                         return 0;
                     }
                 }

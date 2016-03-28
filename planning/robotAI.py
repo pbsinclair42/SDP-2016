@@ -5,6 +5,7 @@ from globalObjects import me, ally, enemies, robots, ball
 from helperClasses import BallStatus, Goals, Point
 #from actions import executePlan
 from goals_new import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
+from helperFunctions import nearEnough
 import world
 #from CommsAPI import commsSystem
 from RobotController import RobotController as controller
@@ -18,6 +19,7 @@ def updatePositions():
         mePosition = api.getMyPosition()
         meOrientation = api.getMyOrientation()[1]
         me.update(Point(mePosition[0],mePosition[1]))
+        me.currentRotation = meOrientation
     else :
         print "Can't find me this tick :("
     if api.getAllyPosition() is not None:
@@ -25,6 +27,8 @@ def updatePositions():
             AllyPosition = api.getAllyPosition()
             AllyOrientation = api.getAllyOrientation()[1]
             ally.update(Point(allyPosition[0],allyPosition[1]))
+            ally.currentRotation = AllyOrientation
+
         except:
             print "ally don't exist"
     else:
@@ -32,8 +36,10 @@ def updatePositions():
     if api.getEnemyPositions()[0] is not None:
         try:
             enemy0Position = api.getEnemyPositions()[0]
-            emeny0Orientation =  api.getEnemyOrientation()[0][1]
-            ememyA.update(Point(enemy0Position[0],enemy0Position[1]))
+            eneny0Orientation =  api.getEnemyOrientation()[0][1]
+            enemyA.update(Point(enemy0Position[0],enemy0Position[1]))
+            enemyA.currentRotation = enamy0Orientation
+
         except:
             print "enemy1 don't exist"
     else:
@@ -43,6 +49,8 @@ def updatePositions():
             enemy1Position = api.getEnemyPositions()[1]
             enemy1Orientation = api.getEnemyOrientation()[1][1]
             enemyB.update(Point(enemy1Position[0],enemy1Position[1]))
+            enemyB.currentRotation = enemy1Orientation
+
         except:
             print "enemy2 don't exist"
     else:
@@ -59,7 +67,7 @@ def updatePositions():
             ball.status = BallStatus.enemyB
         elif  ally.bearing(ball) == ally.currentRotation and ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.ally
-        elif me.bearing(ball) == me.currentRotation and ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
+        elif nearEnough(abs(me.bearing(ball)), abs(me.currentRotation)):# and ball.distance(me)< BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.me
         # if we can't see it, assume it's the same, otherwise if it's far enough from everything, it's free
         elif Point(api.world['ball_center'][0],api.world['ball_center'][1]) !=None:
@@ -76,7 +84,8 @@ def updatePositions():
 def makePlan():
     """Decide what to do based on the system's current
     beliefs about the state of play"""
-    collectBall()
+    #collectBall()
+    shoot()
     """if me.goal == Goals.none:
         if not USING_SIMULATOR:
             commsSystem.restart()
