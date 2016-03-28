@@ -51,7 +51,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
                 command = [ord(item) for item in pipe_data[0]] + [0, 0 ,0]
                 if cmnd_list and is_holo(command) and is_holo(cmnd_list[-1]):
-                    print "replacing last holo command"
                     cmnd_list[-1] = command
                     print cmnd_list
                 else:
@@ -108,35 +107,24 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 sleep(command_sleep_time)
             print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
 
-        #handle atomic operations
+        # handle atomic operations
         if atomic_status == "grab" and robot_state["grabber"] == True:
             # send atomic command with both possible sequence numbers.
             atomic_command = [ord(chr(16)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
-            sequenced = sequence_command(atomic_command, 0)
+            sequenced = sequence_command(atomic_command, robot_state["seq_num"])
             for command_byte in sequenced:
                 comms.write(sequenced)
                 sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 0
-
-            sequenced = sequence_command(atomic_command, 1)
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 1
+            print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
 
         elif atomic_status == "ungrab" and robot_state["grabber"] == False:
             atomic_command = [ord(chr(32)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
-            sequenced = sequence_command(atomic_command, 0)
+            sequenced = sequence_command(atomic_command, robot_state["seq_num"])
             for command_byte in sequenced:
                 comms.write(sequenced)
                 sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 0
+            print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
 
-            sequenced = sequence_command(atomic_command, 1)
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 1
 
         # computer ack count
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
@@ -149,7 +137,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
         print robot_state
-        print cmnd_list
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
