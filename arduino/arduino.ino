@@ -20,7 +20,7 @@
 #define KICKER_PWR 255
 #define KICKER_LFT_POWER 255
 #define KICKER_RGT_POWER 255
-#define GRABBER_POWER 150
+#define GRABBER_POWER 120
 
 
 // temporal calibrations for grabber/ kicker
@@ -31,7 +31,7 @@
 // Movement and kicker Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
-#define ROTATION_CORRECT_TIME 400
+#define ROTATION_CORRECT_TIME 333
 #define KICKER_CONST 10.0  
 
 
@@ -92,7 +92,7 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
-byte invalid_commands = 0;
+byte next_valid_byte = 0;
 
 
 // temporal parameters used for the millis function.
@@ -189,15 +189,8 @@ void setup() {
     mag_min_z = mag[2];
     mag_max_z = mag[2];
     calibrate_compass = 1;
-    rotateLeft(100.0);
-    delay(300); // delay to get first proper mag value
-    
-    /* Custom commands can be initialized below */
-    /*command_buffer[0] = CMD_HOLMOVE_4;
-    command_buffer[1] = 35;
-    command_buffer[2] = 35;
-    command_buffer[3] = 255;
-    buffer_index = 4;*/
+    rotateLeft(30.0);
+    delay(100); // delay to get first proper mag value
   }
   
 
@@ -279,7 +272,7 @@ void loop() {
 
         case CMD_STOP:
             state_end = 1;
-            motorAllStop();
+            stopWheels();
             break;
         
 
@@ -299,8 +292,8 @@ void loop() {
   if (millis() - command_time > 5000)
       state_end = 1;
 
-  if (state_end ){
-        motorAllStop();
+  if (state_end){
+        stopWheels();
         MasterState = IDLE_STATE;
         command_index += 4;
 
@@ -401,7 +394,6 @@ void Communications() {
             if (((command_buffer[target_value - 4] & 128) == 128 * SEQ_NUM) && 
                 (command_buffer[target_value - 1] == checksum)){
                 
-                invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
                 command_id = command_buffer[target_value - 4] & 127;
                 command_buffer[target_value - 4] = command_id;
@@ -413,7 +405,7 @@ void Communications() {
 
                     
                     case CMD_STOP:
-                        motorAllStop();
+                        stopWheels();
                         MoveMode = 0;
                         MasterState = 0;
                         command_index = target_value;
@@ -462,13 +454,14 @@ void Communications() {
                         // commsState is restored inside the function
                         atomicHoloCommand(target_value);
                         break;
-                }    
+                }
+                // force report on current iteration
                 report_time += RESPONSE_TIME + 1;
+                next_valid_byte = buffer_index;
             }
             // report invalid command
             else{
-                invalid_commands += 1;
-                buffer_index = target_value - 4;
+                buffer_index = next_valid_byte
                 
                 if (buffer_index == 252){
                     bufferOverflow -= 1;
@@ -593,6 +586,13 @@ int rotPlaceStep(){
         case 0 :
             target_angle = command_buffer[command_index + 1] + command_buffer[command_index + 2];
             
+            if (calculateAngleDifference(heading, target_angle) < 5){
+                MoveMode = 0;
+                stopWheels();
+                return 1;
+                delay(50);
+            }
+            
             left_angle = calculateLeftAngle(heading, target_angle);
             right_angle = calculateRightAngle(heading, target_angle);
             if (left_angle < right_angle){
@@ -602,6 +602,7 @@ int rotPlaceStep(){
                 rotateLeft(right_angle);
             }
             MoveMode = 1;
+            in_the_zone = 0;
             delay(50);
             return 0;
         
@@ -620,6 +621,15 @@ int rotPlaceStep(){
                 delay(50);
             }
             else{
+                // speed-up hack if we've already received a next holonomic command
+                if ((command_buffer[command_index + 4] ^ CMD_HOLMOVE_1) <= 3 && command_index + 8 == buffer_index && commandOverflow == bufferOverflow){
+                    stopWheels();
+                    delay(25);
+                    in_the_zone = 0;
+                    moveMode = 0;
+                    return 1;
+                }
+
                 // exit if you've been in the zone enough time
                 if (in_the_zone){
                     if (millis() - correct_time > ROTATION_CORRECT_TIME){
@@ -634,7 +644,7 @@ int rotPlaceStep(){
                 else{
                     in_the_zone = 1;
                     correct_time = millis();
-                    motorAllStop();
+                    stopWheels();
                 }
           }
           return 0;
@@ -1007,4 +1017,10 @@ void rotateLeft(float target_angle) {
     motorForward(MOTOR_LFT, power_value);
     motorForward(MOTOR_RGT, power_value);
     motorForward(MOTOR_BCK, power_value);    
+}
+
+void stopWheels(){
+    motorForward(MOTOR_LFT, 0);
+    motorForward(MOTOR_RGT, 0);
+    motorForward(MOTOR_BCK, 0);
 }
