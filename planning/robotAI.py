@@ -7,8 +7,11 @@ from helperClasses import BallStatus, Goals, Point
 from goals_new import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
 from helperFunctions import nearEnough
 import world
+import sys
+sys.path.append(ROOT_DIR+'comms/')
 #from CommsAPI import commsSystem
 from RobotController import RobotController as controller
+
 def updatePositions():
     # me = 0
     # ally = 1

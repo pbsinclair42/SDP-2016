@@ -2,6 +2,8 @@ from constants import *
 from globalObjects import *
 from helperClasses import Point, Goals, Actions, BallStatus
 from helperFunctions import sin, cos, tan, nearEnough
+import sys
+sys.path.append(ROOT_DIR+'comms/')
 from RobotController import RobotController
 import time
 import math
