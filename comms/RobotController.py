@@ -74,14 +74,9 @@ class RobotController(object):
         # case for moving
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
             # stop if you're too close
-            if distance_to_target < 10 and abs(angle_to_face - current_heading) < 5:
+            if distance_to_target is not None and distance_to_target < 10 and abs(angle_to_face - current_heading) < 5:
+                self.holo(angle_to_move, angle_to_face)
                 self.stop_robot()
-            
-            # rotate in place if you're too far
-            elif abs(current_heading - angle_to_face) > 60:
-                self.rotate(angle_to_face)
-            
-            # move holonomically if you're roughly in the right direction and correct on robot-side magnet
             else:
                 self.holo(angle_to_move, angle_to_face)
         
@@ -106,12 +101,12 @@ class RobotController(object):
         """
             A rotation-only function for angles up-to 255 deg
         """
-        degrees1 = absolute_to_magnetic(degrees)
+        degrees1 = self.absolute_to_magnetic(degrees)
         degrees2 = 0
         if degrees1 > 180:
             degrees2 = 180
-            degrees1 = 180 - degrees1 
-        command = self.command_dict(self.command_dict["ROT_MOVE"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"])
+            degrees1 = degrees1 - 180
+        command = self.command_dict["ROT_MOVE"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"]
         self.queue_command(command)
     def holo(self, dist_vector, angular_vector):
         dist_vector = self.absolute_to_magnetic(dist_vector)
@@ -235,13 +230,19 @@ class RobotController(object):
 
         if angle > 360:
             angle = abs(360 - abs(angle))
-        return angles
+        return angle
 
 if __name__ == "__main__":
     r = RobotController()
+    sleep(10)
     deg = 0
-    while True:
-        deg += 30
-        deg %= 360
-        r.move(angle_to_move=deg, angle_to_face=deg, distance_to_target=None, grab_target=False, rotate_in_place=False)
-        sleep(1)
+    for i in range(15, -1, -1):
+	    r.move(deg, r.absolute_to_magnetic(0), i * 10, True, False)
+	    print "========>", i * 10
+	    print "========>", i * 10
+	    print "========>", i * 10
+	    print "========>", i * 10
+	    print "========>", i * 10
+	    
+	    sleep(0.5)
+	    

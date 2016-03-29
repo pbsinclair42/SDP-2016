@@ -102,28 +102,21 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         if cmd_to_send:
             sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
+            comms.write(sequenced)
+            print "Sending CMD", sequenced
 
         # handle atomic operations
         if atomic_status == "grab" and robot_state["grabber"] == True:
-            # send atomic command with both possible sequence numbers.
             atomic_command = [ord(chr(16)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
-
+            comms.write(sequenced)
+            print "Grabbing", sequenced
+        
         elif atomic_status == "ungrab" and robot_state["grabber"] == False:
             atomic_command = [ord(chr(32)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
+            comms.write(sequenced)
+            print "UnGrabbing", sequenced
 
 
         # computer ack count
@@ -136,7 +129,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if robot_state["mag_head"] != prev_mag_state:
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
-        print robot_state
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
@@ -190,6 +182,7 @@ def fetch_command(cmnd_list):
             return cmd_to_send
         except StopIteration:
             if is_holo(cmnd_list[-1]):
+                print "LAST_COMMAND IS HOLO"
                 return cmnd_list[-1]
             else:
                 return None

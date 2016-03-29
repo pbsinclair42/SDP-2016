@@ -189,7 +189,7 @@ void setup() {
     mag_min_z = mag[2];
     mag_max_z = mag[2];
     calibrate_compass = 1;
-    rotateLeft(30.0);
+    rotateRight(100.0);
     delay(100); // delay to get first proper mag value
   }
   
@@ -203,7 +203,7 @@ void loop() {
             calibrateCompass();
         else{
             calibrate_compass = 0;
-            motorAllStop();
+            stopWheels();
         }
         return;
     } 
@@ -334,7 +334,7 @@ void atomicRotCommand(byte target_value){
         command_time = millis();
         restoreCommsState(target_value);
     }
-    return;    
+    return;
 }
 
 void atomicHoloCommand(byte target_value){
@@ -476,7 +476,7 @@ void Communications() {
         // Time-out serial if reading is taking too long
         else if (millis() - serial_time > 200){ 
             while(buffer_index %4 != 0) {
-                buffer_index--;
+                buffer_index = next_valid_byte;
             }
         }
     }
@@ -590,7 +590,6 @@ int rotPlaceStep(){
                 MoveMode = 0;
                 stopWheels();
                 return 1;
-                delay(50);
             }
             
             left_angle = calculateLeftAngle(heading, target_angle);
@@ -608,6 +607,7 @@ int rotPlaceStep(){
         
         // rotation correction and stoppage;
         case 1 :
+            target_angle = command_buffer[command_index + 1] + command_buffer[command_index + 2];
             if (calculateAngleDifference(heading, target_angle) > 5){
                 in_the_zone = 0;
                 left_angle = calculateLeftAngle(heading, target_angle);
@@ -624,7 +624,6 @@ int rotPlaceStep(){
                 // speed-up hack if we've already received a next holonomic command
                 if ((command_buffer[command_index + 4] ^ CMD_HOLMOVE_1) <= 3 && command_index + 8 == buffer_index && commandOverflow == bufferOverflow){
                     stopWheels();
-                    delay(25);
                     in_the_zone = 0;
                     MoveMode = 0;
                     return 1;
@@ -692,26 +691,37 @@ int holoMoveStep(){
             Rw = right_angle / 90.0;
         }
     }
-    else
+    else{
         Rw = 0;
-    
-    holo_math(movement_angle, Rw);
-    turn_holo_motors();
-    delay(50);
+    }
+    // do holonomics or rotate in-place first if angle is too large
+    if (fabs(Rw < 0.5)){
+        holo_math(movement_angle, Rw);
+        turn_holo_motors();
+    }
+    else{
+       if (Rw > 0){
+            rotateLeft(100.0);
+        }
+        else{
+            rotateRight(100.0);
+        }
+    }
+    delay(15);
     return 0;
     
 }
 void holo_math(int angle, float Rw){
         int rot_degrees;
         float rot_radians, vx, vy, m1_val, m2_val, m3_val, scale_factor;
-        
+
         rot_degrees = (int) angle;
         rot_radians = rot_degrees * PI / 180;
 
         vx = cos(rot_radians);
         vy = sin(rot_radians);
-            
-        m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy + Rw;
+        
+        m1_val = -1 * sin(30  * PI / 180) * vx + cos(30  * PI / 180)  * vy + Rw;
         m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy  + Rw;
         m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy  + Rw;
             
@@ -1016,7 +1026,7 @@ void rotateLeft(float target_angle) {
     }
     motorForward(MOTOR_LFT, power_value);
     motorForward(MOTOR_RGT, power_value);
-    motorForward(MOTOR_BCK, power_value);    
+    motorForward(MOTOR_BCK, power_value); 
 }
 
 void stopWheels(){
@@ -1024,3 +1034,4 @@ void stopWheels(){
     motorForward(MOTOR_RGT, 0);
     motorForward(MOTOR_BCK, 0);
 }
+
