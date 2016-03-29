@@ -80,7 +80,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
 
-            elif pipe_data in ["grab", "ungrab"]:
+            elif pipe_data in ["grab", "ungrab", "fgrab"]:
                 atomic_status = pipe_data
 
         while comms.in_waiting:
@@ -120,6 +120,14 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
             comms.write(sequenced)
             print "UnGrabbing", sequenced
+        
+        elif atomic_status == "fgrab":
+            atomic_command = [ord(chr(16)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
+            sequenced = sequence_command(atomic_command, robot_state["seq_num"])
+            for i in range(0, 4):
+                comms.write(sequenced)
+            print "Grabbing forcefully", sequenced
+            atomic_status = "grab"
 
 
         # computer ack count

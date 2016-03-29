@@ -19,6 +19,8 @@ def collectBall():
     else:
         if not controller.stopped:
             controller.stop_robot()
+        if not controller.grabbed:
+            controller.grab(False)
     # if we've got it, we're done
     #else:
     #    print "We already have the ball, you fool"
@@ -37,11 +39,12 @@ def shoot():
 
 
 def passBall():
-    angle_to_face = me.bearing(ally)#Not 100% convinced on this bearing
-    if nearEnough(me.orientation, angle_to_face):
-        controller.kick()
-    else:
-        controller.move(angle_to_face,0,0)
+    angle_to_face = ally.bearing(me)#Not 100% convinced on this bearing
+    print "angle to face: ", angle_to_face, controller.absolute_to_magnetic(angle_to_face)
+    if not controller.kickflag:
+        controller.move(angle_to_face,None,None, None, True)
+        controller.kick(255)
+        
 
     """me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': rotate},
                {'action': Actions.kick, 'targetFunction': kickToAlly}]"""
@@ -123,6 +126,7 @@ def guardGoal():#Little faith in this
 
     # if we're on our goal line, move to block the ball
     if abs(me.currentPoint.x - ourGoal.x) <= ITLL_DO_POINT:
+        controller.grab(True)
         controller.stop_robot()
         """# work out which enemy has the ball
         if ball.status == enemyA:

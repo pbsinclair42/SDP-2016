@@ -150,11 +150,15 @@ class RobotController(object):
         self.queue_command(command)
         self.kickflag = True
 
-    def grab(self, atomic=False):
+    def grab(self, atomic=True):
         """
             grab
         """
-        if not atomic:
+        if atomic == "forced":
+            command = "fgrab"
+            self.parent_pipe_in.send("fgrab")
+        elif not atomic:
+
             command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
             self.queue_command(command)
         else:
@@ -164,7 +168,7 @@ class RobotController(object):
 
 
 
-    def ungrab(self, atomic=False):
+    def ungrab(self, atomic=True):
         """
             ungrab
         """
@@ -194,6 +198,7 @@ class RobotController(object):
         self.process_event.clear()
 
     def stop_robot(self):
+        self.stopped = True
         command = self.command_dict["STOP"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
 

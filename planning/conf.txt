@@ -1,5 +1,5 @@
-yellow
-pink
+bright_blue
+green
 red
 left
 False
