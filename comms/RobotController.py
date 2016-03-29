@@ -22,6 +22,7 @@ class RobotController(object):
         self.grabbed = True
         self.ack_counts = (0, 0)
         self.mag_heading = 0
+        self.expected_rotation = None
         self.commands = 0
         self.command_list = []
         self.command_dict = {
@@ -79,9 +80,12 @@ class RobotController(object):
                 self.stop_robot()
             else:
                 self.holo(angle_to_move, angle_to_face)
+            self.expected_rotation = None
         
         elif angle_to_face is not None and rotate_in_place:
-            self.rotate(angle_to_face)
+        	if int(angle_to_face) != self.expected_rotation:
+            	self.rotate(angle_to_face)
+            	self.expected_rotation = int(angle_to_face)
         
         else:
             print "Warning: move didn't move!"

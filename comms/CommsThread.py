@@ -53,6 +53,12 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 if cmnd_list and is_holo(command) and is_holo(cmnd_list[-1]):
                     cmnd_list[-1] = command
                     print cmnd_list
+                elif is_stop(command):
+                    for cmd_id in range(0, len(cmnd_list)):
+                        cmnd_list[cmd_id][-3] = 1
+                        cmnd_list[cmd_id][-2] = 1
+                        cmnd_list[cmd_id][-1] = 1
+                    cmnd_list.append(command)
                 else:
                     cmnd_list.append(command)
 
@@ -191,6 +197,9 @@ def fetch_command(cmnd_list):
         return None
 def is_holo(command):
     return command[0] >= 124 and command[0] <= 127
+
+def is_stop(command):
+    return command[0] == 8
 if __name__ == "__main__":
     rs = {}
     process_data([253, 0, 0, 0, 154, 0, 228], rs)

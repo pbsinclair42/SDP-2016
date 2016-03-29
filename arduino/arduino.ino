@@ -427,10 +427,10 @@ void Communications() {
                         }
                         break;
                     
-                    case CMD_ROTPLACE:
-                        // commsState is restored inside the function
-                        atomicRotCommand(target_value);
-                        break;
+                    // case CMD_ROTPLACE:
+                    //    // commsState is restored inside the function
+                    //    atomicRotCommand(target_value);
+                    //    break;
 
                     case CMD_HOLMOVE_1:
                         // commsState is restored inside the function
