@@ -102,34 +102,3 @@ class Goals(Enum):
     guardGoal = 6
     receiveAndPass = 7
 
-class Actions(Enum):
-    """An enum listing the possible actions our robot can take"""
-    none = 0
-    moveToPoint = 1
-    rotateToAngle = 2
-    grab = 3
-    ungrab = 4
-    kick = 5
-    guardGoal = 6
-    receiveBall = 7
-
-
-class Anglez():
-    def __init__(self, x):
-        self.angle = x
-        self.rangez = [-180, 180]
-        self.totalSpan = 360
-
-    def validate(self):
-        if self.angle < self.rangez[0]:
-            self.angle += self.totalSpan
-        elif self.angle > self.rangez[1]:
-            self.angle -= self.totalSpan
-
-    def __add__(self, a):
-        self.angle += (a.angle % self.totalSpan)
-        self.validate
-
-    def __radd__(self, a):
-        self.angle += (a % self.totalSpan)
-        self.validate

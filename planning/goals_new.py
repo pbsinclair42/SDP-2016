@@ -1,6 +1,6 @@
 from constants import *
 from globalObjects import *
-from helperClasses import Point, Goals, Actions, BallStatus
+from helperClasses import Point, Goals, BallStatus
 from helperFunctions import sin, cos, tan, nearEnough
 import sys
 sys.path.append(ROOT_DIR+'comms/')
@@ -66,6 +66,8 @@ def passBall():
                {'action': Actions.kick, 'targetFunction': kickToAlly}]"""
 
 def receivePass():
+    #TODO
+    """
     me.goal = Goals.receivePass
 
     def rotate():
@@ -75,6 +77,7 @@ def receivePass():
                {'action': Actions.ungrab},
                {'action': Actions.receiveBall},
                {'action': Actions.grab}]
+               """
 
 
 def blockPass():
@@ -108,6 +111,28 @@ def blockPass():
                {'action': Actions.ungrab},
                {'action': Actions.receiveBall},
                {'action': Actions.grab}]"""
+
+
+def confuseEnemy():
+    """Shoogle around a bit to confuse the enemy and hopefully make them move"""
+    # TODO
+    # save the plan to the robot
+    """
+    me.goal = Goals.confuse
+    print("NEW GOAL: Confuse the enemy")
+
+    actualDirection = me.currentRotation
+    randomRotationAmount = randrange(20,90)
+
+    def firstRotationAmount():
+        return actualDirection + randomRotationAmount
+
+    def backAgain():
+        return actualDirection
+
+    me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': firstRotationAmount},
+               {'action': Actions.rotateToAngle, 'targetFunction': backAgain}]
+    """
 
 
 def guardGoal():#Little faith in this
@@ -144,3 +169,11 @@ def guardGoal():#Little faith in this
     """me.plan = [{'action': Actions.moveToPoint, 'targetFunction': gotoGoal},
                {'action': Actions.rotateToAngle, 'targetFunction': rotate},
                {'action': Actions.moveToPoint,'targetFunction':defend}]"""
+
+def clearPlan():
+    """Reset the robot's goal and plan"""
+    # TODO
+    """
+    me.goal=Goals.none
+    print("GOAL CLEAED")
+    """
