@@ -10,7 +10,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     prev_ack_count = ack_count
     seq_num = 0
     command_sleep_time = 0.005 # sleep time between sending each byte
-    process_sleep_time = 0.05 # sleep time for process
+    process_sleep_time = 0.05 #0.05 # sleep time for process
     # robot state parameters
     robot_state = {
         "mag_head" : 0,
@@ -84,8 +84,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             elif pipe_data in ["grab", "ungrab"]:
                 atomic_status = pipe_data
 
-
-        # get all data
         while comms.in_waiting:
             data = comms.read(1)
             data_buffer += [ord(data)]

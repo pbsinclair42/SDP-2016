@@ -75,7 +75,7 @@ class RobotController(object):
         # case for moving
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
             # stop if you're too close
-            if distance_to_target is not None and distance_to_target < 10 and abs(angle_to_face - current_heading) < 5:
+            if distance_to_target is not None and distance_to_target < 10 and abs(current_heading - self.absolute_to_magnetic(angle_to_face)) < 10:
                 self.holo(angle_to_move, angle_to_face)
                 self.stop_robot()
             else:
@@ -83,9 +83,9 @@ class RobotController(object):
             self.expected_rotation = None
         
         elif angle_to_face is not None and rotate_in_place:
-        	if int(angle_to_face) != self.expected_rotation:
-            	self.rotate(angle_to_face)
-            	self.expected_rotation = int(angle_to_face)
+            if int(angle_to_face) != self.expected_rotation:
+                self.rotate(angle_to_face)
+                self.expected_rotation = int(angle_to_face)
         
         else:
             print "Warning: move didn't move!"
