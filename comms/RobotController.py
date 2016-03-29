@@ -75,7 +75,7 @@ class RobotController(object):
         # case for moving
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
             # stop if you're too close
-            if distance_to_target is not None and distance_to_target < 10 and abs(current_heading - self.absolute_to_magnetic(angle_to_face)) < 10:
+            if distance_to_target is not None and distance_to_target < 10:
                 self.holo(angle_to_move, angle_to_face)
                 self.stop_robot()
             else:
@@ -241,12 +241,23 @@ if __name__ == "__main__":
     sleep(10)
     deg = 0
     for i in range(15, -1, -1):
-	    r.move(deg, r.absolute_to_magnetic(0), i * 10, True, False)
-	    print "========>", i * 10
-	    print "========>", i * 10
-	    print "========>", i * 10
-	    print "========>", i * 10
-	    print "========>", i * 10
-	    
-	    sleep(0.5)
-	    
+        r.move(deg, deg, i * 10, True, False)
+        print "========>", i * 10
+        print "========>", i * 10
+        print "========>", i * 10
+        print "========>", i * 10
+        print "========>", i * 10
+        
+        sleep(0.5)
+        
+    sleep(3)        
+    for i in range(15, -1, -1):
+        r.move(180, 180, i * 10, True, False)
+        print "========>", i * 10
+        print "========>", i * 10
+        print "========>", i * 10
+        print "========>", i * 10
+        print "========>", i * 10
+        
+        sleep(0.5)
+    

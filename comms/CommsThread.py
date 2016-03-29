@@ -52,7 +52,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 command = [ord(item) for item in pipe_data[0]] + [0, 0 ,0]
                 if cmnd_list and is_holo(command) and is_holo(cmnd_list[-1]):
                     cmnd_list[-1] = command
-                    print cmnd_list
                 elif is_stop(command):
                     for cmd_id in range(0, len(cmnd_list)):
                         cmnd_list[cmd_id][-3] = 1
