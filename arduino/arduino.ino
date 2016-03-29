@@ -31,7 +31,7 @@
 // Movement and kicker Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
-#define ROTATION_CORRECT_TIME 333
+#define ROTATION_CORRECT_TIME 666
 #define KICKER_CONST 10.0  
 
 
@@ -191,6 +191,13 @@ void setup() {
     calibrate_compass = 1;
     rotateRight(100.0);
     delay(100); // delay to get first proper mag value
+    
+    /* custom commands may be initialized below */
+    // command_buffer[0] = CMD_HOLMOVE_1;
+    // command_buffer[1] = 180;
+    // command_buffer[2] = 180;
+    // command_buffer[3] = 255;
+    // buffer_index = 4;
   }
   
 
@@ -513,7 +520,7 @@ void CommsOut(){
         }
         for (int i = 0; i < 7; i++){
             Serial.write(args[i]);
-            delay(5);
+            delay(3);
         }
         Serial.write(255 - checksum);
         report_time = millis();
@@ -602,7 +609,7 @@ int rotPlaceStep(){
             }
             MoveMode = 1;
             in_the_zone = 0;
-            delay(50);
+            delay(15);
             return 0;
         
         // rotation correction and stoppage;
@@ -618,16 +625,9 @@ int rotPlaceStep(){
                 else{
                     rotateLeft(right_angle);
                 }
-                delay(50);
+                delay(15);
             }
             else{
-                // speed-up hack if we've already received a next holonomic command
-                if ((command_buffer[command_index + 4] ^ CMD_HOLMOVE_1) <= 3 && command_index + 8 == buffer_index && commandOverflow == bufferOverflow){
-                    stopWheels();
-                    in_the_zone = 0;
-                    MoveMode = 0;
-                    return 1;
-                }
 
                 // exit if you've been in the zone enough time
                 if (in_the_zone){
@@ -684,6 +684,7 @@ int holoMoveStep(){
     if (calculateAngleDifference(heading, facing_angle) > 4){
         left_angle = calculateLeftAngle(heading, facing_angle);
         right_angle = calculateRightAngle(heading, facing_angle);
+    
         if (left_angle < right_angle){
             Rw = -1 * (left_angle / 90.0);
         }
@@ -695,7 +696,7 @@ int holoMoveStep(){
         Rw = 0;
     }
     // do holonomics or rotate in-place first if angle is too large
-    if (fabs(Rw < 0.5)){
+    if (fabs(Rw) < 0.4){
         holo_math(movement_angle, Rw);
         turn_holo_motors();
     }
@@ -1034,4 +1035,18 @@ void stopWheels(){
     motorForward(MOTOR_RGT, 0);
     motorForward(MOTOR_BCK, 0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
