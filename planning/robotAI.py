@@ -21,8 +21,8 @@ def updatePositions():
         print "Can't find me this tick :("
 
     if api.getAllyPosition() is not None:
-        AllyPosition = api.getAllyPosition()
-        AllyOrientation = api.getAllyOrientation()[1]
+        allyPosition = api.getAllyPosition()
+        allyOrientation = api.getAllyOrientation()[1]
         ally.update(Point(allyPosition[0],allyPosition[1]))
         ally.updateRotation(allyOrientation)
     else:
@@ -73,7 +73,8 @@ def tick():
     """Each tick, update your beliefs about the world then decide what action to
     take based on this"""
     updatePositions()
-    playBall()
+    #playBall()
+    collectBall()
     threading.Timer(TICK_TIME, tick).start()
 
 api = WorldApi()

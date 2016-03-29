@@ -1,23 +1,16 @@
 from constants import *
 from globalObjects import me, ally, ball, enemies, ourGoal, opponentGoal
 from helperClasses import Point, Goals, BallStatus
-from helperFunctions import sin, cos, tan, nearEnough
+from helperFunctions import tan, nearEnough
 import sys
 sys.path.append(ROOT_DIR+'comms/')
 from RobotController import RobotController
-import time
-import math
-controller = RobotController()
-"""TODO
-Position to receive pass - Speak to Other Team About that
-Guard goal
-Tell teammate plans (?)
-"""
 
+
+controller = RobotController()
 
 def collectBall():
-    """Make `collectBall` the goal of our robot,
-    and implement the plan for achieving this"""
+    """Move towards then grab the ball"""
     # if we don't yet have the ball, go get it!
     if ball.status != BallStatus.me:
         angle_to_face = me.bearing(ball)
@@ -29,19 +22,16 @@ def collectBall():
         print "We already have the ball, you fool"
 
 
-def shoot():#NEED TO GET THE FUCK OUT OF THERE
-    """Make `shoot` the goal of our robot,
-    and implement the plan for achieving this"""
-    angle_to_face = me.bearing(opponentGoal)#Not 100% convinced on this bearing
-    print angle_to_face
-    print "^^^^^^^^^^^"
+def shoot():
+    """Kick the ball full power towards the goal"""
+    angle_to_face = me.bearing(opponentGoal)
+
+    # if we're facing the goal, shoot!
     if nearEnough(me.currentRotation, angle_to_face):
         controller.kick(255)
-        print "KICKING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    # otherwise, turn towards the goal
     else:
-        print "MOVING TO SHOOT --------------------------------------"
-
-        controller.move(angle_to_face,0,0,False,True)
+        controller.move(angle_to_face,0,0,False,rotate_in_place=True)
 
 
     """me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': aim},
@@ -57,6 +47,7 @@ def passBall():
 
     """me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': rotate},
                {'action': Actions.kick, 'targetFunction': kickToAlly}]"""
+
 
 def receivePass():
     #TODO
