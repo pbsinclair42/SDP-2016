@@ -13,40 +13,51 @@ def updatePositions():
     # get the info on the robots from the vision system
     if api.getMyPosition() is not None:
         mePosition = api.getMyPosition()
-        # may crash if we can get our position but not orientation?
+        me.update(Point(mePosition[0]*X_RATIO,mePosition[1]*Y_RATIO))
+    else:
+        print "Can't find my position this tick :("
+    if api.getMyOrientation()[1] is not None:
         meOrientation = api.getMyOrientation()[1]
-        me.update(Point(mePosition[0],mePosition[1]))
         me.updateRotation(meOrientation)
     else:
-        print "Can't find me this tick :("
+        print "Can't find my orientation this tick :("
 
     if api.getAllyPosition() is not None:
         allyPosition = api.getAllyPosition()
+        ally.update(Point(allyPosition[0]*X_RATIO,allyPosition[1]*Y_RATIO))
+    else:
+        print "Can't find my friend's position this tick :("
+    if api.getAllyOrientation()[1] is not None:
         allyOrientation = api.getAllyOrientation()[1]
-        ally.update(Point(allyPosition[0],allyPosition[1]))
         ally.updateRotation(allyOrientation)
     else:
-        print "Can't find my friend this tick :("
+        print "Can't find my friend's orientation this tick :("
 
     if api.getEnemyPositions()[0] is not None:
         enemy0Position = api.getEnemyPositions()[0]
-        enemy0Orientation =  api.getEnemyOrientation()[0][1]
-        enemies[0].update(Point(enemy0Position[0],enemy0Position[1]))
-        enemies[0].updateRotation(emeny0Orientation)
+        enemies[0].update(Point(enemy0Position[0]*X_RATIO,enemy0Position[1]*Y_RATIO))
     else:
         print "Can't find enemy 0 this tick :("
+    if api.getEnemyOrientation()[0] is not None:
+        enemy0Orientation =  api.getEnemyOrientation()[0][1]
+        enemies[0].updateRotation(enemy0Orientation)
+    else:
+        print "Can't find enemy 0's orientation this tick :("
 
     if api.getEnemyPositions()[1] is not None:
         enemy1Position = api.getEnemyPositions()[1]
-        enemy1Orientation = api.getEnemyOrientation()[1][1]
-        enemies[1].update(Point(enemy1Position[0],enemy1Position[1]))
-        enemies[1].updateRotation(enemy1Orientation)
+        enemies[1].update(Point(enemy1Position[0]*X_RATIO,enemy1Position[1]*Y_RATIO))
     else:
         print "Can't find enemy 1 this tick :("
+    if api.getEnemyOrientation()[1] is not None:
+        enemy1Orientation = api.getEnemyOrientation()[1][1]
+        enemies[1].updateRotation(enemy1Orientation)
+    else:
+        print "Can't find enemy 0's orientation this tick :("
 
     if api.getBallCenter() is not None:
         ballPosition =  api.getBallCenter()
-        ball.update(Point(ballPosition[0],ballPosition[1]))
+        ball.update(Point(ballPosition[0]*X_RATIO,ballPosition[1]*Y_RATIO))
     else:
         print "Shit! Where's the ball gone"
 
@@ -74,8 +85,11 @@ def tick():
     take based on this"""
     updatePositions()
     #playBall()
+    #shoot()
     collectBall()
+    #guardGoal()
     threading.Timer(TICK_TIME, tick).start()
+    print ball.status
 
 api = WorldApi()
 

@@ -6,7 +6,6 @@ import sys
 sys.path.append(ROOT_DIR+'comms/')
 from RobotController import RobotController
 
-
 controller = RobotController()
 
 def collectBall():
@@ -15,25 +14,24 @@ def collectBall():
     if ball.status != BallStatus.me:
         angle_to_face = me.bearing(ball)
         angle_to_move = angle_to_face
-        distance_to_move = me.distance(ball.currentPoint)
+        distance_to_move = me.distance(ball)
         controller.move(angle_to_face,angle_to_move,distance_to_move,True)
-    # if we've got it, we're done
     else:
-        print "We already have the ball, you fool"
+        if not controller.stopped:
+            controller.stop_robot()
+    # if we've got it, we're done
+    #else:
+    #    print "We already have the ball, you fool"
+    #    #controller.stop_robot()
 
 
 def shoot():
     """Kick the ball full power towards the goal"""
     angle_to_face = me.bearing(opponentGoal)
-
+    if not controller.kickflag:
     # if we're facing the goal, shoot!
-    if nearEnough(me.currentRotation, angle_to_face):
-        controller.kick(255)
-    # otherwise, turn towards the goal
-    else:
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
-
-
+        controller.kick(255)
     """me.plan = [{'action': Actions.rotateToAngle, 'targetFunction': aim},
                {'action': Actions.kick, 'targetFunction': distanceToKick}]"""
 
@@ -125,7 +123,8 @@ def guardGoal():#Little faith in this
 
     # if we're on our goal line, move to block the ball
     if abs(me.currentPoint.x - ourGoal.x) <= ITLL_DO_POINT:
-        # work out which enemy has the ball
+        controller.stop_robot()
+        """# work out which enemy has the ball
         if ball.status == enemyA:
             enemyNum=0
         else:
@@ -149,12 +148,12 @@ def guardGoal():#Little faith in this
         else:
             angle_to_move = 270
 
-        controller.move(angle_to_face,angle_to_move,distance)
+        controller.move(angle_to_face,angle_to_move,distance)"""
     else:
         # if not in on our goal line, move into the middle of it
         angle_to_move = me.bearing(ourGoal)
         distance = me.distance(ourGoal)
-        controller.move(angle_to_face,angle_to_move,distance)
+        controller.move(angle_to_mave,angle_to_move,distance)
 
 
 def clearPlan():

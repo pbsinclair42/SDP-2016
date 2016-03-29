@@ -37,7 +37,7 @@ BALL_RADIUS = BALL_DIAMETER/2.0
 ROBOT_WIDTH = 6
 
 # the distance from the ball that a robot needs to be before we assume it's got it (centimeters)
-BALL_OWNERSHIP_DISTANCE = 40
+BALL_OWNERSHIP_DISTANCE = 25
 
 # how close to a target point you need to be to count as equal, give or take normal vision inaccuracy (centimeters)
 POINT_ACCURACY = 3

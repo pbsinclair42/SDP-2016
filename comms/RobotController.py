@@ -3,10 +3,10 @@ from multiprocessing import Process, Pipe, Event
 from time import sleep
 
 # the ideal distance from the edge of our robot that we should grab the ball from (centimeters)
-GRAB_DISTANCE = 10.0
+GRAB_DISTANCE = 20.0
 # the ideal distance from the edge of our robot that we should open our claws to then grab the ball from (centimeters)
-UNGRAB_DISTANCE = 30.0
-
+UNGRAB_DISTANCE = 60.0
+STOP_DISTANCE = 15.0
 
 class RobotController(object):
     """
@@ -19,13 +19,16 @@ class RobotController(object):
         """
             Initialize firware API and start the communications parallel process
         """
+        self.stopped = False
         self.grabbed = True
+        self.kickflag = False
         self.ack_counts = (0, 0)
         self.mag_heading = 0
+        self.expected_rotation = None
         self.commands = 0
         self.command_list = []
         self.command_dict = {
-            "ROT_MOVE_POS" : chr(3  ),
+            "ROT_MOVE" : chr(3  ),
             "HOL_MOVE"     : chr(124),
             "KICK"         : chr(4  ),
             "STOP"         : chr(8  ),
@@ -47,44 +50,51 @@ class RobotController(object):
                                target=comms_thread,
                                args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
         self.process.start()
-    def move(self, angle_to_face=None, angle_to_move=None, distance_to_target=0 , grab_target=False, rotate_in_place=False):
+    def move(self, angle_to_face=None, angle_to_move=None, distance_to_target=None , grab_target=None, rotate_in_place=None):
         """ Overriding move function
-            
+
         angle_to_move: Absolute vision angle towards which to move
-        angle_to_face: Absolute vision angle towards which to face (while moving) 
+        angle_to_face: Absolute vision angle towards which to face (while moving)
         distance_to_target: Distance to target which we're moving towards
         grab_target: whether we want to grab the target(e.g. the ball)
         rotate_in_place: Whether we want the rotation to be in-place, e.g. not to move
-        
+
         """
         self.synchronize()
         current_heading = self.get_mag_heading()
-        mag_to_face = self.absolute_to_magnetic(angle_to_face)
-        mag_to_move = self.absolute_to_magnetic(angle_to_move)
+        mag_heading = self.absolute_to_magnetic(angle_to_face)
+        print "controller_stats", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
+        print "internal stats", self.grabbed
+        # case for grabbing or ungrabbing the ball
 
-        #if abs(angle_to_face - current_heading) > 90:
-        #    self.rot_move(angle_to_face, 0)
-        """
-        print "stats", angle_to_face, angle_to_move, rotate_in_place, current_heading
+        if grab_target:
+            if distance_to_target <= UNGRAB_DISTANCE and self.grabbed:
+                self.ungrab(True)
+                self.grabbed = False
+
+            if distance_to_target <= GRAB_DISTANCE and not self.grabbed:
+                #self.stop_robot()
+                self.grab(True)
+                self.grabbed = True
+
+        # case for moving
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
-	        if distance_to_target < 5 and abs(angle_to_face - current_heading) < 5:
-	            self.stop_robot()
-	        else:
-                print "move moved holonomically"
-	            self.holo(angle_to_move, angle_to_face)
-	    
-        elif angle_to_face is not None and rotate_in_place:
-	        self.rot_move(mag_to_face)
-        """
-        print "controller stats", distance_to_target, grab_target, self.grabbed
-        if distance_to_target <= UNGRAB_DISTANCE and grab_target and self.grabbed:
-            self.ungrab(True)
-            self.grabbed = False
+            # stop if you're too close
+            if distance_to_target is not None and distance_to_target <= STOP_DISTANCE and abs(current_heading - mag_heading) < 15:
+                self.stop_robot()
+                self.stopped = True
+            else:
+                self.holo(angle_to_move, angle_to_face)
+                self.stopped = False
+            self.expected_rotation = None
 
-        if distance_to_target <= GRAB_DISTANCE and abs(angle_to_face - current_heading) < 10 and not self.grabbed and grab_target:
-            self.stop_robot()
-            self.grab(True)
-            self.grabbed = True
+        elif angle_to_face is not None and rotate_in_place:
+            if int(angle_to_face) != self.expected_rotation:
+                self.rotate(angle_to_face)
+                self.expected_rotation = int(angle_to_face)
+
+        else:
+            print "Warning: move didn't move!"
 
     def queue_command(self, command):
         """
@@ -101,30 +111,30 @@ class RobotController(object):
         """
             A rotation-only function for angles up-to 255 deg
         """
-        degrees1 = absolute_to_magnetic(degrees)
+        degrees1 = self.absolute_to_magnetic(degrees)
         degrees2 = 0
         if degrees1 > 180:
-        	degrees2 = 180
-        	degrees1 = 180 - degrees1 
-        command = self.command_dict(self.command_dict["ROT_MOVE_POS"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"])
+            degrees2 = 180
+            degrees1 = degrees1 - 180
+        command = self.command_dict["ROT_MOVE"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"]
         self.queue_command(command)
     def holo(self, dist_vector, angular_vector):
         dist_vector = self.absolute_to_magnetic(dist_vector)
         angular_vector = self.absolute_to_magnetic(angular_vector)
-        
+
         command_byte = ord(self.command_dict["HOL_MOVE"])
-        
+
         if dist_vector > 180:
             command_byte += 1
             dist_vector = dist_vector - 180
-        
+
         if angular_vector > 180:
             command_byte += 2
             angular_vector = angular_vector - 180
 
         command = chr(command_byte) + chr(int(dist_vector)) + chr(int(angular_vector)) + self.command_dict["END"]
         self.queue_command(command)
-    
+
     def exit(self):
         """
             Exit comms process
@@ -138,6 +148,7 @@ class RobotController(object):
         """
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
+        self.kickflag = True
 
     def grab(self, atomic=False):
         """
@@ -150,8 +161,8 @@ class RobotController(object):
             #command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
             command = "grab"
             self.parent_pipe_in.send("grab")
-            
-        
+
+
 
     def ungrab(self, atomic=False):
         """
@@ -164,7 +175,7 @@ class RobotController(object):
             #command = self.command_dict["UNGRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
             command = "ungrab"
             self.parent_pipe_in.send("ungrab")
-        
+
 
     def flush(self):
         """
@@ -181,7 +192,7 @@ class RobotController(object):
             stop communications process until a new command has been issued
         """
         self.process_event.clear()
-    
+
     def stop_robot(self):
         command = self.command_dict["STOP"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
@@ -215,10 +226,10 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-    	mag_north = 157
+        mag_north = 169
 
-    	if angle is None:
-    		return None
+        if angle is None:
+            return None
         # scale from 0 to 360
         if angle < 0:
             angle = 360 - abs(angle)
@@ -234,9 +245,13 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
+    sleep(3)
     deg = 0
     while True:
-        deg += 30
-        deg %= 360
-        r.move(angle_to_move=deg, angle_to_face=deg, distance_to_target=None, grab_target=False, rotate_in_place=False)
-        sleep(1)
+        for i in range(0, 7):
+            r.move(0, 0)
+            sleep(1)
+
+        for i in range(0, 7):
+            r.move(180, 180)
+            sleep(1)

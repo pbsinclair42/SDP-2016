@@ -4,7 +4,7 @@ from constants import PITCH_WIDTH, GOAL_WIDTH, PITCH_LENGTH, OUR_GOAL
 
 # our supreme robot
 me = Robot(name="me")
-me.lastCommandFinished=-1
+me.grabbed=True
 # Team 3's robot
 ally = Robot(name="ally")
 # the two robots we're against
@@ -17,8 +17,8 @@ ball = Ball(name="ball")
 moveables = [me,ally,ball]+enemies
 
 # the point at the center of the goal
-leftGoalCenter = Point(30,PITCH_WIDTH/2)
-rightGoalCenter=Point(PITCH_LENGTH-30,PITCH_WIDTH/2)
+leftGoalCenter = Point(30,110)
+rightGoalCenter=Point(PITCH_LENGTH-30,110)
 
 if OUR_GOAL=='right':
     ourGoal = rightGoalCenter

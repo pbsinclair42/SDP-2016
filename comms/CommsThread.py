@@ -10,7 +10,7 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     prev_ack_count = ack_count
     seq_num = 0
     command_sleep_time = 0.005 # sleep time between sending each byte
-    process_sleep_time = 0.05 # sleep time for process
+    process_sleep_time = 0.05 #0.05 # sleep time for process
     # robot state parameters
     robot_state = {
         "mag_head" : 0,
@@ -51,9 +51,13 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 # also add-in flags for: [SENT, ACKNOWLEDGED, FINISHED]
                 command = [ord(item) for item in pipe_data[0]] + [0, 0 ,0]
                 if cmnd_list and is_holo(command) and is_holo(cmnd_list[-1]):
-                    print "replacing last holo command"
                     cmnd_list[-1] = command
-                    print cmnd_list
+                elif is_stop(command):
+                    for cmd_id in range(0, len(cmnd_list)):
+                        cmnd_list[cmd_id][-3] = 1
+                        cmnd_list[cmd_id][-2] = 1
+                        cmnd_list[cmd_id][-1] = 1
+                    cmnd_list.append(command)
                 else:
                     cmnd_list.append(command)
 
@@ -79,8 +83,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             elif pipe_data in ["grab", "ungrab"]:
                 atomic_status = pipe_data
 
-
-        # get all data
         while comms.in_waiting:
             data = comms.read(1)
             data_buffer += [ord(data)]
@@ -103,40 +105,22 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
 
         if cmd_to_send:
             sequenced = sequence_command(cmd_to_send[:4], robot_state["seq_num"])
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", robot_state["seq_num"]
+            comms.write(sequenced)
+            print "Sending CMD", sequenced
 
-        #handle atomic operations
+        # handle atomic operations
         if atomic_status == "grab" and robot_state["grabber"] == True:
-            # send atomic command with both possible sequence numbers.
             atomic_command = [ord(chr(16)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
-            sequenced = sequence_command(atomic_command, 0)
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 0
-
-            sequenced = sequence_command(atomic_command, 1)
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 1
-
+            sequenced = sequence_command(atomic_command, robot_state["seq_num"])
+            comms.write(sequenced)
+            print "Grabbing", sequenced
+        
         elif atomic_status == "ungrab" and robot_state["grabber"] == False:
             atomic_command = [ord(chr(32)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
-            sequenced = sequence_command(atomic_command, 0)
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 0
+            sequenced = sequence_command(atomic_command, robot_state["seq_num"])
+            comms.write(sequenced)
+            print "UnGrabbing", sequenced
 
-            sequenced = sequence_command(atomic_command, 1)
-            for command_byte in sequenced:
-                comms.write(sequenced)
-                sleep(command_sleep_time)
-            print "Sending command: ", sequenced, "SEQ:", 1
 
         # computer ack count
         ack_count = (sum([command[-2] for command in cmnd_list]), sum([command[-1] for command in cmnd_list]) )
@@ -149,7 +133,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
         print robot_state
-        print cmnd_list
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
@@ -203,6 +186,7 @@ def fetch_command(cmnd_list):
             return cmd_to_send
         except StopIteration:
             if is_holo(cmnd_list[-1]):
+                print "LAST_COMMAND IS HOLO"
                 return cmnd_list[-1]
             else:
                 return None
@@ -211,6 +195,9 @@ def fetch_command(cmnd_list):
         return None
 def is_holo(command):
     return command[0] >= 124 and command[0] <= 127
+
+def is_stop(command):
+    return command[0] == 8
 if __name__ == "__main__":
     rs = {}
     process_data([253, 0, 0, 0, 154, 0, 228], rs)
