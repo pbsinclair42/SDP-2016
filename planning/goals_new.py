@@ -1,5 +1,5 @@
 from constants import *
-from globalObjects import *
+from globalObjects import me, ally, ball, enemies, ourGoal, opponentGoal
 from helperClasses import Point, Goals, BallStatus
 from helperFunctions import sin, cos, tan, nearEnough
 import sys
@@ -18,22 +18,15 @@ Tell teammate plans (?)
 def collectBall():
     """Make `collectBall` the goal of our robot,
     and implement the plan for achieving this"""
-    diff_x = ball.currentPoint.x - me.currentPoint.x
-    diff_y = ball.currentPoint.y - me.currentPoint.y
-    angle_to_face = math.atan2(-diff_y,diff_x) * (180/3.14)
-    #angle_to_face = ball.bearing(Point(0,0))
-    angle_to_move = angle_to_face
-    distance_to_move = me.distance(ball.currentPoint)
+    # if we don't yet have the ball, go get it!
     if ball.status != BallStatus.me:
-        print "something - James"
+        angle_to_face = me.bearing(ball)
+        angle_to_move = angle_to_face
+        distance_to_move = me.distance(ball.currentPoint)
         controller.move(angle_to_face,angle_to_move,distance_to_move,True)
+    # if we've got it, we're done
     else:
-        print "something - Krassy"
-
-    """me.plan = [{'action': Actions.moveToPoint, 'targetFunction': ungrabHere},
-               {'action': Actions.ungrab},
-               {'action': Actions.moveToPoint, 'targetFunction': grabHere},
-               {'action': Actions.grab}]"""
+        print "We already have the ball, you fool"
 
 
 def shoot():#NEED TO GET THE FUCK OUT OF THERE
@@ -138,37 +131,40 @@ def confuseEnemy():
 def guardGoal():#Little faith in this
     """Stop bad people from scoring"""
     angle_to_face = me.bearing(ball)
-    distance = me.distance(ourGoal)
-    if nearEnough(me.currentPoint[1],ourGoal[1]):
 
+    # if we're on our goal line, move to block the ball
+    if abs(me.currentPoint.x - ourGoal.x) <= ITLL_DO_POINT:
+        # work out which enemy has the ball
         if ball.status == enemyA:
-            ori = enemies[0].orientation
-            ori = enemies[0].orientation
-            theta = 180 - ori
-            x_dist = enemies[1].currentPoint[0]  - ourGoal[0]
-            dist = x * tan(ori)
-            dis_en = 0
+            enemyNum=0
         else:
-            ori = enemies[1].orientation
-            theta = 180 - ori
-            x_dist = enemies[1].currentPoint[0]  - ourGoal[0]
-            dist = x * tan(ori)
-            dis_en = 1
-        if ori >= 180:
+            enemyNum=1
+
+        # calculate where on the y axis the ball would hit if kicked now
+        x_dist = enemies[enemyNum].currentPoint.x  - ourGoal.x
+        y_dist = x_dist * tan(enemies[enemyNum].currentRotation)
+        y_intersection = enemies[enemyNum].currentPoint.x - y_dist
+
+        # calculate where we should therefore go to (we don't want to leave the goal line)
+        minY = PITCH_WIDTH/2 - 0.5*GOAL_WIDTH + ROBOT_WIDTH/2
+        maxY = PITCH_WIDTH/2 + 0.5*GOAL_WIDTH - ROBOT_WIDTH/2
+        point_to_be = Point(ourGoal.x, max(minY, min(maxY, y_intersection)))
+
+        # calculate the paramaters to send to the robot
+        distance = me.distance(point_to_be)
+        # we want to move holonomically up and down
+        if point_to_be.y<me.currentPoint.y:
             angle_to_move = 90
-            distance = me.currentPoint[0] -(enemies[dis_en].currentPoint[0] - dist)
         else:
             angle_to_move = 270
-            distance = me.currentPoint[0] +(enemies[dis_en].currentPoint[0] - dist)
 
         controller.move(angle_to_face,angle_to_move,distance)
     else:
-        controller.move(angle_to_face,ourgoal,distance)
+        # if not in on our goal line, move into the middle of it
+        angle_to_move = me.bearing(ourGoal)
+        distance = me.distance(ourGoal)
+        controller.move(angle_to_face,angle_to_move,distance)
 
-
-    """me.plan = [{'action': Actions.moveToPoint, 'targetFunction': gotoGoal},
-               {'action': Actions.rotateToAngle, 'targetFunction': rotate},
-               {'action': Actions.moveToPoint,'targetFunction':defend}]"""
 
 def clearPlan():
     """Reset the robot's goal and plan"""
