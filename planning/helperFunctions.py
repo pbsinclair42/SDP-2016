@@ -22,12 +22,6 @@ def essentiallyEqual(a, b):
 
 
 def nearEnough(a, b):
-    #print type(a)
-    #print type(b)
-    #print a
-    #print b
-    #a = Point(a[0],a[1])
-    #b = Point(b[0],b[1])
     """Checks whether two points or two angles are similar enough
     that we'll work with it
 
@@ -41,12 +35,6 @@ def nearEnough(a, b):
     try:
         return abs(a.x - b.x) <= ITLL_DO_POINT and abs(a.y - b.y) <= ITLL_DO_POINT
     except AttributeError:
-        print "A", a, "B", b
-        print "nearEnough:", abs(a - b) <= ITLL_DO_ANGLE, abs(a + 360 - b) <= ITLL_DO_ANGLE, abs(a - 360 - b) <= ITLL_DO_ANGLE
-        print "arg1", abs(a - b), "<=", ITLL_DO_ANGLE
-        print "arg2", abs(a + 360 - b), "<=", ITLL_DO_ANGLE
-        print "arg3", abs(a - 360 - b), "<=", ITLL_DO_ANGLE
-        print abs(a - b) <= ITLL_DO_ANGLE or abs(a + 360 - b) <= ITLL_DO_ANGLE or abs(a - 360 - b) <= ITLL_DO_ANGLE
         return abs(a - b) <= ITLL_DO_ANGLE or abs(a + 360 - b) <= ITLL_DO_ANGLE or abs(a - 360 - b) <= ITLL_DO_ANGLE
 
 

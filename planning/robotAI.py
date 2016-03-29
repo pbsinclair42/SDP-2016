@@ -42,7 +42,7 @@ def updatePositions():
         enemies[1].update(Point(enemy1Position[0],enemy1Position[1]))
         enemies[1].updateRotation(enemy1Orientation)
     else:
-        print "Enemy_0 Position: ", api.getEnemyPositions()[1]
+        print "Can't find enemy 1 this tick :("
 
     if api.getBallCenter() is not None:
         ballPosition =  api.getBallCenter()
@@ -69,39 +69,11 @@ def updatePositions():
         print("Location of some objects unknown")
 
 
-def makePlan():
-    """Decide what to do based on the system's current
-    beliefs about the state of play"""
-    #collectBall()
-    shoot()
-    """if me.goal == Goals.none:
-        action = "0"
-        while action not in ['1', '2', '3', '4', '5', '6', '7', '8']:
-            print("What action should I do now?")
-            action = raw_input("1. Collect ball\n2. Shoot ball\n3. Pass ball\n4. Recieve ball\n5. Block pass\n6. Guard Goal\n7. Stop\n? ")
-        if action == "1":
-            collectBall()
-        elif action == "2":
-            shoot()
-        elif action == "3":
-            passBall()
-        elif action == "4":
-            receivePass()
-        elif action == "5":
-            blockPass()
-        elif action == "6":
-            guardGoal()
-        else:
-            import sys
-            sys.exit()"""
-
-
 def tick():
     """Each tick, update your beliefs about the world then decide what action to
     take based on this"""
     updatePositions()
     playBall()
-    #executePlan()
     threading.Timer(TICK_TIME, tick).start()
 
 api = WorldApi()

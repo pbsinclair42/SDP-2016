@@ -2,7 +2,7 @@ from os.path import abspath
 # root directory
 ROOT_DIR = abspath('constants.py')[:abspath('constants.py').index('SDP')]+'SDP-2016/'
 # the number of seconds between updating the robot position
-TICK_TIME = 0.2
+TICK_TIME = 0.1
 # our robot's max speed (cm per second)
 MAX_SPEED = 25.0
 # our robot's rotational speed (degrees per second)
@@ -88,8 +88,3 @@ with open('conf.txt','r') as f:
         USING_SIMULATOR=True
     elif config[4].lower().strip() != 'false':
         raise _ConfigError("Invalid value for if using simulator")
-
-
-
-
-
