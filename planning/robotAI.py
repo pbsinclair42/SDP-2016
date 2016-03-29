@@ -30,7 +30,7 @@ def updatePositions():
 
     if api.getEnemyPositions()[0] is not None:
         enemy0Position = api.getEnemyPositions()[0]
-        emeny0Orientation =  api.getEnemyOrientation()[0][1]
+        enemy0Orientation =  api.getEnemyOrientation()[0][1]
         enemies[0].update(Point(enemy0Position[0],enemy0Position[1]))
         enemies[0].updateRotation(emeny0Orientation)
     else:
