@@ -60,6 +60,10 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     cmnd_list.append(command)
                 else:
                     cmnd_list.append(command)
+                    if is_grab(command):
+                        atomic_status = None
+                    elif is_ungrab(command):
+                        atomic_status = None
 
             # non-command-inputs:
             elif pipe_data == "exit":
@@ -197,6 +201,13 @@ def is_holo(command):
 
 def is_stop(command):
     return command[0] == 8
+
+def is_grab:
+    return command[0] == 16
+
+def is_ungrab:
+    return command[0] == 32
+
 if __name__ == "__main__":
     rs = {}
     process_data([253, 0, 0, 0, 154, 0, 228], rs)
