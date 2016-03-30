@@ -24,9 +24,12 @@ def shoot():
     angle_to_face = me.bearing(opponentGoal)
     # if we're facing the goal, shoot!
     if nearEnough(angle_to_face, me.currentRotation):
-        controller.kick(255)
+        controller.stop_robot()
+        if not controller.haveIKicked:
+            controller.kick(255)
     # otherwise, turn to face the goal
     else:
+        print("Turning")
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
 
 

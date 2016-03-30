@@ -3,11 +3,7 @@ from helperClasses import BallStatus, Goals
 from goals_new import collectBall, blockPass, guardGoal, shoot, passBall, confuseEnemy, receivePass, clearPlan
 from helperFunctions import lineOfSight
 from constants import *
-import sys
-sys.path.append(ROOT_DIR+'comms/')
-from RobotController import RobotController
 
-controller = RobotController()
 
 def playBall():
     # if we are closest to ball
@@ -66,11 +62,7 @@ def Actually_play_ball():
     heldByEnemyA = ball.status == BallStatus.enemyA
     heldByEnemyB = ball.status == BallStatus.enemyB
     ballFree = ball.status == BallStatus.free
-    if ball.status == BallStatus.me:
-        controller.stop_robot()
-        controller.grab()
-    #    print "555555555555555555555555555555555555555555555"
-    #
+
     if heldByEnemyA or heldByEnemyB:
         # if I'm closer to the ball than the ally
         if me.distance(ball) < ally.distance(ball):

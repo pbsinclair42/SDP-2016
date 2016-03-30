@@ -17,7 +17,7 @@ def updatePositions():
         me.update(Point(mePosition[0]*X_RATIO,mePosition[1]*Y_RATIO))
     else:
         print "Can't find my position this tick :("
-    if api.getMyOrientation()[1] is not None:
+    if api.getMyOrientation() is not None:
         meOrientation = api.getMyOrientation()[1]
         me.updateRotation(meOrientation)
     else:
@@ -28,12 +28,9 @@ def updatePositions():
         ally.update(Point(allyPosition[0]*X_RATIO,allyPosition[1]*Y_RATIO))
     else:
         print "Can't find my friend's position this tick :("
-    try:
-        if api.getAllyOrientation()[1] is not None:
-            allyOrientation = api.getAllyOrientation()[1]
-            ally.updateRotation(allyOrientation)
-    except:
-        print "lol no"
+    if api.getAllyOrientation() is not None:
+        allyOrientation = api.getAllyOrientation()[1]
+        ally.updateRotation(allyOrientation)
     else:
         print "Can't find my friend's orientation this tick :("
 
@@ -91,12 +88,12 @@ def tick():
     #Actually_play_ball()
     #playBall()
     #confuseEnemy()
-    #shoot()
+    shoot()
     #collectBall()
     #receivePass()
-    guardGoal()
+    #guardGoal()
     threading.Timer(TICK_TIME, tick).start()
-    print ball.status
+    #print ball.status
 
 api = WorldApi()
 

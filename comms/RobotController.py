@@ -21,7 +21,7 @@ class RobotController(object):
         """
         self.stopped = False
         self.grabbed = True
-        self.kickflag = False
+        self.haveIKicked = False
         self.ack_counts = (0, 0)
         self.mag_heading = 0
         self.expected_rotation = None
@@ -87,13 +87,13 @@ class RobotController(object):
                 self.holo(angle_to_move, angle_to_face)
                 self.stopped = False
             self.expected_rotation = None
-            self.kickflag = False
+            self.haveIKicked = False
 
         elif angle_to_face is not None and rotate_in_place:
             if int(angle_to_face) != self.expected_rotation:
                 self.rotate(angle_to_face)
                 self.expected_rotation = int(angle_to_face)
-            self.kickflag = False
+            self.haveIKicked = False
 
         else:
             print "Warning: move didn't move!"
@@ -150,7 +150,7 @@ class RobotController(object):
         """
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
-        self.kickflag = True
+        self.haveIKicked = True
 
     def grab(self, atomic=True):
         """
@@ -200,7 +200,7 @@ class RobotController(object):
         self.process_event.clear()
 
     def stop_robot(self):
-	if not self.stopped:
+    	if not self.stopped:
             self.stopped = True
             command = self.command_dict["STOP"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
             self.queue_command(command)
