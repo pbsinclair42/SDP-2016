@@ -20,7 +20,7 @@
 #define KICKER_PWR 255
 #define KICKER_LFT_POWER 255
 #define KICKER_RGT_POWER 255
-#define GRABBER_POWER 150
+#define GRABBER_POWER 120
 
 
 // temporal calibrations for grabber/ kicker
@@ -31,7 +31,7 @@
 // Movement and kicker Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
-#define ROTATION_CORRECT_TIME 400
+#define ROTATION_CORRECT_TIME 1500
 #define KICKER_CONST 10.0  
 
 
@@ -92,7 +92,7 @@ int positions[ROTARY_COUNT] = {0};
 byte command_buffer[BUFFERSIZE];
 byte buffer_index = 0; // current circular buffer utilization index
 byte command_index = 0; // current circular buffer command index
-byte invalid_commands = 0;
+byte next_valid_byte = 0;
 
 
 // temporal parameters used for the millis function.
@@ -189,15 +189,15 @@ void setup() {
     mag_min_z = mag[2];
     mag_max_z = mag[2];
     calibrate_compass = 1;
-    rotateLeft(100.0);
-    delay(300); // delay to get first proper mag value
+    rotateRight(100.0);
+    delay(100); // delay to get first proper mag value
     
-    /* Custom commands can be initialized below */
-    /*command_buffer[0] = CMD_HOLMOVE_4;
-    command_buffer[1] = 35;
-    command_buffer[2] = 35;
-    command_buffer[3] = 255;
-    buffer_index = 4;*/
+    /* custom commands may be initialized below */
+    // command_buffer[0] = CMD_HOLMOVE_1;
+    // command_buffer[1] = 180;
+    // command_buffer[2] = 180;
+    // command_buffer[3] = 255;
+    // buffer_index = 4;
   }
   
 
@@ -210,7 +210,7 @@ void loop() {
             calibrateCompass();
         else{
             calibrate_compass = 0;
-            motorAllStop();
+            stopWheels();
         }
         return;
     } 
@@ -279,7 +279,7 @@ void loop() {
 
         case CMD_STOP:
             state_end = 1;
-            motorAllStop();
+            stopWheels();
             break;
         
 
@@ -299,8 +299,8 @@ void loop() {
   if (millis() - command_time > 5000)
       state_end = 1;
 
-  if (state_end ){
-        motorAllStop();
+  if (state_end){
+        stopWheels();
         MasterState = IDLE_STATE;
         command_index += 4;
 
@@ -341,7 +341,7 @@ void atomicRotCommand(byte target_value){
         command_time = millis();
         restoreCommsState(target_value);
     }
-    return;    
+    return;
 }
 
 void atomicHoloCommand(byte target_value){
@@ -401,7 +401,6 @@ void Communications() {
             if (((command_buffer[target_value - 4] & 128) == 128 * SEQ_NUM) && 
                 (command_buffer[target_value - 1] == checksum)){
                 
-                invalid_commands = 0;
                 SEQ_NUM = SEQ_NUM == 1 ? 0 : 1;
                 command_id = command_buffer[target_value - 4] & 127;
                 command_buffer[target_value - 4] = command_id;
@@ -413,7 +412,7 @@ void Communications() {
 
                     
                     case CMD_STOP:
-                        motorAllStop();
+                        stopWheels();
                         MoveMode = 0;
                         MasterState = 0;
                         command_index = target_value;
@@ -435,10 +434,10 @@ void Communications() {
                         }
                         break;
                     
-                    case CMD_ROTPLACE:
-                        // commsState is restored inside the function
-                        atomicRotCommand(target_value);
-                        break;
+                    // case CMD_ROTPLACE:
+                    //    // commsState is restored inside the function
+                    //    atomicRotCommand(target_value);
+                    //    break;
 
                     case CMD_HOLMOVE_1:
                         // commsState is restored inside the function
@@ -462,13 +461,14 @@ void Communications() {
                         // commsState is restored inside the function
                         atomicHoloCommand(target_value);
                         break;
-                }    
+                }
+                // force report on current iteration
                 report_time += RESPONSE_TIME + 1;
+                next_valid_byte = buffer_index;
             }
             // report invalid command
             else{
-                invalid_commands += 1;
-                buffer_index = target_value - 4;
+                buffer_index = next_valid_byte;
                 
                 if (buffer_index == 252){
                     bufferOverflow -= 1;
@@ -483,7 +483,7 @@ void Communications() {
         // Time-out serial if reading is taking too long
         else if (millis() - serial_time > 200){ 
             while(buffer_index %4 != 0) {
-                buffer_index--;
+                buffer_index = next_valid_byte;
             }
         }
     }
@@ -520,7 +520,7 @@ void CommsOut(){
         }
         for (int i = 0; i < 7; i++){
             Serial.write(args[i]);
-            delay(5);
+            delay(3);
         }
         Serial.write(255 - checksum);
         report_time = millis();
@@ -593,6 +593,12 @@ int rotPlaceStep(){
         case 0 :
             target_angle = command_buffer[command_index + 1] + command_buffer[command_index + 2];
             
+            if (calculateAngleDifference(heading, target_angle) < 5){
+                MoveMode = 0;
+                stopWheels();
+                return 1;
+            }
+            
             left_angle = calculateLeftAngle(heading, target_angle);
             right_angle = calculateRightAngle(heading, target_angle);
             if (left_angle < right_angle){
@@ -602,11 +608,13 @@ int rotPlaceStep(){
                 rotateLeft(right_angle);
             }
             MoveMode = 1;
-            delay(50);
+            in_the_zone = 0;
+            delay(15);
             return 0;
         
         // rotation correction and stoppage;
         case 1 :
+            target_angle = command_buffer[command_index + 1] + command_buffer[command_index + 2];
             if (calculateAngleDifference(heading, target_angle) > 5){
                 in_the_zone = 0;
                 left_angle = calculateLeftAngle(heading, target_angle);
@@ -617,7 +625,8 @@ int rotPlaceStep(){
                 else{
                     rotateLeft(right_angle);
                 }
-                delay(50);
+                correct_time = millis();
+                delay(15);
             }
             else{
                 // exit if you've been in the zone enough time
@@ -634,7 +643,7 @@ int rotPlaceStep(){
                 else{
                     in_the_zone = 1;
                     correct_time = millis();
-                    motorAllStop();
+                    stopWheels();
                 }
           }
           return 0;
@@ -675,6 +684,7 @@ int holoMoveStep(){
     if (calculateAngleDifference(heading, facing_angle) > 4){
         left_angle = calculateLeftAngle(heading, facing_angle);
         right_angle = calculateRightAngle(heading, facing_angle);
+    
         if (left_angle < right_angle){
             Rw = -1 * (left_angle / 90.0);
         }
@@ -682,26 +692,37 @@ int holoMoveStep(){
             Rw = right_angle / 90.0;
         }
     }
-    else
+    else{
         Rw = 0;
-    
-    holo_math(movement_angle, Rw);
-    turn_holo_motors();
-    delay(50);
+    }
+    // do holonomics or rotate in-place first if angle is too large
+    if (fabs(Rw) < 0.4){
+        holo_math(movement_angle, Rw);
+        turn_holo_motors();
+    }
+    else{
+       if (Rw > 0){
+            rotateLeft(100.0);
+        }
+        else{
+            rotateRight(100.0);
+        }
+    }
+    delay(15);
     return 0;
     
 }
 void holo_math(int angle, float Rw){
         int rot_degrees;
         float rot_radians, vx, vy, m1_val, m2_val, m3_val, scale_factor;
-        
+
         rot_degrees = (int) angle;
         rot_radians = rot_degrees * PI / 180;
 
         vx = cos(rot_radians);
         vy = sin(rot_radians);
-            
-        m1_val = -1 * sin(30  * PI / 180)  * vx + cos(30 * PI / 180)  * vy + Rw;
+        
+        m1_val = -1 * sin(30  * PI / 180) * vx + cos(30  * PI / 180)  * vy + Rw;
         m2_val = -1 * sin(150 * PI / 180) * vx + cos(150 * PI / 180) * vy  + Rw;
         m3_val = -1 * sin(270 * PI / 180) * vx + cos(270 * PI / 180) * vy  + Rw;
             
@@ -1006,5 +1027,11 @@ void rotateLeft(float target_angle) {
     }
     motorForward(MOTOR_LFT, power_value);
     motorForward(MOTOR_RGT, power_value);
-    motorForward(MOTOR_BCK, power_value);    
+    motorForward(MOTOR_BCK, power_value); 
+}
+
+void stopWheels(){
+    motorForward(MOTOR_LFT, 0);
+    motorForward(MOTOR_RGT, 0);
+    motorForward(MOTOR_BCK, 0);
 }
