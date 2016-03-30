@@ -154,6 +154,7 @@ def guardGoal():#Little faith in this
         angle_to_move = me.bearing(ourGoal)
         distance = me.distance(ourGoal)
         controller.move(angle_to_move,angle_to_move,distance)
+        controller.move(angle_to_face,angle_to_move,distance)
 
 
 def clearPlan():
