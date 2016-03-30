@@ -89,5 +89,5 @@ class Goals(Enum):
     receivePass = 4
     blockPass = 5
     guardGoal = 6
-    receiveAndPass = 7
+    confuse = 7
 

@@ -10,9 +10,13 @@ from RobotController import RobotController
 
 controller = RobotController()
 
+# save the amount we're randomly turning between ticks
+confusionTarget = 0
+
 
 def collectBall():
     """Move towards then grab the ball"""
+    me.goal = Goals.collectBall
     angle_to_face = me.bearing(ball)
     angle_to_move = angle_to_face
     distance_to_move = me.distance(ball)
@@ -21,6 +25,7 @@ def collectBall():
 
 def shoot():
     """Kick the ball full power towards the goal"""
+    me.goal = Goals.shoot
     angle_to_face = me.bearing(opponentGoal)
     # if we're facing the goal, shoot!
     if nearEnough(angle_to_face, me.currentRotation):
@@ -29,12 +34,13 @@ def shoot():
             controller.kick(255)
     # otherwise, turn to face the goal
     else:
-        print("Turning")
+        print("Turning ",angle_to_face,"from",me.bearing(opponentGoal))
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
 
 
 def passBall():
     """Kick the ball full power towards our ally"""
+    me.goal = Goals.passBall
     angle_to_face = me.bearing(ally)
     # if we're facing the ally, pass them the ball
     if nearEnough(angle_to_face, me.currentRotation):
@@ -46,6 +52,7 @@ def passBall():
 
 def receivePass():
     """Face our ally and get ready to grab the ball if they kick it to us"""
+    me.goal = Goals.receivePass
     angle_to_face = me.bearing(ally)
     # if we're facing the ally, ungrab and get ready to receive the ball
     if nearEnough(angle_to_face, me.currentRotation):
@@ -57,6 +64,7 @@ def receivePass():
 
 def blockPass():
     """Move to inbetween the two enemies"""
+    me.goal = Goals.blockPass
     # work out where to move to
     e0 = enemies[0].currentPoint
     e1 = enemies[1].currentPoint
@@ -73,14 +81,22 @@ def blockPass():
 
 def confuseEnemy():
     """Shoogle around a bit to confuse the enemy and hopefully make them move"""
-    angle_to_face = me.currentRotation
-    angle_to_face += random.uniform(-60,60)
-    controller.move(angle_to_face,0,0,False,rotate_in_place=True)
+    global confusionTarget
+    # if just started this new goal, choose an amount to shoogle
+    if me.goal!=Goals.confuse:
+        confusionTarget = me.currentRotation + random.uniform(-90,90)
+        me.goal = Goals.confuse
+    # if we've reached our confusion target, we're done for now
+    if nearEnough(confusionTarget, me.currentRotation):
+        clearPlan()
+    # otherwise, shoogle!
+    else:
+        controller.move(confusionTarget,0,0,False,rotate_in_place=True)
 
 
 def guardGoal():
     """Go to the goal line and face the enemy with the ball"""
-    me.goals = Goals.guardGoal
+    me.goal = Goals.guardGoal
     angle_to_face = me.bearing(ball)
 
     # if we're on our goal line, move to block the ball
@@ -113,7 +129,7 @@ def guardGoal():
         else:
             angle_to_move = 270
         controller.move(angle_to_face,angle_to_move,distance)
-        me.goals = Goals.none
+        me.goal = Goals.none
     else:
         # if not in on our goal line, move into the middle of it
         angle_to_move = me.bearing(ourGoal)
@@ -123,5 +139,6 @@ def guardGoal():
 
 def clearPlan():
     """Reset the robot's goal and plan"""
+    me.goal = Goals.none
     controller.stop_robot()
     
