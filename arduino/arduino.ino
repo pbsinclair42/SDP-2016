@@ -31,7 +31,7 @@
 // Movement and kicker Constants
 #define MOTION_CONST 11.891304
 #define ROTATION_CONST 0.4
-#define ROTATION_CORRECT_TIME 666
+#define ROTATION_CORRECT_TIME 1500
 #define KICKER_CONST 10.0  
 
 
@@ -625,10 +625,10 @@ int rotPlaceStep(){
                 else{
                     rotateLeft(right_angle);
                 }
+                correct_time = millis();
                 delay(15);
             }
             else{
-
                 // exit if you've been in the zone enough time
                 if (in_the_zone){
                     if (millis() - correct_time > ROTATION_CORRECT_TIME){
