@@ -39,7 +39,7 @@ def shoot():
 
 
 def passBall():
-    angle_to_face = ally.bearing(me)#Not 100% convinced on this bearing
+    angle_to_face = me.bearing(ally)#Not 100% convinced on this bearing
     print "angle to face: ", angle_to_face, controller.absolute_to_magnetic(angle_to_face)
     if not controller.kickflag:
         controller.move(angle_to_face,None,None, None, True)
@@ -157,7 +157,7 @@ def guardGoal():#Little faith in this
         # if not in on our goal line, move into the middle of it
         angle_to_move = me.bearing(ourGoal)
         distance = me.distance(ourGoal)
-        controller.move(angle_to_mave,angle_to_move,distance)
+        controller.move(angle_to_face,angle_to_move,distance)
 
 
 def clearPlan():
