@@ -87,11 +87,13 @@ class RobotController(object):
                 self.holo(angle_to_move, angle_to_face)
                 self.stopped = False
             self.expected_rotation = None
+            self.kickflag = False
 
         elif angle_to_face is not None and rotate_in_place:
             if int(angle_to_face) != self.expected_rotation:
                 self.rotate(angle_to_face)
                 self.expected_rotation = int(angle_to_face)
+            self.kickflag = False
 
         else:
             print "Warning: move didn't move!"
@@ -198,9 +200,10 @@ class RobotController(object):
         self.process_event.clear()
 
     def stop_robot(self):
-        self.stopped = True
-        command = self.command_dict["STOP"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
-        self.queue_command(command)
+	if not self.stopped:
+            self.stopped = True
+            command = self.command_dict["STOP"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+            self.queue_command(command)
 
     def report(self):
         """
@@ -253,10 +256,7 @@ if __name__ == "__main__":
     sleep(3)
     deg = 0
     while True:
-        for i in range(0, 7):
-            r.move(0, 0)
-            sleep(1)
-
-        for i in range(0, 7):
-            r.move(180, 180)
-            sleep(1)
+        r.move(-45, -45, None, None, True)
+        sleep(4)
+        r.move(135, 135, None, None, True)
+        sleep(4)

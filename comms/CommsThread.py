@@ -60,6 +60,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     cmnd_list.append(command)
                 else:
                     cmnd_list.append(command)
+                    if is_grab(command) or is_ungrab(command):
+                        atomic_status = None
 
             # non-command-inputs:
             elif pipe_data == "exit":
@@ -114,13 +116,13 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
             comms.write(sequenced)
             print "Grabbing", sequenced
-        
+
         elif atomic_status == "ungrab" and robot_state["grabber"] == False:
             atomic_command = [ord(chr(32)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
             comms.write(sequenced)
             print "UnGrabbing", sequenced
-        
+
         elif atomic_status == "fgrab":
             atomic_command = [ord(chr(16)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
@@ -140,7 +142,6 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if robot_state["mag_head"] != prev_mag_state:
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
-        print robot_state
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
@@ -206,6 +207,12 @@ def is_holo(command):
 
 def is_stop(command):
     return command[0] == 8
+
+def is_grab(command):
+    return command[0] == 16
+
+def is_ungrab(command):
+    return command[0] == 32
 if __name__ == "__main__":
     rs = {}
     process_data([253, 0, 0, 0, 154, 0, 228], rs)

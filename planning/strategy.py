@@ -1,8 +1,13 @@
-from globalObjects import ball, me, ally, enemies
+from globalObjects import ball, me, ally, enemies, ourGoal, opponentGoal
 from helperClasses import BallStatus, Goals
 from goals_new import collectBall, blockPass, guardGoal, shoot, passBall, confuseEnemy, receivePass, clearPlan
 from helperFunctions import lineOfSight
+from constants import *
+import sys
+sys.path.append(ROOT_DIR+'comms/')
+from RobotController import RobotController
 
+controller = RobotController()
 
 def playBall():
     # if we are closest to ball
@@ -11,6 +16,7 @@ def playBall():
     ballNotNearEnemy = ballToEnemyDist < 50
     heldByEnemyA = ball.status == BallStatus.enemyA
     heldByEnemyB = ball.status == BallStatus.enemyB
+    ballFree = ball.status == BallStatus.free
 
     # stop guarding the goal if you could be more useful elsewhere
     if me.goal == Goals.guardGoal:
@@ -47,8 +53,55 @@ def playBall():
             receivePass()
 
         # if noone has the ball, go grab the ball or defend
-        elif ballNearerMeThanAlly:
-            collectBall()
         else:
+            collectBall()
+        #else:
+        #    guardGoal()
+
+def Actually_play_ball():
+    print ball.status
+    ballNearerMeThanAlly = ball.distance(me) < ball.distance(ally)
+    ballToEnemyDist = min(ball.distance(enemies[0]), ball.distance(enemies[1]))
+    ballNotNearEnemy = ballToEnemyDist < 50
+    heldByEnemyA = ball.status == BallStatus.enemyA
+    heldByEnemyB = ball.status == BallStatus.enemyB
+    ballFree = ball.status == BallStatus.free
+    if ball.status == BallStatus.me:
+        controller.stop_robot()
+        controller.grab()
+    #    print "555555555555555555555555555555555555555555555"
+    #
+    if heldByEnemyA or heldByEnemyB:
+        # if I'm closer to the ball than the ally
+        if me.distance(ball) < ally.distance(ball):
+            blockPass()
+        # otherwise, defend the goal
+        elif lineOfSight(me.currentPoint,ourGoal):
             guardGoal()
-        
+        else:
+            confuseEnemy()
+
+    # if we have the ball
+    elif ball.status == BallStatus.me:
+        # shoot if possible
+        if lineOfSight(me.currentPoint, opponentGoal):
+            shoot()
+        # else, try and pass to ally
+        elif lineOfSight(me.currentPoint, ally.currentPoint):
+            passBall()
+        #else:
+        #    confuseEnemy()
+
+    # if our ally has the ball, set up a pass
+    elif ball.status == BallStatus.ally:
+        receivePass()
+
+    # if noone has the ball, go grab the ball or defend
+    elif ballFree and ballNearerMeThanAlly:
+        collectBall()
+    #else:
+    #    print "SHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+    #    print ball.status
+        #guardGoal()
+    #    confuseEnemy()
+

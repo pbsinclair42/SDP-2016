@@ -48,6 +48,8 @@ ITLL_DO_POINT = 5
 # how close to a target angle you need to be to count as 'close enough' for the sake of doing stuff (degrees)
 ITLL_DO_ANGLE = 15
 
+Previous_Action = None
+
 
 # initialize the variables with dummy values that will be replaced with info from conf.txt
 TEAM_COLOUR = 'yellow'

@@ -3,10 +3,11 @@ import threading
 from constants import *
 from globalObjects import me, ally, enemies, ball
 from helperClasses import BallStatus, Goals, Point
-from goals_new import collectBall, shoot, passBall, receivePass, blockPass, guardGoal
-from helperFunctions import nearEnough
-from strategy import playBall
+from goals_new import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, confuseEnemy
+from helperFunctions import nearEnough, lineOfSight
+from strategy import Actually_play_ball, playBall
 from world import WorldApi
+import math
 
 def updatePositions():
     """Updates the system's belief of the state of the game based on the vision system"""
@@ -87,11 +88,13 @@ def tick():
     """Each tick, update your beliefs about the world then decide what action to
     take based on this"""
     updatePositions()
+    #Actually_play_ball()
     #playBall()
+    #confuseEnemy()
     #shoot()
     #collectBall()
-    passBall()
-    #guardGoal()
+    #receivePass()
+    guardGoal()
     threading.Timer(TICK_TIME, tick).start()
     print ball.status
 
