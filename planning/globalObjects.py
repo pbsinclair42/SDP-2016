@@ -33,8 +33,8 @@ def lineOfSight(From,To):
     dyc = From.y - To.y
 
     for obj in moveables:
-        dxl = obj.x - To.x
-        dyl = obj.y - To.y
+        dxl = obj.currentPoint.x - To.x
+        dyl = obj.currentPoint.y - To.y
         cross = dxc * dyl - dyc * dxl
         if(cross == 0):
             return True
