@@ -16,11 +16,18 @@ confusionTarget = 0
 # K: What if the vision feed loses the ball or we obscure it after having grabbed it?!
 def collectBall():
     """Move towards then grab the ball"""
-    me.goal = Goals.collectBall
-    angle_to_face = me.bearing(ball)
-    angle_to_move = angle_to_face
-    distance_to_move = me.distance(ball)
-    controller.move(angle_to_face,angle_to_move,distance_to_move,True)
+    me.goal=Goals.collectBall
+    # if we've caught up to the ball, stop and grab
+    if nearEnough(me.bearing(ball), me.currentRotation, near_enough_angle=30) and ball.distance(me)< BALL_OWNERSHIP_DISTANCE:
+        controller.stop_robot()
+        controller.grab(True)
+    # otherwise, go to the ball
+    else:
+        me.goal = Goals.collectBall
+        angle_to_face = me.bearing(ball)
+        angle_to_move = angle_to_face
+        distance_to_move = me.distance(ball)
+        controller.move(angle_to_face,angle_to_move,distance_to_move,True)
 
 # K: you can simply only send move and kick(both of the only once), since we prefer the compass' orientation!
 def shoot():
@@ -30,7 +37,8 @@ def shoot():
     # if we're facing the goal, shoot!
     if nearEnough(angle_to_face, me.currentRotation):
         controller.stop_robot()
-        if not controller.haveIKicked:
+        print controller.haveIkicked
+        if not controller.haveIkicked:
             controller.kick(255)
     # otherwise, turn to face the goal
     else:
@@ -44,7 +52,7 @@ def passBall():
     # if we're facing the ally, pass them the ball
     if nearEnough(angle_to_face, me.currentRotation):
         controller.stop_robot()
-        if not controller.haveIKicked:
+        if not controller.haveIkicked:
             controller.kick(255)
     # otherwise, turn to face our ally
     else:

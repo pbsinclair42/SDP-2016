@@ -280,7 +280,7 @@ void loop() {
         
 
         case CMD_STOP:
-            state_end = 1;
+            //state_end = 1;
             stopWheels();
             break;
         
@@ -417,7 +417,7 @@ void Communications() {
                         stopWheels();
                         MoveMode = 0;
                         MasterState = 0;
-                        command_index = target_value;
+                        command_index = buffer_index;
                         commandOverflow = bufferOverflow;
                         SEQ_NUM = (target_value / 4) % 2;
                         break;
@@ -439,10 +439,10 @@ void Communications() {
                         }
                         break;
                     
-                    // case CMD_ROTPLACE:
-                    //    // commsState is restored inside the function
-                    //    atomicRotCommand(target_value);
-                    //    break;
+                    case CMD_ROTPLACE:
+                        // commsState is restored inside the function
+                        atomicRotCommand(target_value);
+                        break;
 
                     case CMD_HOLMOVE_1:
                         // commsState is restored inside the function
