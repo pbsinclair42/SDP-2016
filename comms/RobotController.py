@@ -21,7 +21,7 @@ class RobotController(object):
         """
         self.stopped = False
         self.grabbed = True
-        self.kickflag = False
+        self.haveIkicked = False
         self.ack_counts = (0, 0)
         self.mag_heading = 0
         self.expected_rotation = None
@@ -64,8 +64,7 @@ class RobotController(object):
         self.synchronize()
         current_heading = self.get_mag_heading()
         mag_heading = self.absolute_to_magnetic(angle_to_face)
-        print "controller_stats", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
-        print "internal stats", self.grabbed
+        # print "controller: ", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
         # case for grabbing or ungrabbing the ball
 
         if grab_target:
@@ -88,13 +87,13 @@ class RobotController(object):
                 self.holo(angle_to_move, angle_to_face)
                 self.stopped = False
             self.expected_rotation = None
-            self.kickflag = False
+            self.haveIkicked = False
 
         elif angle_to_face is not None and rotate_in_place:
             if int(angle_to_face) != self.expected_rotation:
                 self.rotate(angle_to_face)
                 self.expected_rotation = int(angle_to_face)
-            self.kickflag = False
+            self.haveIkicked = False
 
         else:
             print "Warning: move didn't move!"
@@ -108,7 +107,7 @@ class RobotController(object):
         self.parent_pipe_in.send((command,))
         self.process_event.set()
         self.synchronize()
-        print "Queue-ing:", [ord(item) for item in command]
+        # print "Queue-ing:", [ord(item) for item in command]
 
     def rotate(self, degrees):
         """
@@ -151,14 +150,13 @@ class RobotController(object):
         """
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
-        self.kickflag = True
+        self.haveIkicked = True
 
     def grab(self, atomic=True):
         """
             grab
         """
         if not atomic:
-
             command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
             self.queue_command(command)
         else:
@@ -222,7 +220,7 @@ class RobotController(object):
 
     def am_i_done(self):
         self.synchronize()
-        if self.ack_counts[0] == self.commands and self.ack_counts[1] == self.commands:
+        if self.ack_counts[0] == self.ack_counts[1]:
             #print self.ack_counts, self.commands
             return True
         else:
@@ -232,8 +230,8 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-        # mag_north = 165 # pitch closer to SDP
-        mag_north = 155 # pitch closer to toilets
+        mag_north = 165 # pitch closer to SDP
+        # mag_north = 155 # pitch closer to toilets
 
         if angle is None:
             return None
@@ -252,8 +250,8 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    r.move(0, 0)
-    
+    r.move(180, 180)
+    r.synchronize()
     """
     r.ungrab()
     sleep(5)
