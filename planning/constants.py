@@ -57,7 +57,7 @@ OUR_COLOUR = 'green'
 BALL_COLOUR = 'red'
 OUR_GOAL = 'left'
 USING_SIMULATOR = False
-
+PITCH = None
 # get the information from the config file
 with open('conf.txt','r') as f:
 
@@ -90,3 +90,10 @@ with open('conf.txt','r') as f:
         USING_SIMULATOR=True
     elif config[4].lower().strip() != 'false':
         raise _ConfigError("Invalid value for if using simulator")
+
+    if config[5].lower().strip() == 'pitch1':
+    	PITCH = "pitch1"
+    elif config[5].lower().strip() == 'pitch0':
+    	PITCH = "pitch0"
+    else:
+    	raise _ConfigError("Neither pitch1 nor pitch0 was configured")

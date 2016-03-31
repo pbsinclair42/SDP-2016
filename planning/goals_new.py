@@ -8,7 +8,7 @@ sys.path.append(ROOT_DIR+'comms/')
 from RobotController import RobotController
 
 
-controller = RobotController()
+controller = RobotController(pitch = PITCH)
 
 # save the amount we're randomly turning between ticks
 confusionTarget = 0

@@ -14,11 +14,17 @@ class RobotController(object):
     """
     def __init__(self,
                  port="/dev/ttyACM0",
-                 baudrate=115200,
-                 debug=False):
+                 baudrate= 115200,
+                 debug= False,
+                 pitch = None):
         """
             Initialize firware API and start the communications parallel process
         """
+        if pitch == "pitch1":
+        	self.mag_north = 165
+        else:
+        	self.mag_north = 155
+
         self.stopped = False
         self.grabbed = True
         self.haveIkicked = False
@@ -64,7 +70,7 @@ class RobotController(object):
         self.synchronize()
         current_heading = self.get_mag_heading()
         mag_heading = self.absolute_to_magnetic(angle_to_face)
-        # print "controller: ", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
+        print "controller: ", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
         # case for grabbing or ungrabbing the ball
 
         if grab_target:
@@ -160,7 +166,7 @@ class RobotController(object):
             command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
             self.queue_command(command)
         else:
-            #command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
+            # command = self.command_dict["GRAB"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
             command = "grab"
             self.parent_pipe_in.send("grab")
 
@@ -230,8 +236,8 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-        mag_north = 165 # pitch closer to SDP
-        # mag_north = 155 # pitch closer to toilets
+        # mag_north = 165 # pitch closer to SDP
+        mag_north = self.mag_north # pitch closer to toilets
 
         if angle is None:
             return None
@@ -250,33 +256,4 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    r.move(180, 180)
-    r.synchronize()
-    """
-    r.ungrab()
-    sleep(5)
-    print "g"
-    r.grab()
-    sleep(5)
-    r.ungrab()
-    sleep(5)
-    print "g"
-    r.grab()
-    sleep(5)
-    r.ungrab()
-    sleep(5)
-    print "g"
-    r.grab()
-    sleep(5)
-    r.ungrab()
-    sleep(5)
-    print "g"
-    r.grab()
-    sleep(5)
-    r.ungrab()
-    sleep(5)
-    print "g"
-    r.grab()
-    sleep(5)
-    r.ungrab()
-    sleep(5)"""
+    r.move(0, 0)
