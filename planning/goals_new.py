@@ -13,7 +13,7 @@ controller = RobotController(pitch = PITCH)
 # save the amount we're randomly turning between ticks
 confusionTarget = 0
 
-
+# K: What if the vision feed loses the ball or we obscure it after having grabbed it?!
 def collectBall():
     """Move towards then grab the ball"""
     me.goal = Goals.collectBall
@@ -22,7 +22,7 @@ def collectBall():
     distance_to_move = me.distance(ball)
     controller.move(angle_to_face,angle_to_move,distance_to_move,True)
 
-
+# K: you can simply only send move and kick(both of the only once), since we prefer the compass' orientation!
 def shoot():
     """Kick the ball full power towards the goal"""
     me.goal = Goals.shoot
@@ -36,7 +36,7 @@ def shoot():
     else:
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
 
-
+#K: you can simply only send move and kick(both of the only once), since we prefer the compass' orientation!
 def passBall():
     """Kick the ball full power towards our ally"""
     me.goal = Goals.passBall
@@ -50,7 +50,7 @@ def passBall():
     else:
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
 
-
+#K: Do we never move?
 def receivePass():
     """Face our ally and get ready to grab the ball if they kick it to us"""
     me.goal = Goals.receivePass
@@ -63,9 +63,10 @@ def receivePass():
     else:
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
 
-
+#K: if we're exactly where we want to be, we can rotate in place instead!#
 def blockPass():
     """Move to inbetween the two enemies"""
+
     me.goal = Goals.blockPass
     # work out where to move to
     e0 = enemies[0].currentPoint
