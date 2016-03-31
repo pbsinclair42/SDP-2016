@@ -4,8 +4,8 @@ from constants import *
 from globalObjects import me, ally, enemies, ball
 from helperClasses import BallStatus, Goals, Point
 from goals_new import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, confuseEnemy
-from helperFunctions import nearEnough, lineOfSight
-from strategy import Actually_play_ball, playBall
+from helperFunctions import nearEnough
+from strategy import playBall
 from world import WorldApi
 import math
 
@@ -54,7 +54,7 @@ def updatePositions():
         enemy1Orientation = api.getEnemyOrientation()[1][1]
         enemies[1].updateRotation(enemy1Orientation)
     else:
-        print "Can't find enemy 0's orientation this tick :("
+        print "Can't find enemy 1's orientation this tick :("
 
     if api.getBallCenter() is not None:
         ballPosition =  api.getBallCenter()
@@ -85,15 +85,23 @@ def tick():
     """Each tick, update your beliefs about the world then decide what action to
     take based on this"""
     updatePositions()
-    #Actually_play_ball()
-    #playBall()
+    playBall()
+    # test out each individual function by commenting the above line
+    # and uncommenting one of the following:
+    #
+    #collectBall()
+    #passBall()
     #confuseEnemy()
-    shoot()
+    #shoot()
     #collectBall()
     #receivePass()
     #guardGoal()
+    #blockPass()
+    #
+    print
+    print(me.goal)
+    print
     threading.Timer(TICK_TIME, tick).start()
-    #print ball.status
 
 api = WorldApi()
 

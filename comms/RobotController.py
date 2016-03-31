@@ -63,8 +63,8 @@ class RobotController(object):
         self.synchronize()
         current_heading = self.get_mag_heading()
         mag_heading = self.absolute_to_magnetic(angle_to_face)
-        print "controller_stats", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
-        print "internal stats", self.grabbed
+        print "move", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
+        #print "internal stats", self.grabbed
         # case for grabbing or ungrabbing the ball
 
         if grab_target:
@@ -107,7 +107,7 @@ class RobotController(object):
         self.parent_pipe_in.send((command,))
         self.process_event.set()
         self.synchronize()
-        print "Queue-ing:", [ord(item) for item in command]
+        #print "Queue-ing:", [ord(item) for item in command]
 
     def rotate(self, degrees):
         """

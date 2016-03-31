@@ -195,7 +195,7 @@ def fetch_command(cmnd_list):
             return cmd_to_send
         except StopIteration:
             if is_holo(cmnd_list[-1]):
-                print "LAST_COMMAND IS HOLO"
+                #print "LAST_COMMAND IS HOLO"
                 return cmnd_list[-1]
             else:
                 return None

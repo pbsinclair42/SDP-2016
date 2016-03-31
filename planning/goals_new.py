@@ -1,7 +1,7 @@
 from constants import *
 from globalObjects import me, ally, ball, enemies, ourGoal, opponentGoal
 from helperClasses import Point, Goals, BallStatus
-from helperFunctions import tan, nearEnough, lineOfSight
+from helperFunctions import tan, nearEnough
 import sys
 import random
 sys.path.append(ROOT_DIR+'comms/')
@@ -103,7 +103,6 @@ def guardGoal():
 
     # if not on our goal line, move into the middle of it
     if abs(me.currentPoint.x - ourGoal.x) > 15:
-        print("Heading to goal line")
         angle_to_move = me.bearing(ourGoal)
         distance = me.distance(ourGoal)
         controller.move(angle_to_move,angle_to_move,distance)
@@ -115,8 +114,8 @@ def guardGoal():
         elif ball.status == BallStatus.enemyB:
             enemyNum=1
         else:
-            print("They don't have the ball you dafty")
             controller.stop_robot()
+            controller.move(angle_to_face,0,0,False,rotate_in_place=True)
             return
 
         # calculate where on the y axis the ball would hit if kicked now
@@ -128,7 +127,6 @@ def guardGoal():
         minY = PITCH_WIDTH/2 - 0.5*GOAL_WIDTH + ROBOT_WIDTH/2
         maxY = PITCH_WIDTH/2 + 0.5*GOAL_WIDTH - ROBOT_WIDTH/2
         point_to_be = Point(ourGoal.x, max(minY, min(maxY, y_intersection)))
-        print point_to_be
 
         # if we're not where we should be, move there holonomically
         if not nearEnough(point_to_be, me.currentPoint, near_enough_point=10):
@@ -139,25 +137,20 @@ def guardGoal():
                 angle_to_face=180
             # calculate the parameters to send to the robot
             distance = me.distance(point_to_be)
-            print("blocking")
             # we want to move holonomically up and down
             if point_to_be.y<me.currentPoint.y:
-                print("blocking upwards")
                 angle_to_move = -90
             else:
-                print("blocking downwards")
                 angle_to_move = 90
             controller.move(angle_to_face,angle_to_move,distance)
 
         # if we're in position already but just facing wrongly, turn to face the robot with the ball
         elif not nearEnough(angle_to_face, me.currentRotation):
             controller.stop_robot()
-            print("turning")
             controller.move(angle_to_face,0,0,False,rotate_in_place=True)
         # if we're all set, just wait for something to happen
         else:
             controller.stop_robot()
-            print("Guarding successfully")
 
 
 def clearPlan():
