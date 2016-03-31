@@ -82,12 +82,13 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 while comms.in_waiting:
                     print "Flushing", ord(comms.read(1))
 
-            elif pipe_data in ["grab", "ungrab", "fgrab"]:
+            elif pipe_data in ["grab", "ungrab"]:
                 atomic_status = pipe_data
 
         while comms.in_waiting:
             data = comms.read(1)
             data_buffer += [ord(data)]
+            # print ord(data), # debug
 
         try:
         # ensure data has been processed before attempting to send data
@@ -111,25 +112,17 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
             print "Sending CMD", sequenced
 
         # handle atomic operations
-        if atomic_status == "grab" and robot_state["grabber"] == True:
+        if atomic_status == "grab" and robot_state["grabber"] == "open":
             atomic_command = [ord(chr(16)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
             comms.write(sequenced)
             print "Grabbing", sequenced
 
-        elif atomic_status == "ungrab" and robot_state["grabber"] == False:
+        elif atomic_status == "ungrab" and robot_state["grabber"] == "closed":
             atomic_command = [ord(chr(32)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
             sequenced = sequence_command(atomic_command, robot_state["seq_num"])
             comms.write(sequenced)
             print "UnGrabbing", sequenced
-
-        elif atomic_status == "fgrab":
-            atomic_command = [ord(chr(16)), ord(chr(255)), ord(chr(255)), ord(chr(255))]
-            sequenced = sequence_command(atomic_command, robot_state["seq_num"])
-            for i in range(0, 4):
-                comms.write(sequenced)
-            print "Grabbing forcefully", sequenced
-            atomic_status = "grab"
 
 
         # computer ack count
@@ -142,6 +135,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if robot_state["mag_head"] != prev_mag_state:
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
+        
+        print robot_state
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
@@ -158,7 +153,7 @@ def process_data(data, robot_state):
                 robot_state["buffer"] = [data[offset - idx + 1], data[offset - idx + 2], data[offset - idx + 3]]
                 robot_state["mag_head"] = data[offset - idx + 4] + data[offset - idx + 5]
                 robot_state["seq_num"] = data[offset - idx + 2] / 4 % 2
-                robot_state["grabber"] = data[offset - idx + 6] == 1
+                robot_state["grabber"] = "open" if data[offset - idx + 6] == 1 else "closed"
                 robot_state["active"] = True
                 del data
                 return []
@@ -195,7 +190,7 @@ def fetch_command(cmnd_list):
             return cmd_to_send
         except StopIteration:
             if is_holo(cmnd_list[-1]):
-                #print "LAST_COMMAND IS HOLO"
+                print "LAST_COMMAND IS HOLO"
                 return cmnd_list[-1]
             else:
                 return None
