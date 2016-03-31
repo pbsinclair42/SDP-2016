@@ -232,7 +232,8 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-        mag_north = 169
+        # mag_north = 165 # pitch closer to SDP
+        mag_north = 155 # pitch closer to toilets
 
         if angle is None:
             return None
@@ -251,12 +252,8 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    while True:
-	    sleep(5)
-	    r.ungrab(False)
-	    sleep(5)
-	    r.grab(False)
-
+    r.move(0, 0)
+    
     """
     r.ungrab()
     sleep(5)
