@@ -81,7 +81,7 @@ boolean AtomicGrab = 0;
 byte AtomicGrabMode = 0;
 boolean AtomicUnGrab = 0;
 byte AtomicUnGrabMode = 0;
-boolean GrabberStatus = 0;
+byte GrabberStatus = 0;
 
 
 // positions of wheels based on rotary encoder values
@@ -191,7 +191,9 @@ void setup() {
     calibrate_compass = 1;
     rotateRight(100.0);
     delay(100); // delay to get first proper mag value
-    
+    //motorBackward(GRABBER, GRABBER_POWER);
+    //delay(1000);
+    //motorBackward(GRABBER, 0);
     /* custom commands may be initialized below */
     // command_buffer[0] = CMD_HOLMOVE_1;
     // command_buffer[1] = 180;
@@ -421,15 +423,18 @@ void Communications() {
                         break;
                     
                     case CMD_GRAB:
-                        if (command_buffer[target_value - 3]){
-                            AtomicGrab = 1;
+                        if (command_buffer[target_value - 3]!= 0){
+                            if (AtomicGrab != 1 && GrabberStatus == 1)
+                                AtomicGrab = 1;
                             restoreCommsState(target_value);
                         }
                         break;
 
                     case CMD_UNGRAB:
-                        if (command_buffer[target_value - 3]){
-                            AtomicUnGrab = 1;
+                        if (command_buffer[target_value - 3] != 0){
+                            if (AtomicUnGrab != 1 && GrabberStatus == 0){
+                                AtomicUnGrab = 1;
+                            }
                             restoreCommsState(target_value);
                         }
                         break;
@@ -530,17 +535,16 @@ void CommsOut(){
 void handleAtomicActions(){
     if (AtomicUnGrab){
         switch(AtomicUnGrabMode){
-            // start grabbing
+            // start ungrabbing
             case 0:
-                motorForward(GRABBER, GRABBER_POWER);
+                motorBackward(GRABBER, GRABBER_POWER);
                 AtomicUnGrabMode = 1;
                 break;
             
-
             // finish ungrabbing
             case 1:
                 if (millis() - atomic_time > GRAB_TIME){
-                    motorForward(GRABBER, 0);
+                    motorBackward(GRABBER, 0);
                     AtomicUnGrabMode = 0;
                     AtomicUnGrab = 0;
                     GrabberStatus = 1;
@@ -555,8 +559,9 @@ void handleAtomicActions(){
     }
     else if (AtomicGrab){
         switch(AtomicGrabMode){
+            // start grabbing
             case 0:
-                motorBackward(GRABBER, GRABBER_POWER);
+                motorForward(GRABBER, GRABBER_POWER);
                 AtomicGrabMode = 1;
                 break;
             
@@ -564,7 +569,7 @@ void handleAtomicActions(){
             // finish grabbing
             case 1:
                 if (millis() - atomic_time > GRAB_TIME){
-                    motorBackward(GRABBER, 0);
+                    motorForward(GRABBER, 0);
                     AtomicGrabMode = 0;
                     AtomicGrab = 0;
                     GrabberStatus = 0;
@@ -827,13 +832,13 @@ int kickStep(){
 int grabStep(){
     switch(GrabMode){
         case 0:
-            motorBackward(GRABBER, GRABBER_POWER);
+            motorForward(GRABBER, GRABBER_POWER);
             command_time = millis();
             GrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
-                motorBackward(GRABBER, 0);
+                motorForward(GRABBER, 0);
                 GrabMode = 0;
                 finishGrabbing = 0;
                 GrabberStatus = 0;
@@ -846,13 +851,13 @@ int grabStep(){
 int unGrabStep(){
     switch(GrabMode){
         case 0:
-            motorForward(GRABBER, GRABBER_POWER);
+            motorBackward(GRABBER, GRABBER_POWER);
             command_time = millis();
             GrabMode = 1;
             return 0;
         case 1:
             if (millis() - command_time > GRAB_TIME){
-                motorForward(GRABBER, 0);
+                motorBackward(GRABBER, 0);
                 GrabMode = 0;
                 GrabberStatus = 1;
                 return 1;
