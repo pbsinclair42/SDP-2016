@@ -34,7 +34,6 @@ def shoot():
             controller.kick(255)
     # otherwise, turn to face the goal
     else:
-        print("Turning ",angle_to_face,"from",me.bearing(opponentGoal))
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
 
 
@@ -44,7 +43,9 @@ def passBall():
     angle_to_face = me.bearing(ally)
     # if we're facing the ally, pass them the ball
     if nearEnough(angle_to_face, me.currentRotation):
-        controller.kick(255)
+        controller.stop_robot()
+        if not controller.haveIKicked:
+            controller.kick(255)
     # otherwise, turn to face our ally
     else:
         controller.move(angle_to_face,0,0,False,rotate_in_place=True)
@@ -56,6 +57,7 @@ def receivePass():
     angle_to_face = me.bearing(ally)
     # if we're facing the ally, ungrab and get ready to receive the ball
     if nearEnough(angle_to_face, me.currentRotation):
+        controller.stop_robot()
         controller.ungrab(True)
     # otherwise, turn to face our ally
     else:
@@ -76,7 +78,7 @@ def blockPass():
     angle_to_face = point_to_be.bearing(ball.currentPoint)
     angle_to_move = me.bearing(point_to_be)
     distance = me.distance(point_to_be)
-    controller.move(angle_to_face,angle_to_move,distance)
+    controller.move(angle_to_move,angle_to_move,distance)
 
 
 def confuseEnemy():
