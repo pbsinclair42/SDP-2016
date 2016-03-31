@@ -1,6 +1,5 @@
 from constants import POINT_ACCURACY, ANGLE_ACCURACY, ITLL_DO_POINT, ITLL_DO_ANGLE
 from math import radians, sin as sinr, cos as cosr, tan as tanr
-from globalObjects import *
 from helperClasses import Point
 
 def essentiallyEqual(a, b):
@@ -45,32 +44,3 @@ def cos(angle):
 
 def tan(angle):
     return tanr(radians(angle))
-
-def lineOfSight(From,To):
-    dxc = From.x - To.x
-    dyc = From.y - To.y
-
-    for obj in moveables:
-        dxl = obj.x - To.x
-        dyl = obj.y - To.y
-        cross = dxc * dyl - dyc * dxl
-        if(cross == 0):
-            return True
-    return False
-
-    """def isLegal(angle_to_move,distance):
-    # go from 0 to 360, 0 and 360 being left
-    if angle_to_move < 0:
-        angle_to_move = 360 + angle_to_move
-
-    # move angles by 180
-    angle_to_move += 180
-
-    if angle_to_move > 360:
-        angle_to_move = angle_to_move - 360
-
-    print angle_to_move
-
-
-    predicted_XY = cos(angle_to_move) * distance, sin(angle_to_move) * distance
-    if """

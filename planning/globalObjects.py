@@ -26,3 +26,16 @@ if OUR_GOAL=='right':
 else:
     ourGoal = leftGoalCenter
     opponentGoal = rightGoalCenter
+
+
+def lineOfSight(From,To):
+    dxc = From.x - To.x
+    dyc = From.y - To.y
+
+    for obj in moveables:
+        dxl = obj.x - To.x
+        dyl = obj.y - To.y
+        cross = dxc * dyl - dyc * dxl
+        if(cross == 0):
+            return True
+    return False
