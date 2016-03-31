@@ -34,7 +34,7 @@ class RobotController(object):
         self.commands = 0
         self.command_list = []
         self.command_dict = {
-            "ROT_MOVE" : chr(3  ),
+            "ROT_MOVE"     : chr(3  ),
             "HOL_MOVE"     : chr(124),
             "KICK"         : chr(4  ),
             "STOP"         : chr(8  ),
@@ -100,6 +100,7 @@ class RobotController(object):
                 self.rotate(angle_to_face)
                 self.expected_rotation = int(angle_to_face)
             self.haveIkicked = False
+            self.stopped = False
 
         else:
             print "Warning: move didn't move!"
@@ -256,4 +257,11 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    r.move(0, 0)
+    sleep(10)
+    angle = 0
+    for i in range (0, 100):
+        r.stop_robot()
+        r.move(angle, None, None, None, True)
+        angle += 1
+        sleep(0.1)
+        prev_angle = angle

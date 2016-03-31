@@ -22,6 +22,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
     atomic_status = None
     prev_mag_state = robot_state["mag_head"]
 
+    testcounter=0
+
     # perform setup
     while not radio_connected:
 
@@ -35,6 +37,11 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                 print "Failed to connect radio with port", str(port), str(e)
                 radio_connected = False
     print "Radio On-line"
+    
+    print "flushing garbage"
+    while comms.in_waiting:
+        garbage = comms.read(1)
+
 
     while True:
         event.wait()
@@ -54,8 +61,8 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
                     cmnd_list[-1] = command
                 elif is_stop(command):
                     for cmd_id in range(0, len(cmnd_list)):
-                        cmnd_list[cmd_id][-3] = 1
-                        cmnd_list[cmd_id][-2] = 1
+                        # cmnd_list[cmd_id][-3] = 1
+                        # cmnd_list[cmd_id][-2] = 1
                         cmnd_list[cmd_id][-1] = 1
                     cmnd_list.append(command)
                 else:
@@ -135,8 +142,15 @@ def comms_thread(pipe_in, pipe_out, event, port, baudrate):
         if robot_state["mag_head"] != prev_mag_state:
             pipe_out.send(robot_state["mag_head"])
             prev_mag_state = robot_state["mag_head"]
-        
+        #testcounter+=1
+        #if testcounter%100==0:
         # print robot_state
+        # print "ack", ack_count
+        # print cmnd_list
+        # print
+
+        #print cmnd_list
+        testcounter=0
         sleep(process_sleep_time)
 
 def process_data(data, robot_state):
@@ -208,6 +222,9 @@ def is_grab(command):
 
 def is_ungrab(command):
     return command[0] == 32
+
+def is_rot(command):
+    return command[0] == 3
 if __name__ == "__main__":
     rs = {}
     process_data([253, 0, 0, 0, 154, 0, 228], rs)
