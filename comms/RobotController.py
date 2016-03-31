@@ -50,6 +50,7 @@ class RobotController(object):
                                target=comms_thread,
                                args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
         self.process.start()
+        self.process_event.set()
     def move(self, angle_to_face=None, angle_to_move=None, distance_to_target=None , grab_target=None, rotate_in_place=None):
         """ Overriding move function
 
@@ -156,10 +157,7 @@ class RobotController(object):
         """
             grab
         """
-        if atomic == "forced":
-            command = "fgrab"
-            self.parent_pipe_in.send("fgrab")
-        elif not atomic:
+        if not atomic:
 
             command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
             self.queue_command(command)
@@ -253,10 +251,37 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    sleep(3)
-    deg = 0
     while True:
-        r.move(-45, -45, None, None, True)
-        sleep(4)
-        r.move(135, 135, None, None, True)
-        sleep(4)
+	    sleep(5)
+	    r.ungrab(False)
+	    sleep(5)
+	    r.grab(False)
+
+    """
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)"""
