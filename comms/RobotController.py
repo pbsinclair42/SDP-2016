@@ -21,7 +21,7 @@ class RobotController(object):
         """
         self.stopped = False
         self.grabbed = True
-        self.haveIKicked = False
+        self.kickflag = False
         self.ack_counts = (0, 0)
         self.mag_heading = 0
         self.expected_rotation = None
@@ -50,6 +50,7 @@ class RobotController(object):
                                target=comms_thread,
                                args=(self.child_pipe_out, self.child_pipe_in, self.process_event, port, baudrate))
         self.process.start()
+        self.process_event.set()
     def move(self, angle_to_face=None, angle_to_move=None, distance_to_target=None , grab_target=None, rotate_in_place=None):
         """ Overriding move function
 
@@ -63,8 +64,8 @@ class RobotController(object):
         self.synchronize()
         current_heading = self.get_mag_heading()
         mag_heading = self.absolute_to_magnetic(angle_to_face)
-        print "move", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
-        #print "internal stats", self.grabbed
+        print "controller_stats", angle_to_face, angle_to_move, distance_to_target, grab_target, rotate_in_place
+        print "internal stats", self.grabbed
         # case for grabbing or ungrabbing the ball
 
         if grab_target:
@@ -87,13 +88,13 @@ class RobotController(object):
                 self.holo(angle_to_move, angle_to_face)
                 self.stopped = False
             self.expected_rotation = None
-            self.haveIKicked = False
+            self.kickflag = False
 
         elif angle_to_face is not None and rotate_in_place:
             if int(angle_to_face) != self.expected_rotation:
                 self.rotate(angle_to_face)
                 self.expected_rotation = int(angle_to_face)
-            self.haveIKicked = False
+            self.kickflag = False
 
         else:
             print "Warning: move didn't move!"
@@ -107,7 +108,7 @@ class RobotController(object):
         self.parent_pipe_in.send((command,))
         self.process_event.set()
         self.synchronize()
-        #print "Queue-ing:", [ord(item) for item in command]
+        print "Queue-ing:", [ord(item) for item in command]
 
     def rotate(self, degrees):
         """
@@ -150,16 +151,13 @@ class RobotController(object):
         """
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
-        self.haveIKicked = True
+        self.kickflag = True
 
     def grab(self, atomic=True):
         """
             grab
         """
-        if atomic == "forced":
-            command = "fgrab"
-            self.parent_pipe_in.send("fgrab")
-        elif not atomic:
+        if not atomic:
 
             command = self.command_dict["GRAB"] + chr(0) + self.command_dict["END"] + self.command_dict["END"]
             self.queue_command(command)
@@ -200,7 +198,7 @@ class RobotController(object):
         self.process_event.clear()
 
     def stop_robot(self):
-    	if not self.stopped:
+	if not self.stopped:
             self.stopped = True
             command = self.command_dict["STOP"] + self.command_dict["END"] + self.command_dict["END"] + self.command_dict["END"]
             self.queue_command(command)
@@ -234,7 +232,8 @@ class RobotController(object):
         return self.mag_heading
 
     def absolute_to_magnetic(self, angle):
-        mag_north = 169
+        # mag_north = 165 # pitch closer to SDP
+        mag_north = 155 # pitch closer to toilets
 
         if angle is None:
             return None
@@ -253,10 +252,33 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    sleep(3)
-    deg = 0
-    while True:
-        r.move(-45, -45, None, None, True)
-        sleep(4)
-        r.move(135, 135, None, None, True)
-        sleep(4)
+    r.move(0, 0)
+    
+    """
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)
+    print "g"
+    r.grab()
+    sleep(5)
+    r.ungrab()
+    sleep(5)"""
