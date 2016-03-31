@@ -101,8 +101,14 @@ def guardGoal():
     me.goal = Goals.guardGoal
     angle_to_face = me.bearing(ball)
 
+    # if not on our goal line, move into the middle of it
+    if abs(me.currentPoint.x - ourGoal.x) > 15:
+        print("Heading to goal line")
+        angle_to_move = me.bearing(ourGoal)
+        distance = me.distance(ourGoal)
+        controller.move(angle_to_move,angle_to_move,distance)
     # if we're on our goal line, move to block the ball
-    if abs(me.currentPoint.x - ourGoal.x) <= 15:
+    else:
         # work out which enemy has the ball
         if ball.status == BallStatus.enemyA:
             enemyNum=0
@@ -116,27 +122,42 @@ def guardGoal():
         # calculate where on the y axis the ball would hit if kicked now
         x_dist = enemies[enemyNum].currentPoint.x  - ourGoal.x
         y_dist = x_dist * tan(enemies[enemyNum].currentRotation)
-        y_intersection = enemies[enemyNum].currentPoint.x - y_dist
+        y_intersection = enemies[enemyNum].currentPoint.y + y_dist
 
         # calculate where we should therefore go to (we don't want to leave the goal line)
         minY = PITCH_WIDTH/2 - 0.5*GOAL_WIDTH + ROBOT_WIDTH/2
         maxY = PITCH_WIDTH/2 + 0.5*GOAL_WIDTH - ROBOT_WIDTH/2
         point_to_be = Point(ourGoal.x, max(minY, min(maxY, y_intersection)))
+        print point_to_be
 
-        # calculate the paramaters to send to the robot
-        distance = me.distance(point_to_be)
-        # we want to move holonomically up and down
-        if point_to_be.y<me.currentPoint.y:
-            angle_to_move = 90
+        # if we're not where we should be, move there holonomically
+        if not nearEnough(point_to_be, me.currentPoint, near_enough_point=10):
+            # turn to face the opposite side of the pitch before the holo movement
+            if OUR_GOAL=='left':
+                angle_to_face=0
+            else:
+                angle_to_face=180
+            # calculate the parameters to send to the robot
+            distance = me.distance(point_to_be)
+            print("blocking")
+            # we want to move holonomically up and down
+            if point_to_be.y<me.currentPoint.y:
+                print("blocking upwards")
+                angle_to_move = -90
+            else:
+                print("blocking downwards")
+                angle_to_move = 90
+            controller.move(angle_to_face,angle_to_move,distance)
+
+        # if we're in position already but just facing wrongly, turn to face the robot with the ball
+        elif not nearEnough(angle_to_face, me.currentRotation):
+            controller.stop_robot()
+            print("turning")
+            controller.move(angle_to_face,0,0,False,rotate_in_place=True)
+        # if we're all set, just wait for something to happen
         else:
-            angle_to_move = 270
-        controller.move(angle_to_face,angle_to_move,distance)
-        me.goal = Goals.none
-    else:
-        # if not in on our goal line, move into the middle of it
-        angle_to_move = me.bearing(ourGoal)
-        distance = me.distance(ourGoal)
-        controller.move(angle_to_move,angle_to_move,distance)
+            controller.stop_robot()
+            print("Guarding successfully")
 
 
 def clearPlan():
