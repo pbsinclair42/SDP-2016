@@ -17,6 +17,7 @@ confusionTarget = 0
 def collectBall():
     """Move towards then grab the ball"""
     me.goal=Goals.collectBall
+    
     # if we've caught up to the ball, stop and grab
     if nearEnough(me.bearing(ball), me.currentRotation, near_enough_angle=30) and ball.distance(me)< BALL_OWNERSHIP_DISTANCE:
         controller.stop_robot()
@@ -123,7 +124,7 @@ def guardGoal():
         elif ball.status == BallStatus.enemyB:
             enemyNum=1
         else:
-            controller.stop_robot()
+            print("just guarding lol")
             controller.move(angle_to_face,0,0,False,rotate_in_place=True)
             return
 
@@ -148,14 +149,13 @@ def guardGoal():
             distance = me.distance(point_to_be)
             # we want to move holonomically up and down
             if point_to_be.y<me.currentPoint.y:
-                angle_to_move = -90
-            else:
                 angle_to_move = 90
+            else:
+                angle_to_move = -90
             controller.move(angle_to_face,angle_to_move,distance)
 
         # if we're in position already but just facing wrongly, turn to face the robot with the ball
         elif not nearEnough(angle_to_face, me.currentRotation):
-            controller.stop_robot()
             controller.move(angle_to_face,0,0,False,rotate_in_place=True)
         # if we're all set, just wait for something to happen
         else:

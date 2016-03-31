@@ -21,9 +21,9 @@ class RobotController(object):
             Initialize firware API and start the communications parallel process
         """
         if pitch == "pitch1":
-        	self.mag_north = 165
+        	self.mag_north = 172
         else:
-        	self.mag_north = 155
+        	self.mag_north = 162
 
         self.stopped = False
         self.grabbed = True
@@ -94,9 +94,11 @@ class RobotController(object):
                 self.stopped = False
             self.expected_rotation = None
             self.haveIkicked = False
+            self.expected_rotation=None
 
         elif angle_to_face is not None and rotate_in_place:
-            if int(angle_to_face) != self.expected_rotation:
+            if self.expected_rotation is None or abs(int(angle_to_face)- self.expected_rotation)>5:
+                self.stop_robot()
                 self.rotate(angle_to_face)
                 self.expected_rotation = int(angle_to_face)
             self.haveIkicked = False
@@ -140,8 +142,8 @@ class RobotController(object):
         if angular_vector > 180:
             command_byte += 2
             angular_vector = angular_vector - 180
-
         command = chr(command_byte) + chr(int(dist_vector)) + chr(int(angular_vector)) + self.command_dict["END"]
+        print [ord(i) for i in command]
         self.queue_command(command)
 
     def exit(self):
@@ -257,11 +259,8 @@ class RobotController(object):
 
 if __name__ == "__main__":
     r = RobotController()
-    sleep(10)
-    angle = 0
-    for i in range (0, 100):
-        r.stop_robot()
-        r.move(angle, None, None, None, True)
-        angle += 1
-        sleep(0.1)
-        prev_angle = angle
+    sleep(5)
+    for i in range(0, 360, 15):
+        r.move(i,i,20)
+        sleep(0.5)
+    r.stop_robot()
