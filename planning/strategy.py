@@ -1,5 +1,6 @@
 from globalObjects import ball, me, ally, enemies, ourGoal, opponentGoal, lineOfSight
 from helperClasses import BallStatus, Goals
+from helperFunctions import isEnemyBox, isOurBoxFree
 from goals_new import collectBall, blockPass, guardGoal, shoot, passBall, confuseEnemy, receivePass, clearPlan
 from constants import *
 
@@ -37,7 +38,7 @@ def playBall():
         receivePass()
 
     # if noone has the ball, go grab the ball or defend
-    elif me.distance(ball) < ally.distance(ball):
+    elif me.distance(ball) < ally.distance(ball) and not isEnemyBox(ball.currentPoint):
         collectBall()
     else:
         guardGoal()

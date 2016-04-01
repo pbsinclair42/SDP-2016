@@ -74,14 +74,18 @@ class RobotController(object):
         # case for grabbing or ungrabbing the ball
 
         if grab_target:
-            if distance_to_target <= UNGRAB_DISTANCE and self.grabbed:
-                self.ungrab(True)
-                self.grabbed = False
-
             if distance_to_target <= GRAB_DISTANCE and not self.grabbed:
                 #self.stop_robot()
                 self.grab(True)
                 self.grabbed = True
+
+            elif distance_to_target <= UNGRAB_DISTANCE and self.grabbed:
+                self.ungrab(True)
+                self.grabbed = False
+
+            elif not self.grabbed and distance_to_target>UNGRAB_DISTANCE*2:
+                self.grab(True)
+                self.grabbed=True
 
         # case for moving
         if angle_to_face is not None and angle_to_move is not None and not rotate_in_place:
@@ -98,9 +102,12 @@ class RobotController(object):
 
         elif angle_to_face is not None and rotate_in_place:
             if self.expected_rotation is None or abs(int(angle_to_face)- self.expected_rotation)>5:
+                print("Actually rotating")
                 self.stop_robot()
                 self.rotate(angle_to_face)
                 self.expected_rotation = int(angle_to_face)
+            else:
+                print("I was rotating to ",self.expected_rotation," last time, ",angle_to_face," is near enough")
             self.haveIkicked = False
             self.stopped = False
 
@@ -128,7 +135,9 @@ class RobotController(object):
             degrees2 = 180
             degrees1 = degrees1 - 180
         command = self.command_dict["ROT_MOVE"] + chr(int(degrees1)) + chr(int(degrees2)) + self.command_dict["END"]
+        print [ord(i) for i in command]
         self.queue_command(command)
+
     def holo(self, dist_vector, angular_vector):
         dist_vector = self.absolute_to_magnetic(dist_vector)
         angular_vector = self.absolute_to_magnetic(angular_vector)
@@ -143,7 +152,6 @@ class RobotController(object):
             command_byte += 2
             angular_vector = angular_vector - 180
         command = chr(command_byte) + chr(int(dist_vector)) + chr(int(angular_vector)) + self.command_dict["END"]
-        print [ord(i) for i in command]
         self.queue_command(command)
 
     def exit(self):
@@ -159,6 +167,7 @@ class RobotController(object):
         """
         command = self.command_dict["KICK"] + chr(power) + self.command_dict["END"] + self.command_dict["END"]
         self.queue_command(command)
+        print([ord(i) for i in command])
         self.haveIkicked = True
 
     def grab(self, atomic=True):
@@ -260,7 +269,10 @@ class RobotController(object):
 if __name__ == "__main__":
     r = RobotController()
     sleep(5)
+    r.kick(255)
+    """
     for i in range(0, 360, 15):
         r.move(i,i,20)
         sleep(0.5)
     r.stop_robot()
+    """

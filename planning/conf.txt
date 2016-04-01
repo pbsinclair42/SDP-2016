@@ -1,4 +1,4 @@
-bright_blue
+yellow
 green
 red
 left

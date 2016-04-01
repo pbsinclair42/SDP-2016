@@ -1,7 +1,7 @@
 from constants import *
 from globalObjects import me, ally, ball, enemies, ourGoal, opponentGoal
 from helperClasses import Point, Goals, BallStatus
-from helperFunctions import tan, nearEnough
+from helperFunctions import tan, nearEnough, lineOfSight, isEnemyBox
 import sys
 import random
 sys.path.append(ROOT_DIR+'comms/')
@@ -28,8 +28,12 @@ def collectBall():
         angle_to_face = me.bearing(ball)
         angle_to_move = angle_to_face
         distance_to_move = me.distance(ball)
-        controller.move(angle_to_face,angle_to_move,distance_to_move,True)
-
+        if lineOfSight(me.currentPoint,ball.currentPoint):
+            print "Real"
+            controller.move(angle_to_face,angle_to_move,distance_to_move,True)
+        else:
+            ghost_walk(angle_to_face)
+            
 # K: you can simply only send move and kick(both of the only once), since we prefer the compass' orientation!
 def shoot():
     """Kick the ball full power towards the goal"""
@@ -88,7 +92,10 @@ def blockPass():
     angle_to_face = point_to_be.bearing(ball.currentPoint)
     angle_to_move = me.bearing(point_to_be)
     distance = me.distance(point_to_be)
-    controller.move(angle_to_move,angle_to_move,distance)
+    if not isEnemyBox(point_to_be):
+        controller.move(angle_to_move,angle_to_move,distance)
+    else:
+        ghost_walk(angle_to_face)
 
 
 def confuseEnemy():
@@ -161,6 +168,22 @@ def guardGoal():
         else:
             controller.stop_robot()
 
+def ghost_walk(angle_to_face):
+    ghost_flag = False
+    for i in range(0, 10):
+        ghost_pt_x = random.random() * 30 * random.choice([1, -1])
+        ghost_pt_y = random.random() * 30 * random.choice([1, -1])
+        target = me.currentPoint.x + ghost_pt_y, me.currentPoint.y + ghost_pt_y
+        if target[0] > 0 and target[0] < PITCH_LENGTH and target[1] > 0 and target[1] < PITCH_WIDTH and not isEnemyBox(Point(target[0],target[1])) and lineOfSight(me.currentPoint, Point(target[0],target[1])):
+            ghost_flag = True
+            break;
+    if ghost_flag:
+        angle_to_move = me.bearing(Point(target[0],target[1]))
+        print "Ghost"
+        controller.move(angle_to_face, angle_to_move, 60, None, None)
+    else:
+        print "None"
+        controller.stop_robot()
 
 def clearPlan():
     """Reset the robot's goal and plan"""

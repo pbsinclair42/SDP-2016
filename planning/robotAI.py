@@ -1,10 +1,10 @@
 import threading
 
 from constants import *
-from globalObjects import me, ally, enemies, ball
+from globalObjects import me, ally, enemies, ball, moveables
 from helperClasses import BallStatus, Goals, Point
 from goals_new import collectBall, shoot, passBall, receivePass, blockPass, guardGoal, confuseEnemy
-from helperFunctions import nearEnough
+from helperFunctions import nearEnough, lineOfSight, isEnemyBox, isOurBoxFree
 from strategy import playBall
 from world import WorldApi
 import math
@@ -63,13 +63,13 @@ def updatePositions():
         print "Shit! Where's the ball gone"
 
     try:#see who has ball posesion - needs work
-        if nearEnough(enemies[0].bearing(ball),enemies[0].currentRotation, near_enough_angle=30) and ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
+        if nearEnough(enemies[0].bearing(ball),enemies[0].currentRotation, near_enough_angle=45) and ball.distance(enemies[0]) < BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.enemyA
-        elif nearEnough(enemies[1].bearing(ball),enemies[1].currentRotation, near_enough_angle=30) and  ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
+        elif nearEnough(enemies[1].bearing(ball),enemies[1].currentRotation, near_enough_angle=45) and  ball.distance(enemies[1]) < BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.enemyB
-        elif nearEnough(ally.bearing(ball),ally.currentRotation, near_enough_angle=30) and  ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
+        elif nearEnough(ally.bearing(ball),ally.currentRotation, near_enough_angle=45) and  ball.distance(ally)< BALL_OWNERSHIP_DISTANCE:
             ball.status = BallStatus.ally
-        elif nearEnough(me.bearing(ball), me.currentRotation, near_enough_angle=30) and ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
+        elif nearEnough(me.bearing(ball), me.currentRotation, near_enough_angle=45) and ball.distance(me)< BALL_OWNERSHIP_DISTANCE and me.grabbed:
             ball.status = BallStatus.me
         # if we can't see it, assume it's the same
         elif api.world['ball_center']==None:
@@ -85,21 +85,21 @@ def tick():
     """Each tick, update your beliefs about the world then decide what action to
     take based on this"""
     updatePositions()
-    playBall()
+    #playBall()
     # test out each individual function by commenting the above line
     # and uncommenting one of the following:
     #
-    #collectBall()
+    collectBall()
     #passBall()
     #confuseEnemy()
     #shoot()
-    #collectBall()
     #receivePass()
     #guardGoal()
     #blockPass()
     #
     print
     print(me.goal)
+    print(ball.status)
     print
     threading.Timer(TICK_TIME, tick).start()
 
