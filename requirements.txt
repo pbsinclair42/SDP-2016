@@ -1,3 +1,2 @@
-pySerial==3.0.4
-openCV==3.1
+cv2
 numpy
